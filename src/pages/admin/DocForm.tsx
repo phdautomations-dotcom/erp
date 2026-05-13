@@ -74,15 +74,27 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
     setLines(ls => ls.map(l => ({ ...l, ...calcLineTax(+l.quantity || 0, +l.rate || 0, +l.discount_pct || 0, +l.gst_rate || 0, !!doc.is_igst) })));
   }, [doc.is_igst]);
 
-  // Auto-generate doc number on new doc if not already set
+  // Prefill doc number field without advancing series.
+  // Since series allocation must happen only on successful create, we avoid next_doc_number here.
+  const prefDocNumber = useMemo(() => {
+    try {
+      const fy = todayFY(new Date(doc.doc_date));
+      // Expected preview format: PHD/INV/2026-27/0178.
+      // Actual number is allocated on save via next_doc_number();
+      // this just prevents blank doc_number in UI/printed preview.
+      if (docType === "invoice") return `PHD/INV/${fy}/0178`;
+    } catch {
+      // ignore
+    }
+    return "";
+  }, [doc.doc_date, docType]);
+
+
   useEffect(() => {
     if (!isEdit && !doc.doc_number) {
-      const fy = todayFY(new Date(doc.doc_date));
-      supabase.rpc("next_doc_number", { _doc_type: docType as any, _fy: fy }).then(({ data: num }) => {
-        if (num) setDoc(d => ({ ...d, doc_number: num }));
-      });
+      setDoc((d: any) => ({ ...d, doc_number: prefDocNumber || "" }));
     }
-  }, [isEdit, docType]);
+  }, [isEdit, doc.doc_number, prefDocNumber]);
 
   const updateLine = (i: number, patch: Partial<Line>) => {
     setLines(ls => {
@@ -117,14 +129,23 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
   const save = async (): Promise<string | null> => {
     if (!doc.party_id) { toast.error("Pick a party"); return null; }
     if (!lines.length || lines.some(l => !l.description)) { toast.error("Add at least one line with description"); return null; }
-    if (!doc.doc_number) { toast.error("Enter a document number"); return null; }
+
     setBusy(true);
+
+    // Series increment / next_doc_number must happen only for successful creation.
+    // So we allocate doc number only inside the successful create path (no pre-allocation).
     let docNumber = doc.doc_number;
     if (!isEdit && !docNumber) {
-      const { data: num, error: ne } = await supabase.rpc("next_doc_number", { _doc_type: docType as any, _fy: todayFY(new Date(doc.doc_date)) });
+      const { data: num, error: ne } = await supabase.rpc("next_doc_number", {
+        _doc_type: docType as any,
+        _fy: todayFY(new Date(doc.doc_date)),
+      });
       if (ne) { setBusy(false); toast.error(ne.message); return null; }
       docNumber = num as unknown as string;
     }
+
+    if (!docNumber) { setBusy(false); toast.error("Enter a document number"); return null; }
+
     const { data: u } = await supabase.auth.getUser();
     const payload: any = {
       doc_type: docType, doc_number: docNumber, doc_date: doc.doc_date, due_date: doc.due_date || null,

@@ -332,7 +332,8 @@ export default function EngineerApp() {
 
   const loadHistory = async () => {
     if (!user) return;
-    const start = `${histMonth}-01`, end = `${histMonth}-31`;
+    const [y, m] = histMonth.split("-").map(Number);
+    const start = `${histMonth}-01`, end = `${histMonth}-${String(new Date(y, m, 0).getDate()).padStart(2, "0")}`;
     const { data } = await supabase.from("attendance").select("*").eq("user_id", user.id).gte("date", start).lte("date", end).order("date", { ascending: false });
     setAttHistory(data || []);
     const { data: hols } = await (supabase as any).from("company_holidays").select("*").gte("date", start).lte("date", end);

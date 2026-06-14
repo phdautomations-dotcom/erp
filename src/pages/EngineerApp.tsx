@@ -18,7 +18,6 @@ import { useNavigate } from "react-router-dom";
 import { fmtINR, fmtDate, calcLineTax, todayFY } from "@/lib/format";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions, type PermModule } from "@/hooks/usePermissions";
-import { Skeleton } from "@/components/ui/skeleton";
 import logo from "@/assets/logo.png";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -159,27 +158,35 @@ function DocLineRow({ line, items, onChange, onRemove }: {
 
 // ─── Skeleton Loader ──────────────────────────────────────────────────────────
 
+const shimmer = "relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.4s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent";
+
 function DocCardSkeleton() {
   return (
-    <div className="bg-card border border-border/50 rounded-2xl p-4 flex flex-col gap-3 animate-pulse">
+    <div className={`bg-card border border-border/50 rounded-2xl p-4 flex flex-col gap-3 ${shimmer}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 space-y-2">
           <div className="flex gap-2">
-            <Skeleton className="h-4 w-28 rounded-full" />
-            <Skeleton className="h-4 w-14 rounded-full" />
+            <div className="h-4 w-28 rounded-full bg-muted" />
+            <div className="h-4 w-14 rounded-full bg-muted" />
           </div>
-          <Skeleton className="h-3 w-36 rounded-full" />
-          <Skeleton className="h-3 w-20 rounded-full" />
+          <div className="h-3 w-36 rounded-full bg-muted" />
+          <div className="h-3 w-20 rounded-full bg-muted" />
         </div>
-        <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+        <div className="h-8 w-8 rounded-full bg-muted shrink-0" />
       </div>
-      <div className="bg-muted/30 rounded-xl p-2.5 space-y-2">
-        <div className="flex justify-between"><Skeleton className="h-3 w-32 rounded-full" /><Skeleton className="h-3 w-16 rounded-full" /></div>
-        <div className="flex justify-between"><Skeleton className="h-3 w-24 rounded-full" /><Skeleton className="h-3 w-16 rounded-full" /></div>
+      <div className="bg-muted/40 rounded-xl p-2.5 space-y-2">
+        <div className="flex justify-between">
+          <div className="h-3 w-32 rounded-full bg-muted" />
+          <div className="h-3 w-16 rounded-full bg-muted" />
+        </div>
+        <div className="flex justify-between">
+          <div className="h-3 w-24 rounded-full bg-muted" />
+          <div className="h-3 w-16 rounded-full bg-muted" />
+        </div>
       </div>
       <div className="flex justify-between items-center pt-1 border-t border-border/30">
-        <Skeleton className="h-3 w-12 rounded-full" />
-        <Skeleton className="h-5 w-20 rounded-full" />
+        <div className="h-3 w-12 rounded-full bg-muted" />
+        <div className="h-5 w-20 rounded-full bg-muted" />
       </div>
     </div>
   );
@@ -312,7 +319,7 @@ export default function EngineerApp() {
   const [expTo, setExpTo] = useState("");
 
   const { user, signOut, hasRole, roles } = useAuth();
-  const { hasPerm, canViewAll, salesPerm, purchasePerm, expensesPerm, reportsPerm } = usePermissions();
+  const { hasPerm, canViewAll, salesPerm, purchasePerm, expensesPerm, reportsPerm, loading: permLoading } = usePermissions();
   const nav = useNavigate();
 
   // ── Computed: doc line totals ──
@@ -470,8 +477,13 @@ export default function EngineerApp() {
     document.title = "Engineer Workspace | PHD ERP";
     loadPendingVisits();
     loadServices();
-    if (user) { loadAttendance(); loadHistory(); loadBusinessData(); }
+    if (user) { loadAttendance(); loadHistory(); }
   }, [user, roles, nav]);
+
+  // Load business data only AFTER permissions are ready so canViewAll() returns correct values
+  useEffect(() => {
+    if (user && !permLoading) loadBusinessData();
+  }, [user, permLoading]);
 
   useEffect(() => { loadHistory(); }, [histMonth]);
   useEffect(() => { if (reportsPerm) loadReports(); }, [rptFrom, rptTo, reportsPerm]);

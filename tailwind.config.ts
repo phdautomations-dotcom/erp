@@ -75,6 +75,7 @@ export default {
         "scale-in": { "0%": { opacity: "0", transform: "scale(0.96)" }, "100%": { opacity: "1", transform: "scale(1)" } },
         "float-slow": { "0%,100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-12px)" } },
         "spin-slow": { to: { transform: "rotate(360deg)" } },
+        "shimmer": { "100%": { transform: "translateX(100%)" } },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -84,6 +85,7 @@ export default {
         "scale-in": "scale-in 0.4s ease-out both",
         "float-slow": "float-slow 6s ease-in-out infinite",
         "spin-slow": "spin-slow 30s linear infinite",
+        "shimmer": "shimmer 1.4s linear infinite",
       },
     },
   },

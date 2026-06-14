@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { fmtINR, fmtDate, calcLineTax, todayFY } from "@/lib/format";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions, type PermModule } from "@/hooks/usePermissions";
+import { Skeleton } from "@/components/ui/skeleton";
 import logo from "@/assets/logo.png";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -156,6 +157,42 @@ function DocLineRow({ line, items, onChange, onRemove }: {
   );
 }
 
+// ─── Skeleton Loader ──────────────────────────────────────────────────────────
+
+function DocCardSkeleton() {
+  return (
+    <div className="bg-card border border-border/50 rounded-2xl p-4 flex flex-col gap-3 animate-pulse">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 space-y-2">
+          <div className="flex gap-2">
+            <Skeleton className="h-4 w-28 rounded-full" />
+            <Skeleton className="h-4 w-14 rounded-full" />
+          </div>
+          <Skeleton className="h-3 w-36 rounded-full" />
+          <Skeleton className="h-3 w-20 rounded-full" />
+        </div>
+        <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+      </div>
+      <div className="bg-muted/30 rounded-xl p-2.5 space-y-2">
+        <div className="flex justify-between"><Skeleton className="h-3 w-32 rounded-full" /><Skeleton className="h-3 w-16 rounded-full" /></div>
+        <div className="flex justify-between"><Skeleton className="h-3 w-24 rounded-full" /><Skeleton className="h-3 w-16 rounded-full" /></div>
+      </div>
+      <div className="flex justify-between items-center pt-1 border-t border-border/30">
+        <Skeleton className="h-3 w-12 rounded-full" />
+        <Skeleton className="h-5 w-20 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+function BizLoadingGrid() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {[1, 2, 3, 4, 5, 6].map(i => <DocCardSkeleton key={i} />)}
+    </div>
+  );
+}
+
 // ─── Filter Bar ───────────────────────────────────────────────────────────────
 
 function FilterBar({ search, onSearch, month, onMonth, from, onFrom, to, onTo, onClear }: {
@@ -222,6 +259,7 @@ export default function EngineerApp() {
   const [allItems, setAllItems] = useState<any[]>([]);
   const [myDocs, setMyDocs] = useState<any[]>([]);
   const [myExpenses, setMyExpenses] = useState<any[]>([]);
+  const [bizLoading, setBizLoading] = useState(true);
 
   // ── Document sheet state (new) ──
   const [docSheet, setDocSheet] = useState(false);
@@ -342,6 +380,7 @@ export default function EngineerApp() {
 
   const loadBusinessData = async () => {
     if (!user) return;
+    setBizLoading(true);
     // Sales docs: show all if any sales module has can_view_all, else filter by created_by
     const salesViewAll = canViewAll("invoice") || canViewAll("quotation") || canViewAll("proforma") || canViewAll("challan");
     const purchViewAll = canViewAll("purchase");
@@ -370,6 +409,7 @@ export default function EngineerApp() {
     setAllItems(i.data || []);
     setMyDocs([...(salesDocs.data || []), ...(purchDocs.data || [])]);
     setMyExpenses(e.data || []);
+    setBizLoading(false);
   };
 
   const loadReports = async () => {
@@ -649,6 +689,7 @@ export default function EngineerApp() {
   };
 
   const renderDocList = (types: string[], search = "", dateFrom = "", dateTo = "") => {
+    if (bizLoading) return <BizLoadingGrid />;
     let filtered = myDocs.filter(d => types.includes(d.doc_type));
     if (search.trim()) {
       const q = search.trim().toLowerCase();
@@ -1034,6 +1075,7 @@ export default function EngineerApp() {
                 onClear={() => { setExpSearch(""); setExpMonth(""); setExpFrom(""); setExpTo(""); }}
               />
               {(() => {
+                if (bizLoading) return <BizLoadingGrid />;
                 const range = expMonth ? monthToRange(expMonth) : { from: expFrom, to: expTo };
                 let filtered = myExpenses;
                 if (expSearch.trim()) {

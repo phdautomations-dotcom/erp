@@ -371,16 +371,27 @@ export const AdminLayout = ({ children, title }: { children: ReactNode; title?: 
 
   return (
     <div
-      className="h-screen w-full flex overflow-hidden"
-      style={{ background: "hsl(220 22% 94%)", zoom: 0.9 } as any}
+      className="w-full flex overflow-hidden"
+      style={{
+        background: "hsl(220 22% 94%)",
+        zoom: 0.9,
+        height: "calc(100vh / 0.9)",      /* compensate zoom so it fills full viewport */
+        maxHeight: "calc(100vh / 0.9)",
+      } as any}
     >
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-[236px] shrink-0 h-full z-20" style={{ boxShadow: "2px 0 24px hsl(220 30% 15% / 0.18)" }}>
+      <aside
+        className="hidden lg:flex flex-col w-[236px] shrink-0 overflow-hidden z-20"
+        style={{
+          height: "calc(100vh / 0.9)",
+          boxShadow: "2px 0 24px hsl(220 30% 15% / 0.18)",
+        }}
+      >
         <Sidebar />
       </aside>
 
       {/* Right panel */}
-      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ height: "calc(100vh / 0.9)" }}>
         <TopHeader title={title} onMenuClick={() => setMobileOpen(true)} />
 
         <motion.main

@@ -1,148 +1,424 @@
-import { ReactNode, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { ReactNode, useEffect, useRef, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, FileText, ShoppingCart, Wallet, Wrench,
-  Boxes, Receipt, BarChart3, Inbox, Settings, UserCog, LogOut, Menu, Sparkles, ClipboardList
+  Boxes, Receipt, BarChart3, Inbox, Settings, UserCog, LogOut, Menu,
+  ClipboardList, Bell, Search, ChevronRight, X, Building2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { fmtINR } from "@/lib/format";
 import logo from "@/assets/logo.png";
 
-const nav = [
-  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/admin/parties", label: "Parties", icon: Users },
-  { to: "/admin/items", label: "Items", icon: Package },
-  { to: "/admin/sales", label: "Sales", icon: FileText },
-  { to: "/admin/purchases", label: "Purchases", icon: ShoppingCart },
-  { to: "/admin/payments", label: "Payments", icon: Wallet },
-  { to: "/admin/inventory", label: "Inventory", icon: Boxes },
-  { to: "/admin/expenses", label: "Expenses", icon: Receipt },
-      { to: "/admin/attendance", label: "Attendance & HR", icon: ClipboardList },
-  { to: "/admin/reports", label: "Reports", icon: BarChart3 },
-  { to: "/admin/services", label: "Service Desk", icon: Wrench },
-  { to: "/admin/leads", label: "Leads", icon: Inbox },
-  { to: "/admin/users", label: "Users", icon: UserCog, adminOnly: true },
-  { to: "/admin/settings", label: "Settings", icon: Settings },
+// ─── Nav config ───────────────────────────────────────────────────────────────
+
+const NAV = [
+  { to: "/admin",            label: "Dashboard",       icon: LayoutDashboard, end: true },
+  { to: "/admin/parties",    label: "Parties",         icon: Users },
+  { to: "/admin/items",      label: "Items",           icon: Package },
+  { to: "/admin/sales",      label: "Sales",           icon: FileText },
+  { to: "/admin/purchases",  label: "Purchases",       icon: ShoppingCart },
+  { to: "/admin/payments",   label: "Payments",        icon: Wallet },
+  { to: "/admin/inventory",  label: "Inventory",       icon: Boxes },
+  { to: "/admin/expenses",   label: "Expenses",        icon: Receipt },
+  { to: "/admin/attendance", label: "Attendance & HR", icon: ClipboardList },
+  { to: "/admin/reports",    label: "Reports",         icon: BarChart3 },
+  { to: "/admin/services",   label: "Service Desk",    icon: Wrench },
+  { to: "/admin/leads",      label: "Leads",           icon: Inbox },
+  { to: "/admin/users",      label: "Users",           icon: UserCog, adminOnly: true },
+  { to: "/admin/settings",   label: "Settings",        icon: Settings },
 ];
 
-// Global variable to remember scroll position across page changes
-let sidebarScrollY = 0;
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-const SidebarContent = ({ onItem }: { onItem?: () => void }) => {
+let savedScrollY = 0;
+
+function Sidebar({ onClose }: { onClose?: () => void }) {
   const { hasRole, user, signOut, roles } = useAuth();
   const navigate = useNavigate();
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (navRef.current) {
-      navRef.current.scrollTop = sidebarScrollY;
-    }
+    if (navRef.current) navRef.current.scrollTop = savedScrollY;
   }, []);
 
+  const initial = (user?.email?.[0] ?? "A").toUpperCase();
+
   return (
-    <div className="flex h-full flex-col bg-card/40 backdrop-blur-xl border-r border-border/50">
-      <div className="px-5 py-5 border-b border-border/50">
-        <NavLink to="/admin" className="flex items-center gap-2">
-          <img src={logo} alt="PHD" className="h-10 w-auto object-contain" />
-        </NavLink>
-        <p className="mt-2 text-[10px] uppercase tracking-wider text-muted-foreground">ERP & Billing</p>
+    <div
+      className="flex flex-col h-full"
+      style={{ background: "hsl(215 65% 8%)" }}
+    >
+      {/* Logo */}
+      <div className="px-5 pt-5 pb-4" style={{ borderBottom: "1px solid hsl(215 40% 16%)" }}>
+        <div className="flex items-center justify-between">
+          <NavLink to="/admin" onClick={onClose}>
+            <img src={logo} alt="PHD" className="h-8 w-auto brightness-0 invert opacity-90" />
+          </NavLink>
+          {onClose && (
+            <button onClick={onClose} className="text-white/40 hover:text-white/80 transition-colors">
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <p className="mt-2.5 text-[10px] font-bold uppercase tracking-widest" style={{ color: "hsl(22 95% 58%)" }}>
+          ERP &amp; Billing
+        </p>
       </div>
-      <nav 
+
+      {/* Nav */}
+      <nav
         ref={navRef}
-        onScroll={(e) => { sidebarScrollY = e.currentTarget.scrollTop; }}
-        className="flex-1 overflow-y-auto p-3 space-y-1"
+        onScroll={(e) => { savedScrollY = e.currentTarget.scrollTop; }}
+        className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5"
       >
-        {nav.filter(n => !n.adminOnly || hasRole("admin")).map((n) => (
+        {NAV.filter(n => !n.adminOnly || hasRole("admin")).map((item) => (
           <NavLink
-            key={n.to}
-            to={n.to}
-            end={n.end}
-            onClick={onItem}
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            onClick={onClose}
             className={({ isActive }) =>
-              cn(
-                "relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition-all duration-300 hover:translate-x-1 group",
-                isActive ? "text-accent-foreground font-semibold shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-              )
+              [
+                "relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200",
+                isActive ? "text-white" : "text-white/45 hover:text-white/80 hover:bg-white/5",
+              ].join(" ")
             }
           >
             {({ isActive }) => (
               <>
                 {isActive && (
                   <motion.div
-                    layoutId="sidebar-active-indicator"
-                    className="absolute inset-0 bg-accent rounded-2xl z-0"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    layoutId="nav-pill"
+                    className="absolute inset-0 rounded-xl z-0"
+                    style={{ background: "hsl(22 95% 52%)" }}
+                    transition={{ type: "spring", stiffness: 380, damping: 34 }}
                   />
                 )}
-                <n.icon className="h-4 w-4 relative z-10" />
-                <span className="relative z-10">{n.label}</span>
+                <item.icon className="h-4 w-4 shrink-0 relative z-10" />
+                <span className="flex-1 relative z-10">{item.label}</span>
+                {isActive && <ChevronRight className="h-3 w-3 relative z-10 text-white/60 shrink-0" />}
               </>
             )}
           </NavLink>
         ))}
       </nav>
-      <div className="border-t border-border/50 p-3">
-        <div className="px-2 pb-2 text-xs">
-          <div className="font-medium truncate">{user?.email}</div>
-          <div className="text-[10px] text-muted-foreground capitalize">{roles.join(", ") || "no role"}</div>
-        </div>
-        <Button variant="ghost" size="sm" className="w-full h-8 justify-start text-muted-foreground hover:text-foreground" onClick={async () => { await signOut(); navigate("/auth"); }}>
-          <LogOut className="h-3.5 w-3.5 mr-2" /> Sign out
-        </Button>
-        
-        <div className="pt-2 mt-2 border-t border-border/50 flex flex-col items-center justify-center gap-0.5 opacity-60 hover:opacity-100 transition-opacity">
-          <div className="text-[8px] text-muted-foreground uppercase tracking-widest font-medium">
-            Powered by
+
+      {/* User footer — flush to bottom, no extra space */}
+      <div className="px-3 pb-4 pt-3 shrink-0" style={{ borderTop: "1px solid hsl(215 40% 16%)" }}>
+        {/* User chip */}
+        <div
+          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl mb-2"
+          style={{ background: "hsl(215 55% 13%)" }}
+        >
+          <div
+            className="h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
+            style={{ background: "hsl(22 95% 52%)" }}
+          >
+            {initial}
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] font-display font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
-            <Sparkles className="h-2.5 w-2.5 text-blue-500" />
-            Saffyre Intelligence Labs
+          <div className="flex-1 min-w-0">
+            <p className="text-[12px] font-semibold text-white/90 truncate">{user?.email?.split("@")[0]}</p>
+            <p className="text-[10px] capitalize" style={{ color: "hsl(22 95% 65%)" }}>{roles.join(", ")}</p>
           </div>
         </div>
+
+        {/* Sign out */}
+        <button
+          onClick={async () => { await signOut(); navigate("/auth"); }}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] text-white/40 hover:text-white/75 hover:bg-white/5 transition-all"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          Sign out
+        </button>
       </div>
     </div>
   );
-};
+}
 
-export const AdminLayout = ({ children, title }: { children: ReactNode; title?: string }) => {
+// ─── Global Search ────────────────────────────────────────────────────────────
+
+type SearchResult = { id: string; label: string; sub: string; href: string; icon: React.ElementType };
+
+function GlobalSearch() {
+  const navigate = useNavigate();
+  const [q, setQ] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const runSearch = useCallback(async (query: string) => {
+    if (query.trim().length < 2) { setResults([]); setLoading(false); return; }
+    setLoading(true);
+    const like = `%${query}%`;
+    const [parties, items, docs, expenses] = await Promise.all([
+      supabase.from("parties").select("id,name,phone,city").ilike("name", like).limit(4),
+      supabase.from("items").select("id,name,sale_price,unit").ilike("name", like).limit(4),
+      supabase.from("documents").select("id,doc_number,doc_type,total,doc_date").ilike("doc_number", like).limit(4),
+      (supabase as any).from("expenses").select("id,description,amount,category").ilike("description", like).limit(3),
+    ]);
+
+    const mapped: SearchResult[] = [
+      ...(parties.data || []).map((p: any) => ({
+        id: p.id, label: p.name,
+        sub: [p.city, p.phone].filter(Boolean).join(" · "),
+        href: "/admin/parties", icon: Users,
+      })),
+      ...(items.data || []).map((i: any) => ({
+        id: i.id, label: i.name,
+        sub: `${fmtINR(i.sale_price)} / ${i.unit || "pc"}`,
+        href: "/admin/items", icon: Package,
+      })),
+      ...(docs.data || []).map((d: any) => ({
+        id: d.id, label: d.doc_number,
+        sub: `${d.doc_type?.replace("_", " ")} · ${fmtINR(d.total)}`,
+        href: "/admin/sales", icon: FileText,
+      })),
+      ...(expenses.data || []).map((e: any) => ({
+        id: e.id, label: e.description || e.category,
+        sub: `Expense · ${fmtINR(e.amount)}`,
+        href: "/admin/expenses", icon: Receipt,
+      })),
+    ];
+    setResults(mapped);
+    setLoading(false);
+  }, []);
+
+  // Debounce
+  useEffect(() => {
+    const t = setTimeout(() => runSearch(q), 280);
+    return () => clearTimeout(t);
+  }, [q, runSearch]);
+
+  const pick = (href: string) => {
+    navigate(href);
+    setOpen(false);
+    setQ("");
+    setResults([]);
+  };
+
   return (
-    <div className="h-screen w-full bg-background relative overflow-hidden flex" style={{ zoom: 0.9 } as any}>
-      {/* Animated Glowing Background */}
-      <div className="fixed inset-0 z-0 pointer-events-none flex justify-center items-center overflow-hidden">
-        <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15], rotate: [0, 90, 0] }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }} className="absolute -top-[20%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-accent/20 blur-[120px] mix-blend-multiply dark:mix-blend-screen" />
-        <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.1, 0.2, 0.1], rotate: [0, -90, 0] }} transition={{ duration: 20, repeat: Infinity, ease: "linear", delay: 2 }} className="absolute top-[40%] -right-[10%] w-[40vw] h-[40vw] rounded-full bg-blue-500/20 blur-[120px] mix-blend-multiply dark:mix-blend-screen" />
+    <div ref={wrapRef} className="relative hidden md:block w-60">
+      {/* Input pill */}
+      <div
+        className="flex items-center gap-2 px-3.5 h-9 rounded-full border transition-all"
+        style={{
+          background: "hsl(220 22% 94%)",
+          borderColor: open ? "hsl(22 95% 52%)" : "hsl(220 18% 86%)",
+          boxShadow: open ? "var(--neu-in)" : "var(--neu-sm)",
+        }}
+      >
+        <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        <input
+          ref={inputRef}
+          value={q}
+          onChange={e => { setQ(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          placeholder="Search parties, invoices…"
+          className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
+        />
+        {q && (
+          <button onClick={() => { setQ(""); setResults([]); inputRef.current?.focus(); }}>
+            <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+          </button>
+        )}
       </div>
 
-      <div className="flex h-full w-full relative z-10">
-        <aside className="hidden lg:block w-[260px] shrink-0 h-full z-20">
-          <SidebarContent />
-        </aside>
-        <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
-          <header className="shrink-0 z-30 bg-background/50 backdrop-blur-xl border-b border-border/50 shadow-sm">
-            <div className="flex h-14 items-center gap-3 px-4 lg:px-8">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="lg:hidden"><Menu className="h-5 w-5" /></Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-[260px]"><SidebarContent /></SheetContent>
-              </Sheet>
-              <h1 className="font-display text-base font-semibold">{title}</h1>
-            </div>
-          </header>
-          <motion.main 
-            key={title}
-            initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="flex-1 overflow-y-auto p-4 lg:p-8"
+      {/* Dropdown results */}
+      <AnimatePresence>
+        {open && (q.length >= 2) && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-11 left-0 w-80 rounded-2xl overflow-hidden z-50"
+            style={{
+              background: "rgba(255,255,255,0.92)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255,255,255,0.8)",
+              boxShadow: "0 16px 48px hsl(220 30% 15% / 0.14), 0 4px 12px hsl(220 30% 15% / 0.08)",
+            }}
           >
-            {children}
-          </motion.main>
+            {loading ? (
+              <div className="px-4 py-3 text-xs text-muted-foreground animate-pulse">Searching…</div>
+            ) : results.length === 0 ? (
+              <div className="px-4 py-4 text-sm text-muted-foreground text-center">No results for "{q}"</div>
+            ) : (
+              <ul className="py-1.5 max-h-72 overflow-y-auto">
+                {results.map(r => (
+                  <li key={r.id}>
+                    <button
+                      onClick={() => pick(r.href)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-orange-50 transition-colors text-left group"
+                    >
+                      <div
+                        className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ background: "hsl(22 95% 52% / 0.12)" }}
+                      >
+                        <r.icon className="h-3.5 w-3.5" style={{ color: "hsl(22 95% 52%)" }} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-orange-600 transition-colors">{r.label}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{r.sub}</p>
+                      </div>
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── Top header ───────────────────────────────────────────────────────────────
+
+function TopHeader({ title, onMenuClick }: { title?: string; onMenuClick: () => void }) {
+  const { user } = useAuth();
+  const initial = (user?.email?.[0] ?? "A").toUpperCase();
+
+  return (
+    <header
+      className="shrink-0 z-30 flex flex-col"
+      style={{
+        background: "rgba(255,255,255,0.80)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(255,255,255,0.9)",
+        boxShadow: "0 1px 0 hsl(220 18% 86%), 0 4px 16px hsl(220 25% 15% / 0.06)",
+      }}
+    >
+      <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
+        {/* Mobile hamburger */}
+        <button
+          className="lg:hidden flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground transition-colors"
+          style={{ boxShadow: "var(--neu-sm)", background: "hsl(220 22% 94%)" }}
+          onClick={onMenuClick}
+        >
+          <Menu className="h-4.5 w-4.5" />
+        </button>
+
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 min-w-0 mr-2">
+          <Building2 className="h-4 w-4 text-muted-foreground/60 hidden sm:block shrink-0" />
+          <span className="text-xs font-semibold text-muted-foreground hidden sm:block">PHD ERP</span>
+          {title && (
+            <>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 hidden sm:block shrink-0" />
+              <h1 className="text-sm font-bold text-foreground truncate">{title}</h1>
+            </>
+          )}
+        </div>
+
+        <div className="flex-1" />
+
+        {/* Global search */}
+        <GlobalSearch />
+
+        {/* Bell */}
+        <button
+          className="relative flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground transition-colors shrink-0"
+          style={{ boxShadow: "var(--neu-sm)", background: "hsl(220 22% 94%)" }}
+        >
+          <Bell className="h-4 w-4" />
+          <span
+            className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full ring-2 ring-white"
+            style={{ background: "hsl(22 95% 52%)" }}
+          />
+        </button>
+
+        {/* User avatar */}
+        <div
+          className="h-9 w-9 rounded-xl flex items-center justify-center text-[13px] font-bold text-white shrink-0 cursor-pointer"
+          style={{
+            background: "linear-gradient(135deg, hsl(22 95% 52%), hsl(30 100% 58%))",
+            boxShadow: "0 4px 12px hsl(22 95% 52% / 0.4)",
+          }}
+        >
+          {initial}
         </div>
       </div>
+
+      {/* Orange accent underline strip */}
+      <div
+        className="h-0.5 w-full shrink-0"
+        style={{ background: "linear-gradient(90deg, hsl(22 95% 52%), hsl(30 100% 60%) 40%, transparent)" }}
+      />
+    </header>
+  );
+}
+
+// ─── Layout root ──────────────────────────────────────────────────────────────
+
+export const AdminLayout = ({ children, title }: { children: ReactNode; title?: string }) => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <div
+      className="h-screen w-full flex overflow-hidden"
+      style={{ background: "hsl(220 22% 94%)", zoom: 0.9 } as any}
+    >
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex flex-col w-[236px] shrink-0 h-full z-20" style={{ boxShadow: "2px 0 24px hsl(220 30% 15% / 0.18)" }}>
+        <Sidebar />
+      </aside>
+
+      {/* Right panel */}
+      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+        <TopHeader title={title} onMenuClick={() => setMobileOpen(true)} />
+
+        <motion.main
+          key={title}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="flex-1 overflow-y-auto p-4 lg:p-6"
+        >
+          {children}
+        </motion.main>
+      </div>
+
+      {/* Mobile drawer */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+              onClick={() => setMobileOpen(false)}
+            />
+            <motion.aside
+              key="drawer"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 340, damping: 34 }}
+              className="fixed left-0 top-0 bottom-0 z-50 w-[240px]"
+            >
+              <Sidebar onClose={() => setMobileOpen(false)} />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

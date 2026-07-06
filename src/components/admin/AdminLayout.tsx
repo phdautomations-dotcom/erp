@@ -4,7 +4,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, FileText, ShoppingCart, Wallet, Wrench,
   Boxes, Receipt, BarChart3, Inbox, Settings, UserCog, LogOut, Menu,
-  ClipboardList, Bell, Search, ChevronRight, X, Building2,
+  ClipboardList, Bell, Search, ChevronRight, X, Building2, Camera,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -112,12 +112,20 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
           className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl mb-2"
           style={{ background: "hsl(215 55% 13%)" }}
         >
-          <div
-            className="h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
-            style={{ background: "hsl(22 95% 52%)" }}
-          >
-            {initial}
-          </div>
+          {user?.user_metadata?.avatar_url ? (
+            <img
+              src={user.user_metadata.avatar_url}
+              alt="avatar"
+              className="h-8 w-8 rounded-full object-cover shrink-0"
+            />
+          ) : (
+            <div
+              className="h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
+              style={{ background: "hsl(22 95% 52%)" }}
+            >
+              {initial}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-[12px] font-semibold text-white/90 truncate">{user?.email?.split("@")[0]}</p>
             <p className="text-[10px] capitalize" style={{ color: "hsl(22 95% 65%)" }}>{roles.join(", ")}</p>
@@ -287,12 +295,357 @@ function GlobalSearch() {
   );
 }
 
+// ─── Notifications Panel ──────────────────────────────────────────────────────
+
+type Notif = { id: string; title: string; sub: string; icon: React.ElementType; href: string; time: string; };
+
+function NotificationsPanel() {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [notifs, setNotifs] = useState<Notif[]>([]);
+  const [loading, setLoading] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+
+    const [overdue, recentExp, newLeads] = await Promise.all([
+      supabase.from("documents")
+        .select("id,doc_number,total,doc_date,parties(name)")
+        .eq("doc_type", "invoice")
+        .lte("doc_date", thirtyDaysAgo)
+        .order("doc_date", { ascending: false })
+        .limit(5),
+      (supabase as any).from("expenses")
+        .select("id,description,amount,category,expense_date")
+        .gte("expense_date", sevenDaysAgo)
+        .order("expense_date", { ascending: false })
+        .limit(4),
+      (supabase as any).from("leads")
+        .select("id,name,phone,created_at")
+        .gte("created_at", sevenDaysAgo + "T00:00:00Z")
+        .order("created_at", { ascending: false })
+        .limit(3),
+    ]);
+
+    const all: Notif[] = [];
+    (overdue.data || []).forEach((d: any) => {
+      all.push({
+        id: `inv-${d.id}`,
+        title: `Invoice ${d.doc_number} overdue`,
+        sub: `${(d.parties as any)?.name || "Party"} · ${fmtINR(d.total)}`,
+        icon: FileText,
+        href: "/admin/sales",
+        time: d.doc_date,
+      });
+    });
+    (recentExp.data || []).forEach((e: any) => {
+      all.push({
+        id: `exp-${e.id}`,
+        title: e.description || e.category || "Expense",
+        sub: `Expense · ${fmtINR(e.amount)}`,
+        icon: Receipt,
+        href: "/admin/expenses",
+        time: e.expense_date || "",
+      });
+    });
+    (newLeads.data || []).forEach((l: any) => {
+      all.push({
+        id: `lead-${l.id}`,
+        title: `New lead: ${l.name}`,
+        sub: l.phone || "",
+        icon: Inbox,
+        href: "/admin/leads",
+        time: (l.created_at || "").slice(0, 10),
+      });
+    });
+
+    setNotifs(all);
+    setLoading(false);
+  }, []);
+
+  // Load on mount for badge + reload each time panel opens
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (open) load(); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const unread = notifs.length;
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="relative flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground transition-colors shrink-0"
+        style={{ boxShadow: "var(--neu-sm)", background: "hsl(220 22% 94%)" }}
+      >
+        <Bell className="h-4 w-4" />
+        {unread > 0 && (
+          <span
+            className="absolute -top-1 -right-1 h-4 w-4 rounded-full ring-2 ring-white flex items-center justify-center text-[9px] font-bold text-white"
+            style={{ background: "hsl(22 95% 52%)" }}
+          >
+            {unread > 9 ? "9+" : unread}
+          </span>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-11 w-80 rounded-2xl overflow-hidden z-50"
+            style={{
+              background: "rgba(255,255,255,0.96)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              border: "1px solid rgba(255,255,255,0.85)",
+              boxShadow: "0 16px 48px hsl(220 30% 15% / 0.14), 0 4px 12px hsl(220 30% 15% / 0.08)",
+            }}
+          >
+            {/* Header */}
+            <div
+              className="flex items-center justify-between px-4 py-3"
+              style={{ borderBottom: "1px solid hsl(220 18% 90%)" }}
+            >
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-foreground">Notifications</h3>
+                {unread > 0 && (
+                  <span
+                    className="text-[11px] font-semibold px-2 py-0.5 rounded-full text-white"
+                    style={{ background: "hsl(22 95% 52%)" }}
+                  >
+                    {unread}
+                  </span>
+                )}
+              </div>
+              {unread > 0 && (
+                <button
+                  onClick={() => setNotifs([])}
+                  className="text-[11px] text-muted-foreground hover:text-orange-600 transition-colors"
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
+
+            {loading ? (
+              <div className="px-4 py-6 text-center text-sm text-muted-foreground animate-pulse">Loading…</div>
+            ) : notifs.length === 0 ? (
+              <div className="px-4 py-8 text-center">
+                <Bell className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">All caught up!</p>
+              </div>
+            ) : (
+              <ul className="py-1 max-h-80 overflow-y-auto divide-y divide-border/40">
+                {notifs.map(n => (
+                  <li key={n.id}>
+                    <button
+                      onClick={() => { setNotifs(prev => prev.filter(x => x.id !== n.id)); navigate(n.href); setOpen(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-50 transition-colors text-left group"
+                    >
+                      <div
+                        className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0"
+                        style={{ background: "hsl(22 95% 52% / 0.12)" }}
+                      >
+                        <n.icon className="h-4 w-4" style={{ color: "hsl(22 95% 52%)" }} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-orange-600 transition-colors">{n.title}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{n.sub}</p>
+                      </div>
+                      {n.time && (
+                        <span className="text-[10px] text-muted-foreground/50 shrink-0 ml-1">{n.time}</span>
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── User Avatar Menu ─────────────────────────────────────────────────────────
+
+function UserAvatarMenu() {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(
+    user?.user_metadata?.avatar_url ?? null
+  );
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const initial = (user?.email?.[0] ?? "A").toUpperCase();
+
+  // Sync avatar URL when auth user updates (e.g. after updateUser resolves)
+  useEffect(() => {
+    if (user?.user_metadata?.avatar_url) {
+      setAvatarUrl(user.user_metadata.avatar_url);
+    }
+  }, [user?.user_metadata?.avatar_url]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploading(true);
+    setUploadError(null);
+
+    // Show image immediately from local file (works regardless of bucket settings)
+    const localUrl = URL.createObjectURL(file);
+    setAvatarUrl(localUrl);
+
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${user.id}/avatar.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    if (error) {
+      setUploadError(error.message);
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+
+    // Try public URL first; fall back to signed URL (1 year) if bucket is private
+    const { data: pubData } = supabase.storage.from("avatars").getPublicUrl(path);
+    let persistUrl = `${pubData.publicUrl}?t=${Date.now()}`;
+
+    // Test if public URL is accessible
+    try {
+      const res = await fetch(persistUrl, { method: "HEAD" });
+      if (!res.ok) {
+        // Bucket is private — get a long-lived signed URL instead
+        const { data: signed } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24 * 365);
+        if (signed?.signedUrl) persistUrl = signed.signedUrl;
+      }
+    } catch { /* network error — keep localUrl */ }
+
+    await supabase.auth.updateUser({ data: { avatar_url: persistUrl } });
+    setAvatarUrl(persistUrl);
+    setUploading(false);
+    setOpen(false);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <button onClick={() => setOpen(v => !v)} className="shrink-0 focus:outline-none">
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt="avatar"
+            className="h-9 w-9 rounded-xl object-cover"
+            style={{ boxShadow: "0 4px 12px hsl(22 95% 52% / 0.4)" }}
+          />
+        ) : (
+          <div
+            className="h-9 w-9 rounded-xl flex items-center justify-center text-[13px] font-bold text-white"
+            style={{
+              background: "linear-gradient(135deg, hsl(22 95% 52%), hsl(30 100% 58%))",
+              boxShadow: "0 4px 12px hsl(22 95% 52% / 0.4)",
+            }}
+          >
+            {initial}
+          </div>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-11 w-52 rounded-2xl overflow-hidden z-50"
+            style={{
+              background: "rgba(255,255,255,0.96)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              border: "1px solid rgba(255,255,255,0.85)",
+              boxShadow: "0 16px 48px hsl(220 30% 15% / 0.14), 0 4px 12px hsl(220 30% 15% / 0.08)",
+            }}
+          >
+            {/* User info */}
+            <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid hsl(220 18% 90%)" }}>
+              <div className="shrink-0">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="avatar" className="h-10 w-10 rounded-xl object-cover" />
+                ) : (
+                  <div
+                    className="h-10 w-10 rounded-xl flex items-center justify-center text-[14px] font-bold text-white"
+                    style={{ background: "linear-gradient(135deg, hsl(22 95% 52%), hsl(30 100% 58%))" }}
+                  >
+                    {initial}
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[12px] font-semibold text-foreground truncate">{user?.email?.split("@")[0]}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="py-1.5">
+              {uploadError && (
+                <p className="mx-4 mb-2 text-[11px] text-red-500 bg-red-50 rounded-lg px-3 py-2 leading-tight">
+                  {uploadError.includes("Bucket not found")
+                    ? "Storage bucket 'avatars' not found. Create it in Supabase → Storage."
+                    : uploadError}
+                </p>
+              )}
+              <button
+                onClick={() => { setUploadError(null); fileRef.current?.click(); }}
+                disabled={uploading}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-orange-50 transition-colors text-left text-[13px] text-foreground hover:text-orange-600 disabled:opacity-60"
+              >
+                <Camera className="h-3.5 w-3.5 shrink-0" />
+                {uploading ? "Uploading…" : "Upload photo"}
+              </button>
+              <button
+                onClick={async () => { await signOut(); navigate("/auth"); }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-red-50 transition-colors text-left text-[13px] text-red-500"
+              >
+                <LogOut className="h-3.5 w-3.5 shrink-0" />
+                Sign out
+              </button>
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // ─── Top header ───────────────────────────────────────────────────────────────
 
 function TopHeader({ title, onMenuClick }: { title?: string; onMenuClick: () => void }) {
-  const { user } = useAuth();
-  const initial = (user?.email?.[0] ?? "A").toUpperCase();
-
   return (
     <header
       className="shrink-0 z-30 flex flex-col"
@@ -331,28 +684,11 @@ function TopHeader({ title, onMenuClick }: { title?: string; onMenuClick: () => 
         {/* Global search */}
         <GlobalSearch />
 
-        {/* Bell */}
-        <button
-          className="relative flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          style={{ boxShadow: "var(--neu-sm)", background: "hsl(220 22% 94%)" }}
-        >
-          <Bell className="h-4 w-4" />
-          <span
-            className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full ring-2 ring-white"
-            style={{ background: "hsl(22 95% 52%)" }}
-          />
-        </button>
+        {/* Notifications bell */}
+        <NotificationsPanel />
 
-        {/* User avatar */}
-        <div
-          className="h-9 w-9 rounded-xl flex items-center justify-center text-[13px] font-bold text-white shrink-0 cursor-pointer"
-          style={{
-            background: "linear-gradient(135deg, hsl(22 95% 52%), hsl(30 100% 58%))",
-            boxShadow: "0 4px 12px hsl(22 95% 52% / 0.4)",
-          }}
-        >
-          {initial}
-        </div>
+        {/* User avatar + menu */}
+        <UserAvatarMenu />
       </div>
 
       {/* Orange accent underline strip */}

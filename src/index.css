@@ -142,3 +142,27 @@
     50% { transform: translateY(-10px); }
   }
 }
+
+/* ── Public site: clean corporate theme (scoped, does not affect the app) ── */
+.site-corporate {
+  --background: 0 0% 100%;
+  --foreground: 215 35% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 35% 14%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 35% 14%;
+  --primary: 215 65% 18%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 215 25% 96%;
+  --secondary-foreground: 215 35% 20%;
+  --muted: 215 25% 96%;
+  --muted-foreground: 215 14% 46%;
+  --accent: 212 90% 40%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 215 20% 89%;
+  --input: 215 20% 89%;
+  --ring: 212 90% 40%;
+  --radius: 0.5rem;
+}

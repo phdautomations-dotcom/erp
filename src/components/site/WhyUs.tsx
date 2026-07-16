@@ -10,29 +10,28 @@ const items = [
 
 export const WhyUs = () => {
   return (
-    <section id="why" className="relative py-24 sm:py-32 bg-secondary/40">
+    <section id="why" className="py-20 sm:py-28 bg-secondary/50 border-y border-border">
       <div className="container">
         <div className="max-w-2xl">
-          <p className="text-xs uppercase tracking-[0.2em] text-accent font-medium">Why PHD</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-accent font-semibold">Why PHD</p>
           <h2 className="mt-3 font-display text-3xl sm:text-4xl font-semibold tracking-tight">
             Engineered for uptime, priced for partnership.
           </h2>
         </div>
 
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid gap-px sm:grid-cols-2 lg:grid-cols-4 border border-border bg-border">
           {items.map((i, idx) => (
             <motion.div
               key={i.t}
-              initial={{ opacity: 0, y: 18 }}
+              initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: idx * 0.06 }}
-              className="group relative rounded-3xl border border-border/60 bg-card/50 backdrop-blur-sm p-8 transition-all duration-500 hover:-translate-y-2 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/10 overflow-hidden"
+              transition={{ duration: 0.4, delay: idx * 0.05 }}
+              className="bg-background p-7"
             >
-              <div className="absolute -inset-px rounded-3xl bg-gradient-to-b from-accent/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <CheckCircle2 className="relative z-10 h-8 w-8 text-accent group-hover:scale-110 transition-transform duration-300" />
-              <h3 className="relative z-10 mt-5 font-display text-xl font-semibold tracking-tight">{i.t}</h3>
-              <p className="relative z-10 mt-3 text-sm text-muted-foreground leading-relaxed">{i.d}</p>
+              <CheckCircle2 className="h-6 w-6 text-accent" />
+              <h3 className="mt-5 font-display text-lg font-semibold tracking-tight">{i.t}</h3>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{i.d}</p>
             </motion.div>
           ))}
         </div>

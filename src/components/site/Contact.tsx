@@ -64,11 +64,11 @@ export const Contact = () => {
   };
 
   return (
-    <section id="contact" className="relative py-24 sm:py-32">
+    <section id="contact" className="py-20 sm:py-28 bg-background">
       <div className="container">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-accent font-medium">Contact</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-accent font-semibold">Contact</p>
             <h2 className="mt-3 font-display text-3xl sm:text-4xl font-semibold tracking-tight">
               Tell us about your machine. We'll take it from there.
             </h2>
@@ -78,36 +78,36 @@ export const Contact = () => {
             </p>
 
             <div className="mt-10 space-y-5">
-              <a href="tel:+919999502399" className="flex items-start gap-4 group hover:-translate-y-1 transition-transform duration-300">
-                <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary group-hover:bg-accent group-hover:text-accent-foreground transition-all duration-300 shadow-sm group-hover:shadow-accent/20">
-                  <Phone className="h-5 w-5" />
+              <a href="tel:+919999502399" className="flex items-start gap-4">
+                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border bg-secondary text-primary">
+                  <Phone className="h-4.5 w-4.5" />
                 </span>
                 <div>
                   <div className="text-sm text-muted-foreground">Call us</div>
                   <div className="font-medium">+91 9999502399</div>
                 </div>
               </a>
-              <a href="https://wa.me/919999502399" className="flex items-start gap-4 group hover:-translate-y-1 transition-transform duration-300" target="_blank" rel="noreferrer">
-                <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary group-hover:bg-[#25D366] group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-[#25D366]/20">
-                  <MessageCircle className="h-5 w-5" />
+              <a href="https://wa.me/919999502399" className="flex items-start gap-4" target="_blank" rel="noreferrer">
+                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border bg-secondary text-primary">
+                  <MessageCircle className="h-4.5 w-4.5" />
                 </span>
                 <div>
                   <div className="text-sm text-muted-foreground">WhatsApp</div>
                   <div className="font-medium">Chat with our team</div>
                 </div>
               </a>
-              <a href="mailto:contact@phdautomations.in" className="flex items-start gap-4 group hover:-translate-y-1 transition-transform duration-300">
-                <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary group-hover:bg-accent group-hover:text-accent-foreground transition-all duration-300 shadow-sm group-hover:shadow-accent/20">
-                  <Mail className="h-5 w-5" />
+              <a href="mailto:contact@phdautomations.in" className="flex items-start gap-4">
+                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border bg-secondary text-primary">
+                  <Mail className="h-4.5 w-4.5" />
                 </span>
                 <div>
                   <div className="text-sm text-muted-foreground">Email</div>
                   <div className="font-medium">contact@phdautomations.in</div>
                 </div>
               </a>
-              <div className="flex items-start gap-4 group hover:-translate-y-1 transition-transform duration-300">
-                <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary group-hover:bg-accent group-hover:text-accent-foreground transition-all duration-300 shadow-sm group-hover:shadow-accent/20">
-                  <MapPin className="h-5 w-5" />
+              <div className="flex items-start gap-4">
+                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border bg-secondary text-primary">
+                  <MapPin className="h-4.5 w-4.5" />
                 </span>
                 <div>
                   <div className="text-sm text-muted-foreground">Address</div>
@@ -119,30 +119,30 @@ export const Contact = () => {
 
           <motion.form
             onSubmit={onSubmit}
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="relative rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-card-elev ring-gradient"
+            transition={{ duration: 0.5 }}
+            className="rounded-lg border border-border bg-background p-6 sm:p-8"
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="name">Full name *</Label>
-                <Input id="name" value={form.name} onChange={handleChange("name")} className="mt-1.5 bg-background/50 focus-visible:ring-accent/30 focus-visible:border-accent transition-all duration-300" />
+                <Input id="name" value={form.name} onChange={handleChange("name")} className="mt-1.5 rounded-md" />
                 {errors.name && <p className="mt-1 text-xs text-destructive">{errors.name}</p>}
               </div>
               <div>
                 <Label htmlFor="company">Company</Label>
-                <Input id="company" value={form.company} onChange={handleChange("company")} className="mt-1.5 bg-background/50 focus-visible:ring-accent/30 focus-visible:border-accent transition-all duration-300" />
+                <Input id="company" value={form.company} onChange={handleChange("company")} className="mt-1.5 rounded-md" />
               </div>
               <div>
                 <Label htmlFor="phone">Phone *</Label>
-                <Input id="phone" value={form.phone} onChange={handleChange("phone")} className="mt-1.5 bg-background/50 focus-visible:ring-accent/30 focus-visible:border-accent transition-all duration-300" />
+                <Input id="phone" value={form.phone} onChange={handleChange("phone")} className="mt-1.5 rounded-md" />
                 {errors.phone && <p className="mt-1 text-xs text-destructive">{errors.phone}</p>}
               </div>
               <div>
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={form.email} onChange={handleChange("email")} className="mt-1.5 bg-background/50 focus-visible:ring-accent/30 focus-visible:border-accent transition-all duration-300" />
+                <Input id="email" type="email" value={form.email} onChange={handleChange("email")} className="mt-1.5 rounded-md" />
                 {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email}</p>}
               </div>
               <div className="sm:col-span-2">
@@ -152,7 +152,7 @@ export const Contact = () => {
                   placeholder="e.g. CNC Lathe, VMC, HMC, brand & model"
                   value={form.machine_type}
                   onChange={handleChange("machine_type")}
-                  className="mt-1.5 bg-background/50 focus-visible:ring-accent/30 focus-visible:border-accent transition-all duration-300"
+                  className="mt-1.5 rounded-md"
                 />
               </div>
               <div className="sm:col-span-2">
@@ -163,7 +163,7 @@ export const Contact = () => {
                   placeholder="Describe the issue or service required"
                   value={form.message}
                   onChange={handleChange("message")}
-                  className="mt-1.5 bg-background/50 focus-visible:ring-accent/30 focus-visible:border-accent transition-all duration-300 resize-none"
+                  className="mt-1.5 rounded-md resize-none"
                 />
               </div>
             </div>
@@ -172,7 +172,7 @@ export const Contact = () => {
               type="submit"
               disabled={loading}
               size="lg"
-              className="mt-6 w-full rounded-full bg-foreground text-background hover:bg-foreground/90"
+              className="mt-6 w-full rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Inquiry"}
             </Button>

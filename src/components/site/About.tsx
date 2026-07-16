@@ -17,7 +17,7 @@ const Counter = ({ to, suffix }: { to: number; suffix: string }) => {
 
   useEffect(() => {
     if (!inView) return;
-    const duration = 1400;
+    const duration = 1200;
     const start = performance.now();
     let raf = 0;
     const tick = (t: number) => {
@@ -31,7 +31,7 @@ const Counter = ({ to, suffix }: { to: number; suffix: string }) => {
   }, [inView, to]);
 
   return (
-    <span ref={ref} className="font-display text-4xl sm:text-5xl font-semibold tracking-tight">
+    <span ref={ref} className="font-display text-4xl sm:text-5xl font-semibold tracking-tight text-primary">
       {val}
       {suffix}
     </span>
@@ -40,11 +40,11 @@ const Counter = ({ to, suffix }: { to: number; suffix: string }) => {
 
 export const About = () => {
   return (
-    <section id="about" className="relative py-24 sm:py-32">
+    <section id="about" className="py-20 sm:py-28 bg-background">
       <div className="container">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-accent font-medium">About</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-accent font-semibold">About</p>
             <h2 className="mt-3 font-display text-3xl sm:text-4xl font-semibold tracking-tight">
               Built by engineers, trusted by manufacturers.
             </h2>
@@ -59,7 +59,7 @@ export const About = () => {
               {industries.map((i) => (
                 <span
                   key={i}
-                  className="rounded-full border border-border/60 bg-card/40 backdrop-blur px-4 py-2 text-xs font-medium text-muted-foreground transition-all duration-300 hover:bg-accent hover:text-accent-foreground hover:border-accent cursor-default hover:-translate-y-0.5 hover:shadow-md"
+                  className="rounded-md border border-border bg-secondary px-3.5 py-1.5 text-xs font-medium text-foreground/80"
                 >
                   {i}
                 </span>
@@ -68,14 +68,14 @@ export const About = () => {
           </div>
 
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-            className="grid grid-cols-2 gap-px rounded-3xl overflow-hidden border border-border bg-border shadow-card-elev"
+            transition={{ duration: 0.5 }}
+            className="grid grid-cols-2 gap-px rounded-lg overflow-hidden border border-border bg-border"
           >
             {stats.map((s) => (
-              <div key={s.l} className="bg-card p-8">
+              <div key={s.l} className="bg-background p-8">
                 <Counter to={s.v} suffix={s.suffix} />
                 <p className="mt-2 text-sm text-muted-foreground">{s.l}</p>
               </div>

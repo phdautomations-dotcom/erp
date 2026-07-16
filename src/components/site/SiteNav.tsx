@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -27,15 +27,21 @@ export const SiteNav = () => {
   return (
     <header
       className={cn(
-        "fixed top-0 inset-x-0 z-50 transition-all duration-500",
-        scrolled
-          ? "backdrop-blur-xl bg-background/70 border-b border-border/60"
-          : "bg-transparent",
+        "fixed top-0 inset-x-0 z-50 bg-background transition-shadow duration-300",
+        scrolled ? "border-b border-border shadow-sm" : "border-b border-transparent",
       )}
     >
+      <div className="hidden md:flex items-center justify-end gap-6 border-b border-border/70 bg-primary px-6 py-1.5 text-xs text-primary-foreground/90">
+        <a href="tel:+919999502399" className="flex items-center gap-1.5 hover:text-primary-foreground">
+          <Phone className="h-3 w-3" /> +91 99995 02399
+        </a>
+        <span className="opacity-40">|</span>
+        <a href="mailto:contact@phdautomations.in" className="hover:text-primary-foreground">contact@phdautomations.in</a>
+      </div>
+
       <nav className="container flex h-16 items-center justify-between">
-        <a href="#top" className="flex items-center gap-2 group">
-          <img src={logo} alt="PHD Automations" className="h-9 md:h-11 w-auto object-contain" />
+        <a href="#top" className="flex items-center gap-2">
+          <img src={logo} alt="PHD Automations" className="h-9 md:h-10 w-auto object-contain" />
         </a>
 
         <div className="hidden md:flex items-center gap-8">
@@ -43,7 +49,7 @@ export const SiteNav = () => {
             <a
               key={l.href}
               href={l.href}
-              className="relative text-sm text-muted-foreground hover:text-foreground transition-colors after:absolute after:left-0 after:-bottom-1 after:h-px after:w-0 after:bg-accent after:transition-all hover:after:w-full"
+              className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
             >
               {l.label}
             </a>
@@ -52,15 +58,15 @@ export const SiteNav = () => {
 
         <div className="hidden md:flex items-center gap-3">
           <a href="#contact">
-            <Button variant="default" size="sm" className="bg-foreground text-background hover:bg-foreground/90 rounded-full px-5">
-              Get Quote
+            <Button className="rounded-md bg-primary text-primary-foreground hover:bg-primary/90 px-5">
+              Get a Quote
             </Button>
           </a>
         </div>
 
         <button
           onClick={() => setOpen((v) => !v)}
-          className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border"
+          className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-md border border-border"
           aria-label="Toggle menu"
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -68,16 +74,16 @@ export const SiteNav = () => {
       </nav>
 
       {open && (
-        <div className="md:hidden border-t border-border/60 bg-background/95 backdrop-blur">
-          <div className="container py-4 flex flex-col gap-3">
+        <div className="md:hidden border-t border-border bg-background">
+          <div className="container py-4 flex flex-col gap-1">
             {links.map((l) => (
-              <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="py-2 text-sm">
+              <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="py-2.5 text-sm font-medium border-b border-border/60 last:border-0">
                 {l.label}
               </a>
             ))}
-            <a href="#contact" onClick={() => setOpen(false)}>
-              <Button className="w-full bg-foreground text-background hover:bg-foreground/90 rounded-full">
-                Get Quote
+            <a href="#contact" onClick={() => setOpen(false)} className="mt-3">
+              <Button className="w-full rounded-md bg-primary text-primary-foreground hover:bg-primary/90">
+                Get a Quote
               </Button>
             </a>
           </div>

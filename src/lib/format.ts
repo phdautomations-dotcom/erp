@@ -25,6 +25,38 @@ export const todayFY = (d = new Date()) => {
   return `${start}-${end}`;
 };
 
+export const DOC_TYPE_CODE: Record<string, string> = {
+  invoice: "INV", quotation: "QTN", proforma: "PRO",
+  challan: "CHL", purchase_bill: "PB", purchase_order: "PO",
+};
+
+// "2026-27" -> "2627", kept short so doc numbers stay within the GST
+// e-invoice 16-character limit (e.g. PHDINV-2627-0217).
+const compactFY = (fy: string) => fy.slice(2, 4) + fy.slice(-2);
+
+export const docNumberPrefix = (docType: string, fy: string) =>
+  `PHD${DOC_TYPE_CODE[docType] || "DOC"}-${compactFY(fy)}-`;
+
+// Read-only preview of the next number for display while a create form is
+// open. Does NOT reserve/consume it, so abandoning the draft doesn't skip
+// a number. The authoritative number is only assigned by reserveDocNumber.
+export const peekNextDocNumber = async (supabase: any, docType: string, fy: string): Promise<string> => {
+  const pfx = docNumberPrefix(docType, fy);
+  const { data: ns } = await supabase.from("number_series").select("next_number").eq("doc_type", docType).eq("fy", fy).maybeSingle();
+  const nextNum = ns?.next_number || 1;
+  return `${pfx}${String(nextNum).padStart(4, "0")}`;
+};
+
+// Atomically reserves and returns the next document number via the
+// reserve_doc_number() DB function (row-locked update), so two people
+// saving a document at the same instant can never receive the same number.
+export const reserveDocNumber = async (supabase: any, docType: string, fy: string): Promise<string> => {
+  const pfx = docNumberPrefix(docType, fy);
+  const { data, error } = await supabase.rpc("reserve_doc_number", { p_doc_type: docType, p_fy: fy, p_prefix: pfx });
+  if (error) throw error;
+  return data as string;
+};
+
 export const numberToWords = (num: number): string => {
   if (num === 0) return "Zero Rupees Only";
   const a = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",

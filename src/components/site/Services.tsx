@@ -12,10 +12,10 @@ const services = [
 
 export const Services = () => {
   return (
-    <section id="services" className="relative py-24 sm:py-32">
+    <section id="services" className="py-20 sm:py-28 bg-background">
       <div className="container">
         <div className="max-w-2xl">
-          <p className="text-xs uppercase tracking-[0.2em] text-accent font-medium">Services</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-accent font-semibold">Services</p>
           <h2 className="mt-3 font-display text-3xl sm:text-4xl font-semibold tracking-tight">
             Everything your shopfloor needs — under one roof.
           </h2>
@@ -25,23 +25,21 @@ export const Services = () => {
           </p>
         </div>
 
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid gap-px sm:grid-cols-2 lg:grid-cols-3 border border-border bg-border">
           {services.map((s, i) => (
             <motion.article
               key={s.title}
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.6, delay: i * 0.05 }}
-              whileHover={{ y: -8 }}
-              className="group relative rounded-3xl border border-border/60 bg-card/40 backdrop-blur-sm p-8 transition-all duration-500 hover:border-accent/50 hover:shadow-2xl hover:shadow-accent/10 overflow-hidden cursor-pointer"
+              transition={{ duration: 0.4, delay: i * 0.04 }}
+              className="group bg-background p-8 transition-colors hover:bg-secondary/60"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary text-foreground group-hover:bg-accent group-hover:text-accent-foreground group-hover:scale-110 transition-all duration-300 shadow-sm">
-                <s.icon className="h-6 w-6" />
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-border bg-secondary text-primary group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-colors">
+                <s.icon className="h-5 w-5" />
               </div>
-              <h3 className="relative z-10 mt-6 font-display text-xl font-semibold tracking-tight group-hover:text-accent transition-colors">{s.title}</h3>
-              <p className="relative z-10 mt-3 text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+              <h3 className="mt-6 font-display text-lg font-semibold tracking-tight">{s.title}</h3>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
             </motion.article>
           ))}
         </div>

@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
 const parts = [
   "Spindles & Cartridges",
@@ -14,11 +15,11 @@ const parts = [
 
 export const SpareParts = () => {
   return (
-    <section id="parts" className="relative py-24 sm:py-32 bg-secondary/40">
+    <section id="parts" className="py-20 sm:py-28 bg-secondary/50 border-y border-border">
       <div className="container">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 max-w-5xl">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-accent font-medium">Spare Parts</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-accent font-semibold">Spare Parts</p>
             <h2 className="mt-3 font-display text-3xl sm:text-4xl font-semibold tracking-tight">
               OEM-grade spares for every critical assembly.
             </h2>
@@ -29,20 +30,19 @@ export const SpareParts = () => {
           </p>
         </div>
 
-        <div className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid gap-px sm:grid-cols-2 lg:grid-cols-3 border border-border bg-border">
           {parts.map((p, i) => (
             <motion.div
               key={p}
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.5, delay: i * 0.04 }}
-              className="group relative rounded-2xl border border-border/60 bg-card/40 backdrop-blur-sm p-5 flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:border-accent/50 hover:shadow-lg hover:shadow-accent/10 overflow-hidden cursor-pointer"
+              transition={{ duration: 0.4, delay: i * 0.03 }}
+              className="group bg-background p-5 flex items-center justify-between transition-colors hover:bg-secondary/60"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
-              <span className="relative z-10 font-medium group-hover:text-foreground transition-colors">{p}</span>
-              <span className="relative z-10 text-xs font-semibold text-muted-foreground group-hover:text-accent transition-colors flex items-center gap-1 group-hover:translate-x-1">
-                Enquire →
+              <span className="font-medium text-sm">{p}</span>
+              <span className="text-xs font-semibold text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                Enquire <ArrowRight className="h-3 w-3" />
               </span>
             </motion.div>
           ))}

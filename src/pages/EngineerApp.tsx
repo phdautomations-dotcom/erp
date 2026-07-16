@@ -15,17 +15,12 @@ import {
   Plus, Edit2, ShoppingCart, Receipt, BarChart3, TrendingUp, Search, X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { fmtINR, fmtDate, calcLineTax, todayFY } from "@/lib/format";
+import { fmtINR, fmtDate, calcLineTax, todayFY, peekNextDocNumber, reserveDocNumber } from "@/lib/format";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions, type PermModule } from "@/hooks/usePermissions";
 import logo from "@/assets/logo.png";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const DOC_PREFIX: Record<string, string> = {
-  invoice: "PHD/INV", quotation: "PHD/QTN", proforma: "PHD/PRO",
-  challan: "PHD/CHL", purchase_bill: "PHD/PB", purchase_order: "PHD/PO",
-};
 
 const DOC_MODULE: Record<string, PermModule> = {
   invoice: "invoice", quotation: "quotation", proforma: "proforma",
@@ -272,6 +267,7 @@ export default function EngineerApp() {
   const [docSheet, setDocSheet] = useState(false);
   const [editingDoc, setEditingDoc] = useState<any>(null);
   const [activeDocType, setActiveDocType] = useState("invoice");
+  const [previewDocNumber, setPreviewDocNumber] = useState("");
   const [docForm, setDocForm] = useState<any>({
     party_id: "", doc_date: new Date().toISOString().slice(0, 10), notes: "", status: "draft",
   });
@@ -585,12 +581,15 @@ export default function EngineerApp() {
     setEditingDoc(null); setActiveDocType(type);
     setDocForm({ party_id: "", doc_date: new Date().toISOString().slice(0, 10), notes: "", status: "draft" });
     setDocLines([newLine()]); setDocSheet(true);
+    setPreviewDocNumber("…");
+    peekNextDocNumber(supabase, type, todayFY()).then(setPreviewDocNumber).catch(() => setPreviewDocNumber(""));
   };
 
   const openEditDoc = async (doc: any) => {
     if (!hasPerm(DOC_MODULE[doc.doc_type], "can_view")) return toast.error("No permission to view this document.");
     setEditingDoc(doc); setActiveDocType(doc.doc_type);
     setDocForm({ party_id: doc.party_id || "", doc_date: doc.doc_date, notes: doc.notes || "", status: doc.status });
+    setPreviewDocNumber(doc.doc_number || "");
     const { data: lines } = await supabase.from("document_lines").select("*").eq("document_id", doc.id).order("position");
     setDocLines(lines?.length ? lines : [newLine()]);
     setDocSheet(true);
@@ -618,9 +617,7 @@ export default function EngineerApp() {
         await supabase.from("document_lines").delete().eq("document_id", docId);
       } else {
         const fy = todayFY();
-        const prefix = DOC_PREFIX[activeDocType] || "PHD/DOC";
-        const { count } = await supabase.from("documents").select("*", { count: "exact", head: true }).eq("doc_type", activeDocType);
-        docNumber = `${prefix}/${fy}/${String((count || 0) + 1).padStart(4, "0")}`;
+        docNumber = await reserveDocNumber(supabase, activeDocType, fy);
         const { data: saved, error } = await supabase.from("documents").insert({ ...payload, doc_number: docNumber }).select().single();
         if (error) throw error;
         docId = saved.id;
@@ -1556,6 +1553,11 @@ export default function EngineerApp() {
               <FileText className="h-5 w-5 text-accent" />
               {editingDoc ? `Edit ${DOC_LABEL[activeDocType]}` : `New ${DOC_LABEL[activeDocType]}`}
             </SheetTitle>
+            {previewDocNumber && (
+              <p className="text-xs text-muted-foreground font-mono">
+                {previewDocNumber}{!editingDoc && <span className="text-muted-foreground/70"> · confirmed on save</span>}
+              </p>
+            )}
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">

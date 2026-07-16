@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { fmtINR, calcLineTax, todayFY } from "@/lib/format";
+import { fmtINR, calcLineTax, todayFY, reserveDocNumber } from "@/lib/format";
 import { generateDocPDF } from "@/lib/pdf";
 import { toast } from "sonner";
 
@@ -84,40 +84,7 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
     if (!isEdit) {
       const fetchNextNum = async () => {
         const fy = todayFY(new Date(doc.doc_date || new Date()));
-        let pfx = "";
-        if (docType === "invoice") pfx = `PHD/INV/${fy}/`;
-        else if (docType === "quotation") pfx = `PHD/QTN/${fy}/`;
-        else if (docType === "proforma") pfx = `PHD/PRO/${fy}/`;
-        else if (docType === "challan") pfx = `PHD/CHL/${fy}/`;
-        else if (docType === "purchase_bill") pfx = `PHD/PB/${fy}/`;
-        else if (docType === "purchase_order") pfx = `PHD/PO/${fy}/`;
-
-        const { data: ns } = await supabase.from("number_series").select("prefix, next_number").eq("doc_type", docType as "invoice").eq("fy", fy).maybeSingle();
-        let nextNum = ns?.next_number || 1;
-        if (ns?.prefix) pfx = ns.prefix;
-
-        // Auto-heal if actual documents have higher numbers (e.g. user manually bypassed the sequence)
-        const { data: docs } = await supabase.from("documents").select("doc_number").ilike("doc_number", `${pfx}%`).order("created_at", { ascending: false }).limit(1000);
-
-        if (docs && docs.length > 0) {
-          let maxParsed = 0;
-          for (const d of docs) {
-            if (!d.doc_number) continue;
-            const parts = d.doc_number.split("/");
-            const parsed = parseInt(parts[parts.length - 1], 10);
-            if (!isNaN(parsed) && parsed > maxParsed) maxParsed = parsed;
-          }
-          if (maxParsed >= nextNum) nextNum = maxParsed + 1;
-        }
-
-        if (ns && ns.next_number !== nextNum) {
-          await supabase.from("number_series").update({ next_number: nextNum }).eq("doc_type", docType as "invoice").eq("fy", fy);
-        } else if (!ns) {
-          await supabase.from("number_series").insert({ doc_type: docType as "invoice", fy, prefix: pfx, next_number: nextNum });
-        }
-
-        const nextNumStr = `${pfx}${String(nextNum).padStart(4, "0")}`;
-
+        const nextNumStr = await reserveDocNumber(supabase, docType, fy);
         setDoc((d: any) => {
           return { ...d, doc_number: nextNumStr };
         });
@@ -261,7 +228,7 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
               </Select>
             </div>
             <div><Label>Date</Label><Input type="date" value={doc.doc_date} onChange={e => setDoc({ ...doc, doc_date: e.target.value })} /></div>
-            <div><Label>Document Number *</Label><Input type="text" value={doc.doc_number || ""} onChange={e => setDoc({ ...doc, doc_number: e.target.value })} placeholder="e.g., PHD/INV/2026-27/0178" /></div>
+            <div><Label>Document Number *</Label><Input type="text" value={doc.doc_number || ""} onChange={e => setDoc({ ...doc, doc_number: e.target.value })} placeholder="e.g., PHDINV-2627-0178" /></div>
             <div><Label>Due date</Label><Input type="date" value={doc.due_date || ""} onChange={e => setDoc({ ...doc, due_date: e.target.value })} /></div>
             <div className="sm:col-span-2"><Label>Party *</Label>
               <Select value={doc.party_id || ""} onValueChange={v => setDoc({ ...doc, party_id: v })}>

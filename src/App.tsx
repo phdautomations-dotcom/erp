@@ -18,6 +18,7 @@ import DocForm from "./pages/admin/DocForm";
 import Payments from "./pages/admin/Payments";
 import Inventory from "./pages/admin/Inventory";
 import Expenses from "./pages/admin/Expenses";
+import CashLedger from "./pages/admin/CashLedger";
 import Reports from "./pages/admin/Reports";
 import Attendance from "./pages/admin/Attendance";
 import Leads from "./pages/admin/Leads";
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="/admin/payments" element={<Payments />} />
               <Route path="/admin/inventory" element={<Inventory />} />
               <Route path="/admin/expenses" element={<Expenses />} />
+              <Route path="/admin/cash-ledger" element={<CashLedger />} />
               <Route path="/admin/reports" element={<Reports />} />
                   <Route path="/admin/attendance" element={<Attendance />} />
               <Route path="/admin/leads" element={<Leads />} />

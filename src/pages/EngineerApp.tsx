@@ -12,11 +12,13 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import {
   MapPin, Phone, Wrench, CheckCircle, ArrowLeft, PenTool, LogOut, Calendar,
   FileText, WifiOff, RefreshCw, Map, Sparkles, Trash2, Clock, CalendarCheck2,
-  Plus, Edit2, ShoppingCart, Receipt, BarChart3, TrendingUp, Search, X,
+  Plus, Edit2, ShoppingCart, Receipt, BarChart3, TrendingUp, Search, X, Banknote, Camera,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fmtINR, fmtDate, calcLineTax, todayFY, peekNextDocNumber, reserveDocNumber } from "@/lib/format";
 import { useAuth } from "@/hooks/useAuth";
+import { useAvatarUpload } from "@/hooks/useAvatarUpload";
+import { AvatarCropDialog } from "@/components/AvatarCropDialog";
 import { usePermissions, type PermModule } from "@/hooks/usePermissions";
 import logo from "@/assets/logo.png";
 
@@ -263,6 +265,31 @@ export default function EngineerApp() {
   const [myExpenses, setMyExpenses] = useState<any[]>([]);
   const [bizLoading, setBizLoading] = useState(true);
 
+  // ── Cash ledger (shared, independent of revenue/reports) ──
+  const [cashRows, setCashRows] = useState<any[]>([]);
+  const [cashProfiles, setCashProfiles] = useState<Record<string, string>>({});
+  const [cashSheet, setCashSheet] = useState(false);
+  const [cashForm, setCashForm] = useState<any>({ entry_date: new Date().toISOString().slice(0, 10), type: "in", amount: 0, description: "" });
+
+  const loadCashLedger = async () => {
+    const { data } = await supabase.from("cash_ledger" as any).select("*").order("entry_date", { ascending: true }).order("created_at", { ascending: true });
+    setCashRows((data as any[]) || []);
+    const { data: profs } = await supabase.from("profiles").select("user_id, display_name");
+    setCashProfiles(Object.fromEntries((profs || []).map((p: any) => [p.user_id, p.display_name || "Unnamed"])));
+  };
+
+  const saveCashEntry = async () => {
+    if (!cashForm.amount || +cashForm.amount <= 0) return toast.error("Enter a valid amount");
+    const { error } = await supabase.from("cash_ledger" as any).insert({
+      entry_date: cashForm.entry_date, type: cashForm.type, amount: +cashForm.amount,
+      description: cashForm.description || null, created_by: user?.id,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Saved"); setCashSheet(false);
+    setCashForm({ entry_date: new Date().toISOString().slice(0, 10), type: "in", amount: 0, description: "" });
+    loadCashLedger();
+  };
+
   // ── Document sheet state (new) ──
   const [docSheet, setDocSheet] = useState(false);
   const [editingDoc, setEditingDoc] = useState<any>(null);
@@ -315,6 +342,13 @@ export default function EngineerApp() {
   const [expTo, setExpTo] = useState("");
 
   const { user, signOut, hasRole, roles } = useAuth();
+  const { avatarUrl, pendingImage, cropOpen, uploading: avatarUploading, selectFile: selectAvatarFile, cancelCrop: cancelAvatarCrop, confirmCrop: confirmAvatarCrop } = useAvatarUpload();
+  const avatarFileRef = useRef<HTMLInputElement>(null);
+  const handleAvatarFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) selectAvatarFile(file);
+    if (avatarFileRef.current) avatarFileRef.current.value = "";
+  };
   const { hasPerm, canViewAll, salesPerm, purchasePerm, expensesPerm, reportsPerm, loading: permLoading } = usePermissions();
   const nav = useNavigate();
 
@@ -473,7 +507,7 @@ export default function EngineerApp() {
     document.title = "Engineer Workspace | PHD ERP";
     loadPendingVisits();
     loadServices();
-    if (user) { loadAttendance(); loadHistory(); }
+    if (user) { loadAttendance(); loadHistory(); loadCashLedger(); }
   }, [user, roles, nav]);
 
   // Load business data only AFTER permissions are ready so canViewAll() returns correct values
@@ -899,9 +933,25 @@ export default function EngineerApp() {
         <div className="relative z-10 max-w-6xl mx-auto">
           <img src={logo} alt="PHD Automations" className="h-8 md:h-12 w-auto mb-6 md:mb-10 brightness-0 invert opacity-90 hover:opacity-100 transition-opacity" />
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <p className="text-background/60 text-sm md:text-base font-medium mb-1">Welcome back,</p>
-              <h1 className="font-display font-bold text-3xl md:text-4xl lg:text-5xl truncate max-w-[200px] sm:max-w-md lg:max-w-2xl">{user?.email?.split("@")[0]}</h1>
+            <div className="flex items-center gap-4">
+              <button onClick={() => avatarFileRef.current?.click()} className="relative shrink-0 group" title="Change photo">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="avatar" className="h-16 w-16 md:h-20 md:w-20 rounded-full object-cover ring-2 ring-background/20" />
+                ) : (
+                  <div className="h-16 w-16 md:h-20 md:w-20 rounded-full flex items-center justify-center text-2xl font-bold text-white ring-2 ring-background/20"
+                    style={{ background: "linear-gradient(135deg, hsl(22 95% 52%), hsl(30 100% 58%))" }}>
+                    {(user?.email?.[0] ?? "E").toUpperCase()}
+                  </div>
+                )}
+                <span className="absolute bottom-0 right-0 h-6 w-6 md:h-7 md:w-7 rounded-full bg-accent text-accent-foreground flex items-center justify-center ring-2 ring-foreground group-hover:scale-110 transition-transform">
+                  <Camera className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                </span>
+                <input ref={avatarFileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFilePick} />
+              </button>
+              <div>
+                <p className="text-background/60 text-sm md:text-base font-medium mb-1">Welcome back,</p>
+                <h1 className="font-display font-bold text-3xl md:text-4xl lg:text-5xl truncate max-w-[200px] sm:max-w-md lg:max-w-2xl">{user?.email?.split("@")[0]}</h1>
+              </div>
             </div>
             <Button variant="ghost" size="icon" onClick={handleLogout} className="rounded-full h-12 w-12 md:h-14 md:w-14 bg-background/10 hover:bg-background/20 text-background shrink-0 transition-colors">
               <LogOut className="h-5 w-5 md:h-6 md:w-6" />
@@ -919,6 +969,7 @@ export default function EngineerApp() {
             {purchasePerm && <TabsTrigger value="purchases" className="rounded-full text-xs md:text-sm px-4 h-full whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all flex items-center gap-1.5"><ShoppingCart className="h-3.5 w-3.5" />Purchases</TabsTrigger>}
             {expensesPerm && <TabsTrigger value="expenses"  className="rounded-full text-xs md:text-sm px-4 h-full whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all flex items-center gap-1.5"><Receipt className="h-3.5 w-3.5" />Expenses</TabsTrigger>}
             {reportsPerm  && <TabsTrigger value="reports"   className="rounded-full text-xs md:text-sm px-4 h-full whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all flex items-center gap-1.5"><BarChart3 className="h-3.5 w-3.5" />Reports</TabsTrigger>}
+            <TabsTrigger value="cashledger" className="rounded-full text-xs md:text-sm px-4 h-full whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all flex items-center gap-1.5"><Banknote className="h-3.5 w-3.5" />Cash Ledger</TabsTrigger>
             <TabsTrigger value="calendar"  className="rounded-full text-xs md:text-sm px-4 h-full whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all">My Calendar</TabsTrigger>
             <TabsTrigger value="leave"     className="rounded-full text-xs md:text-sm px-4 h-full whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all">Apply Leave</TabsTrigger>
           </TabsList>
@@ -926,6 +977,18 @@ export default function EngineerApp() {
 
         {/* ── Dashboard ── */}
         <TabsContent value="dashboard" className="mt-0">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            className="mb-6 md:mb-8 flex items-center justify-between bg-card border border-border/50 rounded-3xl p-5 md:p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 rounded-2xl bg-accent/10 text-accent flex items-center justify-center shrink-0"><Banknote className="h-5 w-5" /></div>
+              <div>
+                <p className="text-xs md:text-sm text-muted-foreground">Cash Wallet Balance</p>
+                <p className={`font-display font-bold text-xl md:text-2xl ${cashRows.reduce((s, r) => s + (r.type === "in" ? Number(r.amount) : -Number(r.amount)), 0) < 0 ? "text-destructive" : "text-foreground"}`}>
+                  {fmtINR(cashRows.reduce((s, r) => s + (r.type === "in" ? Number(r.amount) : -Number(r.amount)), 0))}
+                </p>
+              </div>
+            </div>
+          </motion.div>
           <div className="grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="lg:col-span-4 bg-card border border-border/50 rounded-3xl p-6 md:p-8 shadow-sm text-center hover:shadow-md transition-shadow">
               <h2 className="font-semibold text-xl md:text-2xl mb-1 flex items-center justify-center gap-2"><Clock className="h-6 w-6 text-accent" /> Today</h2>
@@ -1462,6 +1525,60 @@ export default function EngineerApp() {
           </TabsContent>
         )}
 
+        {/* ── Cash Ledger (shared, independent of revenue/reports) ── */}
+        <TabsContent value="cashledger" className="mt-0">
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
+            {(() => {
+              let running = 0;
+              const withBalance = cashRows.map(r => {
+                running += r.type === "in" ? Number(r.amount) : -Number(r.amount);
+                return { ...r, balance: running };
+              });
+              const balance = running;
+              return (
+                <>
+                  <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                    <div>
+                      <h3 className="font-semibold text-lg">Cash Ledger</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        Balance: <span className={`font-semibold ${balance < 0 ? "text-destructive" : "text-foreground"}`}>{fmtINR(balance)}</span>
+                      </p>
+                    </div>
+                    <Button onClick={() => setCashSheet(true)} className="rounded-full bg-foreground text-background hover:bg-foreground/90 h-9 text-sm">
+                      <Plus className="h-4 w-4 mr-1" /> New Entry
+                    </Button>
+                  </div>
+
+                  {!withBalance.length ? (
+                    <div className="text-center py-14 text-muted-foreground text-sm bg-card rounded-3xl border border-border/50">
+                      No cash entries yet.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {[...withBalance].reverse().map((r, i) => (
+                        <motion.div key={r.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+                          className="bg-card border border-border/50 rounded-2xl p-4 flex flex-col gap-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${r.type === "in" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-red-100 text-red-700 border-red-200"}`}>
+                              {r.type === "in" ? "Cash In" : "Cash Out"}
+                            </span>
+                            <p className={`text-sm font-bold ${r.type === "in" ? "text-emerald-600" : "text-destructive"}`}>{fmtINR(r.amount)}</p>
+                          </div>
+                          {r.description && <p className="text-xs text-muted-foreground">{r.description}</p>}
+                          <div className="flex items-center justify-between mt-auto pt-1 border-t border-border/30 text-xs text-muted-foreground">
+                            <span>{fmtDate(r.entry_date)} · {cashProfiles[r.created_by] || "—"}</span>
+                            <span className="font-medium text-foreground">Bal: {fmtINR(r.balance)}</span>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </motion.div>
+        </TabsContent>
+
         {/* ── Calendar ── */}
         <TabsContent value="calendar" className="mt-0">
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border/50 rounded-3xl p-5 md:p-8 shadow-sm max-w-xl mx-auto mb-6">
@@ -1684,6 +1801,52 @@ export default function EngineerApp() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <Sheet open={cashSheet} onOpenChange={setCashSheet}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto flex flex-col gap-0 p-0">
+          <SheetHeader className="px-5 pt-5 pb-4 border-b border-border/50 bg-background sticky top-0 z-10">
+            <SheetTitle className="flex items-center gap-2 text-base">
+              <Banknote className="h-5 w-5 text-accent" />
+              New Cash Entry
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground">Date</Label>
+                <Input type="date" value={cashForm.entry_date} onChange={e => setCashForm({ ...cashForm, entry_date: e.target.value })} className="mt-1.5 rounded-xl h-10" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Amount (₹) *</Label>
+                <Input type="number" min="0" step="0.01" value={cashForm.amount} onChange={e => setCashForm({ ...cashForm, amount: e.target.value })} className="mt-1.5 rounded-xl h-10" placeholder="0.00" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Type</Label>
+              <Select value={cashForm.type} onValueChange={v => setCashForm({ ...cashForm, type: v })}>
+                <SelectTrigger className="mt-1.5 rounded-xl h-10"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="in">Cash In</SelectItem>
+                  <SelectItem value="out">Cash Out</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Description</Label>
+              <Textarea rows={3} value={cashForm.description} onChange={e => setCashForm({ ...cashForm, description: e.target.value })} className="mt-1.5 rounded-xl resize-none text-sm" placeholder="e.g. Received from client, paid for fuel" />
+            </div>
+          </div>
+
+          <div className="px-5 py-4 border-t border-border/50 bg-background">
+            <Button onClick={saveCashEntry} className="w-full rounded-xl h-12 bg-foreground text-background font-semibold">
+              Save Entry
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <AvatarCropDialog imageSrc={pendingImage} open={cropOpen} onCancel={cancelAvatarCrop} onConfirm={confirmAvatarCrop} busy={avatarUploading} />
     </div>
   );
 }

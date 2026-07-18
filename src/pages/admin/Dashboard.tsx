@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { fmtINR } from "@/lib/format";
-import { Wallet, FileText, AlertTriangle, Inbox, Download, Upload, Settings, Wrench, PhoneCall, BarChart3, ClipboardCheck, TrendingUp, Users } from "lucide-react";
+import { Wallet, FileText, AlertTriangle, Inbox, Download, Upload, Settings, Wrench, PhoneCall, BarChart3, ClipboardCheck, TrendingUp, Users, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,7 +23,7 @@ const formatLabel = (v: number) => v > 0 ? formatYAxis(v) : '';
 export default function Dashboard() {
   const [stats, setStats] = useState({
     receivable: 0, payable: 0, monthSales: 0, monthPurchase: 0,
-    lowStock: 0, newLeads: 0, pendingLogs: 0
+    lowStock: 0, newLeads: 0, pendingLogs: 0, cashBalance: 0
   });
   const [recent, setRecent] = useState<any[]>([]);
   const [dueServices, setDueServices] = useState<any[]>([]);
@@ -39,6 +39,7 @@ export default function Dashboard() {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const { hasRole, user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.title = "Dashboard | PHD ERP";
@@ -48,7 +49,7 @@ export default function Dashboard() {
       // --- Data Fetching (Consolidated) ---
       const todayStr = new Date().toISOString().slice(0, 10);
       // Fetches all necessary data in parallel for efficiency.
-      const [{ data: docs }, { data: items }, { data: leads }, { data: serviceVisits }, { data: exps }, { data: machines }, { data: profs }, { data: att }] = await Promise.all([
+      const [{ data: docs }, { data: items }, { data: leads }, { data: serviceVisits }, { data: exps }, { data: machines }, { data: profs }, { data: att }, { data: cashEntries }] = await Promise.all([
         supabase.from("documents").select("*, parties(name, phone), document_lines(*)").order("created_at", { ascending: false }),
         supabase.from("items").select("*"),
         supabase.from("leads").select("id,status").eq("status", "new"),
@@ -56,8 +57,10 @@ export default function Dashboard() {
         supabase.from("expenses").select("expense_date, amount"),
         (supabase as any).from("party_machines").select("id, amc_expiry_date, name, model, serial_number, parties(name, phone)"),
         supabase.from("profiles").select("user_id, display_name"),
-        supabase.from("attendance").select("user_id, status, punch_in").eq("date", todayStr)
+        supabase.from("attendance").select("user_id, status, punch_in").eq("date", todayStr),
+        supabase.from("cash_ledger" as any).select("type, amount"),
       ]);
+      const cashBalance = ((cashEntries as any[]) || []).reduce((s, r) => s + (r.type === "in" ? Number(r.amount) : -Number(r.amount)), 0);
 
       setRawDocs(docs || []);
       setRawExps(exps || []);
@@ -75,7 +78,7 @@ export default function Dashboard() {
       const lowStock = (items || []).filter(i => Number(i.current_stock) <= Number(i.low_stock_threshold || 0)).length;
       const pendingLogs = (serviceVisits || []).filter(v => !v.is_verified).length;
 
-      setStats({ receivable, payable, monthSales, monthPurchase, lowStock, newLeads: leads?.length || 0, pendingLogs });
+      setStats({ receivable, payable, monthSales, monthPurchase, lowStock, newLeads: leads?.length || 0, pendingLogs, cashBalance });
 
       // 2. Top Outstanding Customers
       const outstanding: Record<string, any> = {};
@@ -271,6 +274,7 @@ export default function Dashboard() {
   const cards = [
     { label: "Receivable", value: fmtINR(stats.receivable), icon: Wallet, accent: true },
     { label: "Payable", value: fmtINR(stats.payable), icon: Wallet },
+    { label: "Cash Wallet Balance", value: fmtINR(stats.cashBalance), icon: Banknote, to: "/admin/cash-ledger" },
     { label: "This month sales", value: fmtINR(stats.monthSales), icon: FileText },
     { label: "This month purchase", value: fmtINR(stats.monthPurchase), icon: FileText },
     { label: "Low stock items", value: stats.lowStock.toString(), icon: AlertTriangle },
@@ -321,7 +325,8 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 + 0.1, duration: 0.4, ease: "easeOut" }}
-            className="group relative overflow-hidden rounded-3xl border border-border/50 bg-card/50 p-6 shadow-sm backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/10 hover:border-accent/50 dark:hover:shadow-accent/5"
+            className={`group relative overflow-hidden rounded-3xl border border-border/50 bg-card/50 p-6 shadow-sm backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/10 hover:border-accent/50 dark:hover:shadow-accent/5 ${c.to ? "cursor-pointer" : ""}`}
+            onClick={() => c.to && navigate(c.to)}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
             <div className="relative flex items-center justify-between">

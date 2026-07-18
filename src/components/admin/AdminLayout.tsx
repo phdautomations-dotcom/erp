@@ -4,9 +4,11 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, FileText, ShoppingCart, Wallet, Wrench,
   Boxes, Receipt, BarChart3, Inbox, Settings, UserCog, LogOut, Menu,
-  ClipboardList, Bell, Search, ChevronRight, X, Building2, Camera,
+  ClipboardList, Bell, Search, ChevronRight, X, Building2, Camera, Banknote,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useAvatarUpload } from "@/hooks/useAvatarUpload";
+import { AvatarCropDialog } from "@/components/AvatarCropDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtINR } from "@/lib/format";
 import logo from "@/assets/logo.png";
@@ -22,6 +24,7 @@ const NAV = [
   { to: "/admin/payments",   label: "Payments",        icon: Wallet },
   { to: "/admin/inventory",  label: "Inventory",       icon: Boxes },
   { to: "/admin/expenses",   label: "Expenses",        icon: Receipt },
+  { to: "/admin/cash-ledger", label: "Cash Ledger",     icon: Banknote },
   { to: "/admin/attendance", label: "Attendance & HR", icon: ClipboardList },
   { to: "/admin/reports",    label: "Reports",         icon: BarChart3 },
   { to: "/admin/services",   label: "Service Desk",    icon: Wrench },
@@ -116,11 +119,11 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
             <img
               src={user.user_metadata.avatar_url}
               alt="avatar"
-              className="h-8 w-8 rounded-full object-cover shrink-0"
+              className="h-10 w-10 rounded-full object-cover shrink-0"
             />
           ) : (
             <div
-              className="h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
+              className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
               style={{ background: "hsl(22 95% 52%)" }}
             >
               {initial}
@@ -486,21 +489,10 @@ function UserAvatarMenu() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(
-    user?.user_metadata?.avatar_url ?? null
-  );
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const { avatarUrl, pendingImage, cropOpen, uploading, uploadError, selectFile, cancelCrop, confirmCrop } = useAvatarUpload();
   const wrapRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const initial = (user?.email?.[0] ?? "A").toUpperCase();
-
-  // Sync avatar URL when auth user updates (e.g. after updateUser resolves)
-  useEffect(() => {
-    if (user?.user_metadata?.avatar_url) {
-      setAvatarUrl(user.user_metadata.avatar_url);
-    }
-  }, [user?.user_metadata?.avatar_url]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -510,45 +502,15 @@ function UserAvatarMenu() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
-    setUploading(true);
-    setUploadError(null);
-
-    // Show image immediately from local file (works regardless of bucket settings)
-    const localUrl = URL.createObjectURL(file);
-    setAvatarUrl(localUrl);
-
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `${user.id}/avatar.${ext}`;
-    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
-    if (error) {
-      setUploadError(error.message);
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
-      return;
-    }
-
-    // Try public URL first; fall back to signed URL (1 year) if bucket is private
-    const { data: pubData } = supabase.storage.from("avatars").getPublicUrl(path);
-    let persistUrl = `${pubData.publicUrl}?t=${Date.now()}`;
-
-    // Test if public URL is accessible
-    try {
-      const res = await fetch(persistUrl, { method: "HEAD" });
-      if (!res.ok) {
-        // Bucket is private — get a long-lived signed URL instead
-        const { data: signed } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24 * 365);
-        if (signed?.signedUrl) persistUrl = signed.signedUrl;
-      }
-    } catch { /* network error — keep localUrl */ }
-
-    await supabase.auth.updateUser({ data: { avatar_url: persistUrl } });
-    setAvatarUrl(persistUrl);
-    setUploading(false);
-    setOpen(false);
+    if (file) selectFile(file);
     if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const onCropConfirm = async (blob: Blob) => {
+    await confirmCrop(blob);
+    setOpen(false);
   };
 
   return (
@@ -558,12 +520,12 @@ function UserAvatarMenu() {
           <img
             src={avatarUrl}
             alt="avatar"
-            className="h-9 w-9 rounded-xl object-cover"
+            className="h-11 w-11 rounded-xl object-cover"
             style={{ boxShadow: "0 4px 12px hsl(22 95% 52% / 0.4)" }}
           />
         ) : (
           <div
-            className="h-9 w-9 rounded-xl flex items-center justify-center text-[13px] font-bold text-white"
+            className="h-11 w-11 rounded-xl flex items-center justify-center text-base font-bold text-white"
             style={{
               background: "linear-gradient(135deg, hsl(22 95% 52%), hsl(30 100% 58%))",
               boxShadow: "0 4px 12px hsl(22 95% 52% / 0.4)",
@@ -594,10 +556,10 @@ function UserAvatarMenu() {
             <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid hsl(220 18% 90%)" }}>
               <div className="shrink-0">
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt="avatar" className="h-10 w-10 rounded-xl object-cover" />
+                  <img src={avatarUrl} alt="avatar" className="h-14 w-14 rounded-xl object-cover" />
                 ) : (
                   <div
-                    className="h-10 w-10 rounded-xl flex items-center justify-center text-[14px] font-bold text-white"
+                    className="h-14 w-14 rounded-xl flex items-center justify-center text-lg font-bold text-white"
                     style={{ background: "linear-gradient(135deg, hsl(22 95% 52%), hsl(30 100% 58%))" }}
                   >
                     {initial}
@@ -620,7 +582,7 @@ function UserAvatarMenu() {
                 </p>
               )}
               <button
-                onClick={() => { setUploadError(null); fileRef.current?.click(); }}
+                onClick={() => fileRef.current?.click()}
                 disabled={uploading}
                 className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-orange-50 transition-colors text-left text-[13px] text-foreground hover:text-orange-600 disabled:opacity-60"
               >
@@ -635,10 +597,12 @@ function UserAvatarMenu() {
                 Sign out
               </button>
             </div>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFilePick} />
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AvatarCropDialog imageSrc={pendingImage} open={cropOpen} onCancel={cancelCrop} onConfirm={onCropConfirm} busy={uploading} />
     </div>
   );
 }

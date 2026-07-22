@@ -39,11 +39,26 @@ export const docNumberPrefix = (docType: string, fy: string) =>
 
 // Read-only preview of the next number for display while a create form is
 // open. Does NOT reserve/consume it, so abandoning the draft doesn't skip
-// a number. The authoritative number is only assigned by reserveDocNumber.
+// a number. Mirrors reserveDocNumber's own auto-heal so the preview stays
+// accurate even if the number_series counter has drifted (old-format docs
+// from before a prefix change, etc.) — but the authoritative number is only
+// ever assigned by reserveDocNumber, at actual save time.
 export const peekNextDocNumber = async (supabase: any, docType: string, fy: string): Promise<string> => {
   const pfx = docNumberPrefix(docType, fy);
-  const { data: ns } = await supabase.from("number_series").select("next_number").eq("doc_type", docType).eq("fy", fy).maybeSingle();
-  const nextNum = ns?.next_number || 1;
+  const compactFy = compactFY(fy);
+  const [{ data: ns }, { data: docs }] = await Promise.all([
+    supabase.from("number_series").select("next_number").eq("doc_type", docType).eq("fy", fy).maybeSingle(),
+    supabase.from("documents").select("doc_number").eq("doc_type", docType)
+      .or(`doc_number.ilike.%${fy}%,doc_number.ilike.%${compactFy}%`)
+      .order("created_at", { ascending: false }).limit(500),
+  ]);
+  let nextNum = ns?.next_number || 1;
+  for (const d of (docs as any[]) || []) {
+    const m = String(d.doc_number || "").match(/(\d+)$/);
+    if (!m) continue;
+    const n = parseInt(m[1], 10) + 1;
+    if (n > nextNum) nextNum = n;
+  }
   return `${pfx}${String(nextNum).padStart(4, "0")}`;
 };
 

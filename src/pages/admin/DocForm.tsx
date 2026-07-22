@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { fmtINR, calcLineTax, todayFY, reserveDocNumber } from "@/lib/format";
+import { fmtINR, calcLineTax, todayFY, peekNextDocNumber, reserveDocNumber } from "@/lib/format";
 import { generateDocPDF } from "@/lib/pdf";
 import { toast } from "sonner";
 
@@ -41,6 +41,7 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
   const [scanVal, setScanVal] = useState("");
   const [lines, setLines] = useState<Line[]>([newLine()]);
   const [busy, setBusy] = useState(false);
+  const [suggestedDocNumber, setSuggestedDocNumber] = useState("");
 
   useEffect(() => {
     document.title = isEdit ? "Edit Document | PHD ERP" : "New Document | PHD ERP";
@@ -80,14 +81,16 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
     setLines(ls => ls.map(l => ({ ...l, ...calcLineTax(+l.quantity || 0, +l.rate || 0, +l.discount_pct || 0, +l.gst_rate || 0, !!doc.is_igst) })));
   }, [doc.is_igst]);
 
+  // Only a preview — does not reserve/consume a number, so opening this
+  // page (without saving) never skips a number. The real number is
+  // reserved atomically in save() when the document is actually created.
   useEffect(() => {
     if (!isEdit) {
       const fetchNextNum = async () => {
         const fy = todayFY(new Date(doc.doc_date || new Date()));
-        const nextNumStr = await reserveDocNumber(supabase, docType, fy);
-        setDoc((d: any) => {
-          return { ...d, doc_number: nextNumStr };
-        });
+        const nextNumStr = await peekNextDocNumber(supabase, docType, fy);
+        setSuggestedDocNumber(nextNumStr);
+        setDoc((d: any) => ({ ...d, doc_number: nextNumStr }));
       };
 
       fetchNextNum();
@@ -165,8 +168,15 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
 
     setBusy(true);
 
-    const docNumber = doc.doc_number;
+    let docNumber = doc.doc_number;
     if (!docNumber) { setBusy(false); toast.error("Enter a document number"); return null; }
+    // If the number wasn't manually overridden, reserve it atomically now
+    // (at save time) instead of trusting the on-open preview, so concurrent
+    // saves can never collide.
+    if (!isEdit && docNumber === suggestedDocNumber) {
+      const fy = todayFY(new Date(doc.doc_date || new Date()));
+      docNumber = await reserveDocNumber(supabase, docType, fy);
+    }
 
     const { data: u } = await supabase.auth.getUser();
     const payload: any = {

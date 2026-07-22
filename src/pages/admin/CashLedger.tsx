@@ -65,8 +65,8 @@ export default function CashLedger() {
                   <Select value={form.type} onValueChange={v => setForm({ ...form, type: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="in">Cash In</SelectItem>
-                      <SelectItem value="out">Cash Out</SelectItem>
+                      <SelectItem value="in">Credit</SelectItem>
+                      <SelectItem value="out">Debit</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -86,8 +86,8 @@ export default function CashLedger() {
                 <th className="px-6 py-4 text-left">Date</th>
                 <th className="px-6 py-4 text-left">Description</th>
                 <th className="px-6 py-4 text-left">Added By</th>
-                <th className="px-6 py-4 text-right">Cash In</th>
-                <th className="px-6 py-4 text-right">Cash Out</th>
+                <th className="px-6 py-4 text-right">Credit</th>
+                <th className="px-6 py-4 text-right">Debit</th>
                 <th className="px-6 py-4 text-right">Balance</th>
                 <th className="px-6 py-4"></th>
               </tr>

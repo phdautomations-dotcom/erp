@@ -1560,7 +1560,7 @@ export default function EngineerApp() {
                           className="bg-card border border-border/50 rounded-2xl p-4 flex flex-col gap-2">
                           <div className="flex items-start justify-between gap-2">
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${r.type === "in" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-red-100 text-red-700 border-red-200"}`}>
-                              {r.type === "in" ? "Cash In" : "Cash Out"}
+                              {r.type === "in" ? "Credit" : "Debit"}
                             </span>
                             <p className={`text-sm font-bold ${r.type === "in" ? "text-emerald-600" : "text-destructive"}`}>{fmtINR(r.amount)}</p>
                           </div>
@@ -1827,8 +1827,8 @@ export default function EngineerApp() {
               <Select value={cashForm.type} onValueChange={v => setCashForm({ ...cashForm, type: v })}>
                 <SelectTrigger className="mt-1.5 rounded-xl h-10"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="in">Cash In</SelectItem>
-                  <SelectItem value="out">Cash Out</SelectItem>
+                  <SelectItem value="in">Credit</SelectItem>
+                  <SelectItem value="out">Debit</SelectItem>
                 </SelectContent>
               </Select>
             </div>

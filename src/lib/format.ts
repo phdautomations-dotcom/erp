@@ -30,12 +30,12 @@ export const DOC_TYPE_CODE: Record<string, string> = {
   challan: "CHL", purchase_bill: "PB", purchase_order: "PO",
 };
 
-// "2026-27" -> "2627", kept short so doc numbers stay within the GST
-// e-invoice 16-character limit (e.g. PHDINV-2627-0217).
-const compactFY = (fy: string) => fy.slice(2, 4) + fy.slice(-2);
+// "2026-27" -> "26-27", kept short so doc numbers stay within the GST
+// e-invoice 16-character limit (e.g. PHDINV26-27-0217).
+const compactFY = (fy: string) => `${fy.slice(2, 4)}-${fy.slice(-2)}`;
 
 export const docNumberPrefix = (docType: string, fy: string) =>
-  `PHD${DOC_TYPE_CODE[docType] || "DOC"}-${compactFY(fy)}-`;
+  `PHD${DOC_TYPE_CODE[docType] || "DOC"}${compactFY(fy)}-`;
 
 // Read-only preview of the next number for display while a create form is
 // open. Does NOT reserve/consume it, so abandoning the draft doesn't skip

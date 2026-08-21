@@ -3,15 +3,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAIAssistant } from "@/hooks/useAIAssistant";
+import { useAIAssistant, type MatchedDraft } from "@/hooks/useAIAssistant";
 
 // Floating in-app AI assistant. Answers come from Google Gemini's free
 // tier via a Vercel serverless proxy (api/ai-chat.js) — the API key
 // never reaches the browser. Shared between the admin and engineer apps.
-export const AIAssistant = () => {
+//
+// onDraftReady: when the user asks it to create an invoice/purchase/etc,
+// the AI never saves anything itself — it only produces a matched draft.
+// Pass this to have the draft handed to your own create-document UI
+// (e.g. EngineerApp opens its doc sheet prefilled). Omit it (admin) and
+// the hook falls back to navigating to the admin create-document route.
+export const AIAssistant = ({ onDraftReady }: { onDraftReady?: (draft: MatchedDraft) => void }) => {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
-  const { messages, ask, thinking } = useAIAssistant();
+  const { messages, ask, thinking } = useAIAssistant(onDraftReady);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

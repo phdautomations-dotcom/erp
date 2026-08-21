@@ -20,6 +20,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import { AvatarCropDialog } from "@/components/AvatarCropDialog";
 import { AIAssistant } from "@/components/AIAssistant";
+import { classifyText, expandDescription } from "@/lib/ai/remote";
+import type { MatchedDraft } from "@/hooks/useAIAssistant";
 import { usePermissions, type PermModule } from "@/hooks/usePermissions";
 import logo from "@/assets/logo.png";
 
@@ -100,6 +102,15 @@ const SignaturePad = ({ onSign }: { onSign: (s: string) => void }) => {
 function DocLineRow({ line, items, onChange, onRemove }: {
   line: any; items: any[]; onChange: (f: string, v: any) => void; onRemove: () => void;
 }) {
+  const [expanding, setExpanding] = useState(false);
+  const expand = async () => {
+    if (!line.description?.trim()) return;
+    setExpanding(true);
+    try {
+      const expanded = await expandDescription(line.description);
+      if (expanded) onChange("description", expanded);
+    } catch { /* silent */ } finally { setExpanding(false); }
+  };
   return (
     <div className="bg-secondary/20 rounded-2xl p-3 space-y-2 border border-border/30">
       <div className="flex gap-2">
@@ -125,8 +136,14 @@ function DocLineRow({ line, items, onChange, onRemove }: {
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
-      <Input value={line.description} onChange={e => onChange("description", e.target.value)}
-        placeholder="Description *" className="rounded-xl text-xs h-9 bg-background/50" />
+      <div className="relative">
+        <Input value={line.description} onChange={e => onChange("description", e.target.value)}
+          placeholder="Description *" className="rounded-xl text-xs h-9 bg-background/50 pr-8" />
+        <button type="button" title="Expand with AI" disabled={expanding || !line.description?.trim()} onClick={expand}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-accent disabled:opacity-40">
+          <Sparkles className={`h-3.5 w-3.5 ${expanding ? "animate-pulse" : ""}`} />
+        </button>
+      </div>
       <div className="grid grid-cols-4 gap-2">
         <div>
           <Label className="text-[10px] text-muted-foreground">Qty</Label>
@@ -322,6 +339,15 @@ export default function EngineerApp() {
     mode: "cash", amount: "", description: "", paid_to: "",
   });
   const [expBusy, setExpBusy] = useState(false);
+  const [suggestingExpCategory, setSuggestingExpCategory] = useState(false);
+  const suggestExpCategory = async () => {
+    if (!expForm.description?.trim()) return;
+    setSuggestingExpCategory(true);
+    try {
+      const suggested = await classifyText(expForm.description, EXPENSE_CATEGORIES);
+      if (suggested) setExpForm((f: any) => ({ ...f, category: suggested }));
+    } catch { /* silent */ } finally { setSuggestingExpCategory(false); }
+  };
 
   // ── Sales / purchase sub-type selectors ──
   const [salesType, setSalesType] = useState("invoice");
@@ -630,6 +656,21 @@ export default function EngineerApp() {
     setDocLines([newLine()]); setDocSheet(true);
     setPreviewDocNumber("…");
     peekNextDocNumber(supabase, type, todayFY()).then(setPreviewDocNumber).catch(() => setPreviewDocNumber(""));
+  };
+
+  // AI assistant never saves a document itself — it only produces this
+  // draft, which just prefills the same sheet/Save flow as a manual entry.
+  const handleAIDraft = (draft: MatchedDraft) => {
+    if (!hasPerm(DOC_MODULE[draft.doc_type], "can_create")) {
+      toast.error(`You don't have permission to create a ${DOC_LABEL[draft.doc_type] || draft.doc_type}.`);
+      return;
+    }
+    setEditingDoc(null); setActiveDocType(draft.doc_type);
+    setDocForm({ party_id: draft.party_id, doc_date: new Date().toISOString().slice(0, 10), notes: draft.notes || "", status: "draft" });
+    setDocLines(draft.lines.length ? draft.lines : [newLine()]);
+    setDocSheet(true);
+    setPreviewDocNumber("…");
+    peekNextDocNumber(supabase, draft.doc_type, todayFY()).then(setPreviewDocNumber).catch(() => setPreviewDocNumber(""));
   };
 
   const openEditDoc = async (doc: any) => {
@@ -1805,7 +1846,8 @@ export default function EngineerApp() {
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Description</Label>
-              <Textarea rows={3} value={expForm.description} onChange={e => setExpForm({ ...expForm, description: e.target.value })} className="mt-1.5 rounded-xl resize-none text-sm" placeholder="What was this expense for?" />
+              <Textarea rows={3} value={expForm.description} onChange={e => setExpForm({ ...expForm, description: e.target.value })} onBlur={suggestExpCategory} className="mt-1.5 rounded-xl resize-none text-sm" placeholder="What was this expense for?" />
+              {suggestingExpCategory && <p className="text-xs text-accent mt-1 flex items-center gap-1"><Sparkles className="h-3 w-3 animate-pulse" /> Suggesting category…</p>}
             </div>
           </div>
 
@@ -1872,7 +1914,7 @@ export default function EngineerApp() {
       </Sheet>
 
       <AvatarCropDialog imageSrc={pendingImage} open={cropOpen} onCancel={cancelAvatarCrop} onConfirm={confirmAvatarCrop} busy={avatarUploading} />
-      <AIAssistant />
+      <AIAssistant onDraftReady={handleAIDraft} />
     </div>
   );
 }

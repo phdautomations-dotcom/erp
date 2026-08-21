@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { messages } = req.body || {};
+  const { messages, json, maxOutputTokens } = req.body || {};
   if (!Array.isArray(messages) || messages.length === 0) {
     res.status(400).json({ error: "messages array is required" });
     return;
@@ -36,7 +36,18 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           contents,
           ...(systemMsg ? { systemInstruction: { parts: [{ text: systemMsg.content }] } } : {}),
-          generationConfig: { maxOutputTokens: 400, temperature: 0.4 },
+          generationConfig: {
+            // gemini-3.6-flash spends part of maxOutputTokens on internal
+            // "thinking" before the visible reply, even for trivial
+            // classification prompts — a low budget here silently truncates
+            // to an empty/partial reply rather than erroring, so every
+            // caller needs real headroom above what the visible text
+            // actually needs (verified: 20 tokens -> empty reply for a
+            // one-word classification; 300 was enough).
+            maxOutputTokens: maxOutputTokens || 800,
+            temperature: json ? 0.1 : 0.4,
+            ...(json ? { responseMimeType: "application/json" } : {}),
+          },
         }),
       },
     );

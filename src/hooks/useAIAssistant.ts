@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { chat, loadModel, type ChatMessage, type ModelProgress } from "@/lib/ai/engine";
 import { chatRemote } from "@/lib/ai/remote";
 import { fmtINR } from "@/lib/format";
 import {
@@ -14,9 +13,9 @@ const SYSTEM_PROMPT =
   "Answer briefly and only using the FACTS given to you below the user's question — never invent numbers. " +
   "If no facts are given, answer generally and helpfully in 1-3 sentences. Reply in the same language style (Hindi/English mix is fine) as the question.";
 
-// Cheap keyword-based intent routing — small local models are unreliable at
-// picking tools themselves, so retrieval is done in plain JS and the model
-// is only asked to phrase the result.
+// Cheap keyword-based intent routing — the model is unreliable at picking
+// tools itself, so retrieval is done in plain JS and the model is only
+// asked to phrase the result.
 const buildFacts = async (question: string, parties: any[]): Promise<string> => {
   const q = question.toLowerCase();
   const facts: string[] = [];
@@ -80,35 +79,8 @@ const buildFacts = async (question: string, parties: any[]): Promise<string> => 
 
 export function useAIAssistant() {
   const [messages, setMessages] = useState<Msg[]>([]);
-  const [loadingModel, setLoadingModel] = useState(false);
-  const [modelProgress, setModelProgress] = useState(0);
   const [thinking, setThinking] = useState(false);
-  const [modelReady, setModelReady] = useState(false);
   const partiesRef = useRef<any[] | null>(null);
-
-  // Silently warm the model in the background shortly after mount, so by
-  // the time someone opens the assistant it's usually already cached and
-  // answers come back instantly instead of triggering a visible download.
-  // Only auto-prefetch on WiFi — engineers in the field are often on
-  // limited mobile data, and a ~300-400MB silent download isn't fair to
-  // burn on their plan just because they logged in. On cellular (or when
-  // the connection type can't be detected) it stays on-demand: opening
-  // the panel still downloads it, just with the visible progress bar.
-  useEffect(() => {
-    const conn = (navigator as any).connection;
-    const onWifi = conn?.type === "wifi" || conn?.type === "ethernet";
-    if (!onWifi) return;
-
-    const idle = (cb: () => void) =>
-      "requestIdleCallback" in window ? (window as any).requestIdleCallback(cb, { timeout: 8000 }) : setTimeout(cb, 4000);
-    const handle = idle(() => {
-      loadModel().then(() => setModelReady(true)).catch(() => {});
-    });
-    return () => {
-      if ("cancelIdleCallback" in window && typeof handle === "number") (window as any).cancelIdleCallback(handle);
-      else clearTimeout(handle as any);
-    };
-  }, []);
 
   const getParties = async () => {
     if (!partiesRef.current) {
@@ -125,34 +97,13 @@ export function useAIAssistant() {
     try {
       const parties = await getParties();
       const facts = await buildFacts(question, parties);
-      const chatMessages: ChatMessage[] = [
+      const reply = await chatRemote([
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: `${question}\n\nFACTS:\n${facts}` },
-      ];
-
-      // Prefer the free-tier Gemini proxy (better quality, no local
-      // download) — fall back to the fully-local model if it's
-      // unreachable (no internet, local dev without the function, daily
-      // free quota used up, etc.), so the assistant still works either way.
-      let reply: string;
-      try {
-        reply = await chatRemote(chatMessages);
-      } catch {
-        const onProgress = (p: ModelProgress) => {
-          if (p.status === "progress" && typeof p.progress === "number") {
-            setLoadingModel(true);
-            setModelProgress(p.progress);
-          }
-          if (p.status === "ready" || p.status === "done") setLoadingModel(false);
-        };
-        reply = await chat(chatMessages, { onProgress });
-        setLoadingModel(false);
-        setModelReady(true);
-      }
+      ]);
       setMessages(prev => [...prev, { role: "assistant", content: reply || "Sorry, I couldn't generate a response." }]);
     } catch (err: any) {
-      setLoadingModel(false);
-      setMessages(prev => [...prev, { role: "assistant", content: `Something went wrong loading the AI model: ${err?.message || err}` }]);
+      setMessages(prev => [...prev, { role: "assistant", content: `AI request failed: ${err?.message || err}` }]);
     } finally {
       setThinking(false);
     }
@@ -160,5 +111,5 @@ export function useAIAssistant() {
 
   const clear = useCallback(() => setMessages([]), []);
 
-  return { messages, ask, clear, thinking, loadingModel, modelProgress, modelReady };
+  return { messages, ask, clear, thinking };
 }

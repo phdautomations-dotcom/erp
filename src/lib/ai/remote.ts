@@ -1,9 +1,7 @@
 // Calls the Vercel serverless proxy (api/ai-chat.js), which holds the
 // Gemini free-tier API key server-side. Never called with the key itself
-// in the browser. Throws on any failure so callers can fall back to the
-// fully-local model (engine.ts) — e.g. during local dev without the
-// function running, or if the daily free quota is used up.
-import type { ChatMessage } from "./engine";
+// in the browser.
+export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
 export const chatRemote = async (messages: ChatMessage[]): Promise<string> => {
   const res = await fetch("/api/ai-chat", {

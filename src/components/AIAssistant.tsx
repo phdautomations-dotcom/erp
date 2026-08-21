@@ -5,14 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAIAssistant } from "@/hooks/useAIAssistant";
 
-// Floating in-app AI assistant. Runs a small open-source model
-// (Qwen2.5-0.5B-Instruct) entirely in the browser via transformers.js —
-// no API key, no server round-trip, no cost. Shared between the admin
-// and engineer apps.
+// Floating in-app AI assistant. Answers come from Google Gemini's free
+// tier via a Vercel serverless proxy (api/ai-chat.js) — the API key
+// never reaches the browser. Shared between the admin and engineer apps.
 export const AIAssistant = () => {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
-  const { messages, ask, thinking, loadingModel, modelProgress, modelReady } = useAIAssistant();
+  const { messages, ask, thinking } = useAIAssistant();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,12 +31,9 @@ export const AIAssistant = () => {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         className="fixed bottom-5 right-5 z-[60] h-14 w-14 rounded-full bg-foreground text-background shadow-xl shadow-black/20 flex items-center justify-center"
-        title={modelReady ? "AI Assistant (ready)" : "AI Assistant"}
+        title="AI Assistant"
       >
         {open ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
-        {modelReady && !open && (
-          <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-foreground" />
-        )}
       </motion.button>
 
       <AnimatePresence>
@@ -53,7 +49,6 @@ export const AIAssistant = () => {
               <Sparkles className="h-4 w-4" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold">AI Assistant</p>
-                <p className="text-[10px] opacity-70">Runs on your device — no data leaves the app</p>
               </div>
             </div>
 
@@ -75,7 +70,7 @@ export const AIAssistant = () => {
                   <div className="flex justify-start">
                     <div className="max-w-[85%] rounded-2xl px-3.5 py-2 text-sm bg-secondary text-muted-foreground flex items-center gap-2">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      {loadingModel ? `Loading AI model… ${Math.round(modelProgress)}%` : "Thinking…"}
+                      Thinking…
                     </div>
                   </div>
                 )}

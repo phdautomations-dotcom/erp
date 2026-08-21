@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { chat, type ChatMessage, type ModelProgress } from "@/lib/ai/engine";
+import { chat, loadModel, type ChatMessage, type ModelProgress } from "@/lib/ai/engine";
 import { fmtINR } from "@/lib/format";
 import {
   getDashboardSnapshot, findParties, getPartyBalance, getCashLedgerSummary, getRecentDocuments,
@@ -82,7 +82,32 @@ export function useAIAssistant() {
   const [loadingModel, setLoadingModel] = useState(false);
   const [modelProgress, setModelProgress] = useState(0);
   const [thinking, setThinking] = useState(false);
+  const [modelReady, setModelReady] = useState(false);
   const partiesRef = useRef<any[] | null>(null);
+
+  // Silently warm the model in the background shortly after mount, so by
+  // the time someone opens the assistant it's usually already cached and
+  // answers come back instantly instead of triggering a visible download.
+  // Only auto-prefetch on WiFi — engineers in the field are often on
+  // limited mobile data, and a ~300-400MB silent download isn't fair to
+  // burn on their plan just because they logged in. On cellular (or when
+  // the connection type can't be detected) it stays on-demand: opening
+  // the panel still downloads it, just with the visible progress bar.
+  useEffect(() => {
+    const conn = (navigator as any).connection;
+    const onWifi = conn?.type === "wifi" || conn?.type === "ethernet";
+    if (!onWifi) return;
+
+    const idle = (cb: () => void) =>
+      "requestIdleCallback" in window ? (window as any).requestIdleCallback(cb, { timeout: 8000 }) : setTimeout(cb, 4000);
+    const handle = idle(() => {
+      loadModel().then(() => setModelReady(true)).catch(() => {});
+    });
+    return () => {
+      if ("cancelIdleCallback" in window && typeof handle === "number") (window as any).cancelIdleCallback(handle);
+      else clearTimeout(handle as any);
+    };
+  }, []);
 
   const getParties = async () => {
     if (!partiesRef.current) {
@@ -112,6 +137,7 @@ export function useAIAssistant() {
       };
       const reply = await chat(chatMessages, { onProgress });
       setLoadingModel(false);
+      setModelReady(true);
       setMessages(prev => [...prev, { role: "assistant", content: reply || "Sorry, I couldn't generate a response." }]);
     } catch (err: any) {
       setLoadingModel(false);
@@ -123,5 +149,5 @@ export function useAIAssistant() {
 
   const clear = useCallback(() => setMessages([]), []);
 
-  return { messages, ask, clear, thinking, loadingModel, modelProgress };
+  return { messages, ask, clear, thinking, loadingModel, modelProgress, modelReady };
 }

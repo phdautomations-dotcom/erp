@@ -12,7 +12,7 @@ import { useAIAssistant } from "@/hooks/useAIAssistant";
 export const AIAssistant = () => {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
-  const { messages, ask, thinking, loadingModel, modelProgress } = useAIAssistant();
+  const { messages, ask, thinking, loadingModel, modelProgress, modelReady } = useAIAssistant();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,9 +32,12 @@ export const AIAssistant = () => {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         className="fixed bottom-5 right-5 z-[60] h-14 w-14 rounded-full bg-foreground text-background shadow-xl shadow-black/20 flex items-center justify-center"
-        title="AI Assistant"
+        title={modelReady ? "AI Assistant (ready)" : "AI Assistant"}
       >
         {open ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+        {modelReady && !open && (
+          <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-foreground" />
+        )}
       </motion.button>
 
       <AnimatePresence>

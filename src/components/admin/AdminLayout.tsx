@@ -9,6 +9,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import { AvatarCropDialog } from "@/components/AvatarCropDialog";
+import { AIAssistant } from "@/components/AIAssistant";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtINR } from "@/lib/format";
 import logo from "@/assets/logo.png";
@@ -670,6 +671,7 @@ export const AdminLayout = ({ children, title }: { children: ReactNode; title?: 
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
+    <>
     <div
       className="w-full flex overflow-hidden"
       style={{
@@ -731,5 +733,7 @@ export const AdminLayout = ({ children, title }: { children: ReactNode; title?: 
         )}
       </AnimatePresence>
     </div>
+    <AIAssistant />
+    </>
   );
 };

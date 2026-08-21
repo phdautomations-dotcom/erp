@@ -19,6 +19,7 @@ import { fmtINR, fmtDate, calcLineTax, todayFY, peekNextDocNumber, reserveDocNum
 import { useAuth } from "@/hooks/useAuth";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import { AvatarCropDialog } from "@/components/AvatarCropDialog";
+import { AIAssistant } from "@/components/AIAssistant";
 import { usePermissions, type PermModule } from "@/hooks/usePermissions";
 import logo from "@/assets/logo.png";
 
@@ -266,27 +267,39 @@ export default function EngineerApp() {
   const [bizLoading, setBizLoading] = useState(true);
 
   // ── Cash ledger (shared, independent of revenue/reports) ──
+  const emptyCashForm = () => ({ entry_date: new Date().toISOString().slice(0, 10), type: "in", amount: 0, description: "", party_id: "" });
   const [cashRows, setCashRows] = useState<any[]>([]);
   const [cashProfiles, setCashProfiles] = useState<Record<string, string>>({});
   const [cashSheet, setCashSheet] = useState(false);
-  const [cashForm, setCashForm] = useState<any>({ entry_date: new Date().toISOString().slice(0, 10), type: "in", amount: 0, description: "" });
+  const [editingCashId, setEditingCashId] = useState<string | null>(null);
+  const [cashForm, setCashForm] = useState<any>(emptyCashForm());
 
   const loadCashLedger = async () => {
-    const { data } = await supabase.from("cash_ledger" as any).select("*").order("entry_date", { ascending: true }).order("created_at", { ascending: true });
+    const { data } = await supabase.from("cash_ledger" as any).select("*, parties(name)").order("entry_date", { ascending: true }).order("created_at", { ascending: true });
     setCashRows((data as any[]) || []);
     const { data: profs } = await supabase.from("profiles").select("user_id, display_name");
     setCashProfiles(Object.fromEntries((profs || []).map((p: any) => [p.user_id, p.display_name || "Unnamed"])));
   };
 
+  const openNewCash = () => { setEditingCashId(null); setCashForm(emptyCashForm()); setCashSheet(true); };
+  const openEditCash = (r: any) => {
+    setEditingCashId(r.id);
+    setCashForm({ entry_date: r.entry_date, type: r.type, amount: r.amount, description: r.description || "", party_id: r.party_id || "" });
+    setCashSheet(true);
+  };
+
   const saveCashEntry = async () => {
     if (!cashForm.amount || +cashForm.amount <= 0) return toast.error("Enter a valid amount");
-    const { error } = await supabase.from("cash_ledger" as any).insert({
+    const payload = {
       entry_date: cashForm.entry_date, type: cashForm.type, amount: +cashForm.amount,
-      description: cashForm.description || null, created_by: user?.id,
-    });
+      description: cashForm.description || null, party_id: cashForm.party_id || null,
+    };
+    const { error } = editingCashId
+      ? await supabase.from("cash_ledger" as any).update(payload).eq("id", editingCashId)
+      : await supabase.from("cash_ledger" as any).insert({ ...payload, created_by: user?.id });
     if (error) return toast.error(error.message);
-    toast.success("Saved"); setCashSheet(false);
-    setCashForm({ entry_date: new Date().toISOString().slice(0, 10), type: "in", amount: 0, description: "" });
+    toast.success("Saved"); setCashSheet(false); setEditingCashId(null);
+    setCashForm(emptyCashForm());
     loadCashLedger();
   };
 
@@ -1544,7 +1557,7 @@ export default function EngineerApp() {
                         Balance: <span className={`font-semibold ${balance < 0 ? "text-destructive" : "text-foreground"}`}>{fmtINR(balance)}</span>
                       </p>
                     </div>
-                    <Button onClick={() => setCashSheet(true)} className="rounded-full bg-foreground text-background hover:bg-foreground/90 h-9 text-sm">
+                    <Button onClick={openNewCash} className="rounded-full bg-foreground text-background hover:bg-foreground/90 h-9 text-sm">
                       <Plus className="h-4 w-4 mr-1" /> New Entry
                     </Button>
                   </div>
@@ -1557,13 +1570,15 @@ export default function EngineerApp() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {[...withBalance].reverse().map((r, i) => (
                         <motion.div key={r.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-                          className="bg-card border border-border/50 rounded-2xl p-4 flex flex-col gap-2">
+                          onClick={() => openEditCash(r)}
+                          className="bg-card border border-border/50 rounded-2xl p-4 flex flex-col gap-2 cursor-pointer hover:shadow-md transition-shadow">
                           <div className="flex items-start justify-between gap-2">
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${r.type === "in" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-red-100 text-red-700 border-red-200"}`}>
                               {r.type === "in" ? "Credit" : "Debit"}
                             </span>
                             <p className={`text-sm font-bold ${r.type === "in" ? "text-emerald-600" : "text-destructive"}`}>{fmtINR(r.amount)}</p>
                           </div>
+                          {r.parties?.name && <p className="text-xs font-medium text-foreground">{r.parties.name}</p>}
                           {r.description && <p className="text-xs text-muted-foreground">{r.description}</p>}
                           <div className="flex items-center justify-between mt-auto pt-1 border-t border-border/30 text-xs text-muted-foreground">
                             <span>{fmtDate(r.entry_date)} · {cashProfiles[r.created_by] || "—"}</span>
@@ -1802,12 +1817,12 @@ export default function EngineerApp() {
         </SheetContent>
       </Sheet>
 
-      <Sheet open={cashSheet} onOpenChange={setCashSheet}>
+      <Sheet open={cashSheet} onOpenChange={(v) => { setCashSheet(v); if (!v) { setEditingCashId(null); setCashForm(emptyCashForm()); } }}>
         <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto flex flex-col gap-0 p-0">
           <SheetHeader className="px-5 pt-5 pb-4 border-b border-border/50 bg-background sticky top-0 z-10">
             <SheetTitle className="flex items-center gap-2 text-base">
               <Banknote className="h-5 w-5 text-accent" />
-              New Cash Entry
+              {editingCashId ? "Edit Cash Entry" : "New Cash Entry"}
             </SheetTitle>
           </SheetHeader>
 
@@ -1833,6 +1848,16 @@ export default function EngineerApp() {
               </Select>
             </div>
             <div>
+              <Label className="text-xs text-muted-foreground">Party (optional)</Label>
+              <Select value={cashForm.party_id || "none"} onValueChange={v => setCashForm({ ...cashForm, party_id: v === "none" ? "" : v })}>
+                <SelectTrigger className="mt-1.5 rounded-xl h-10"><SelectValue placeholder="Type to search a party..." /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  <SelectItem value="none">— No party —</SelectItem>
+                  {parties.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label className="text-xs text-muted-foreground">Description</Label>
               <Textarea rows={3} value={cashForm.description} onChange={e => setCashForm({ ...cashForm, description: e.target.value })} className="mt-1.5 rounded-xl resize-none text-sm" placeholder="e.g. Received from client, paid for fuel" />
             </div>
@@ -1840,13 +1865,14 @@ export default function EngineerApp() {
 
           <div className="px-5 py-4 border-t border-border/50 bg-background">
             <Button onClick={saveCashEntry} className="w-full rounded-xl h-12 bg-foreground text-background font-semibold">
-              Save Entry
+              {editingCashId ? "Update Entry" : "Save Entry"}
             </Button>
           </div>
         </SheetContent>
       </Sheet>
 
       <AvatarCropDialog imageSrc={pendingImage} open={cropOpen} onCancel={cancelAvatarCrop} onConfirm={confirmAvatarCrop} busy={avatarUploading} />
+      <AIAssistant />
     </div>
   );
 }

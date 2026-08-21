@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { chat, loadModel, type ChatMessage, type ModelProgress } from "@/lib/ai/engine";
+import { chatRemote } from "@/lib/ai/remote";
 import { fmtINR } from "@/lib/format";
 import {
   getDashboardSnapshot, findParties, getPartyBalance, getCashLedgerSummary, getRecentDocuments,
@@ -128,16 +129,26 @@ export function useAIAssistant() {
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: `${question}\n\nFACTS:\n${facts}` },
       ];
-      const onProgress = (p: ModelProgress) => {
-        if (p.status === "progress" && typeof p.progress === "number") {
-          setLoadingModel(true);
-          setModelProgress(p.progress);
-        }
-        if (p.status === "ready" || p.status === "done") setLoadingModel(false);
-      };
-      const reply = await chat(chatMessages, { onProgress });
-      setLoadingModel(false);
-      setModelReady(true);
+
+      // Prefer the free-tier Gemini proxy (better quality, no local
+      // download) — fall back to the fully-local model if it's
+      // unreachable (no internet, local dev without the function, daily
+      // free quota used up, etc.), so the assistant still works either way.
+      let reply: string;
+      try {
+        reply = await chatRemote(chatMessages);
+      } catch {
+        const onProgress = (p: ModelProgress) => {
+          if (p.status === "progress" && typeof p.progress === "number") {
+            setLoadingModel(true);
+            setModelProgress(p.progress);
+          }
+          if (p.status === "ready" || p.status === "done") setLoadingModel(false);
+        };
+        reply = await chat(chatMessages, { onProgress });
+        setLoadingModel(false);
+        setModelReady(true);
+      }
       setMessages(prev => [...prev, { role: "assistant", content: reply || "Sorry, I couldn't generate a response." }]);
     } catch (err: any) {
       setLoadingModel(false);

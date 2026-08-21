@@ -2,7 +2,7 @@
 // free tier so the API key never reaches the browser. GEMINI_API_KEY must
 // be set as a server-side environment variable in the Vercel project
 // (NOT prefixed with VITE_, or it would get bundled into client JS).
-const MODEL = "gemini-2.0-flash";
+const MODEL = "gemini-3.6-flash";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

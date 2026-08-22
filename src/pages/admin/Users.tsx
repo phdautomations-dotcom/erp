@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, KeyRound, PenTool, Shield, History } from "lucide-react";
+import { Plus, Trash2, KeyRound, PenTool, Shield, History, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { PERM_MODULES, type UserPerm, type PermModule } from "@/hooks/usePermissions";
@@ -38,6 +38,7 @@ const ACTION_COLORS: Record<string, string> = {
 export default function Users() {
   const confirm = useConfirm();
   const [rows, setRows] = useState<any[]>([]);
+  const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState<any>({ email: "", password: "", display_name: "", phone: "", role: "engineer" });
@@ -179,13 +180,25 @@ export default function Users() {
     setActOpen(true);
   };
 
+  // This table is naturally small (employee headcount), so filtering the
+  // already-loaded list client-side is fine — no need for a server round trip.
+  const filtered = rows.filter(u => {
+    if (!q) return true;
+    const needle = q.toLowerCase();
+    return (u.display_name || "").toLowerCase().includes(needle) || (u.phone || "").toLowerCase().includes(needle);
+  });
+
   return (
     <AdminLayout title="Users & Roles">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <p className="text-sm text-muted-foreground">Create staff accounts and manage their roles and permissions.</p>
+      <div className="flex flex-wrap items-center gap-3 mb-5">
+        <p className="text-sm text-muted-foreground shrink-0">Create staff accounts and manage their roles and permissions.</p>
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or phone" className="pl-9 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm" />
+        </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-full btn-gradient">
+            <Button className="rounded-full btn-gradient ml-auto">
               <Plus className="h-4 w-4 mr-1" /> New User
             </Button>
           </DialogTrigger>
@@ -216,7 +229,7 @@ export default function Users() {
 
       {/* Mobile: stacked cards — no horizontal scrolling */}
       <div className="md:hidden space-y-3">
-        {rows.map(u => (
+        {filtered.map(u => (
           <div key={u.id} className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
@@ -251,7 +264,7 @@ export default function Users() {
             </div>
           </div>
         ))}
-        {rows.length === 0 && <p className="p-12 text-center text-muted-foreground font-medium">No users found.</p>}
+        {filtered.length === 0 && <p className="p-12 text-center text-muted-foreground font-medium">{q ? "No users match your search" : "No users found."}</p>}
       </div>
 
       <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
@@ -266,7 +279,7 @@ export default function Users() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
-              {rows.map(u => (
+              {filtered.map(u => (
                 <tr key={u.id} className="transition-colors hover:bg-muted/30">
                   <td className="px-6 py-4 font-medium">{u.display_name}</td>
                   <td className="px-6 py-4 text-muted-foreground">{u.phone || "—"}</td>
@@ -299,6 +312,7 @@ export default function Users() {
                   </td>
                 </tr>
               ))}
+              {filtered.length === 0 && <tr><td colSpan={4} className="p-12 text-center text-muted-foreground font-medium">{q ? "No users match your search" : "No users found."}</td></tr>}
             </tbody>
           </table>
         </div>

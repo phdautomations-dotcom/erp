@@ -8,23 +8,36 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { fmtNum, fmtDate } from "@/lib/format";
 import { toast } from "sonner";
-import { Plus, AlertTriangle } from "lucide-react";
+import { Plus, AlertTriangle, Search } from "lucide-react";
 
 export default function Inventory() {
   const [items, setItems] = useState<any[]>([]);
+  const [itemCount, setItemCount] = useState(0);
+  const [q, setQ] = useState("");
+  // Full unbounded product list for the Stock Adjustment dropdown — a
+  // selector needs every option, unlike the "recent" display list below,
+  // which mirrors how party-select dropdowns elsewhere stay unlimited too.
+  const [allItems, setAllItems] = useState<any[]>([]);
   const [moves, setMoves] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>({ movement: "in", quantity: 0 });
 
   const load = () => {
-    supabase.from("items").select("*").eq("type", "product").order("name").then(({ data }) => setItems(data || []));
+    supabase.from("items").select("*").eq("type", "product").order("name").limit(50).then(({ data }) => setItems(data || []));
+    supabase.from("items").select("*").eq("type", "product").order("name").then(({ data }) => setAllItems(data || []));
+    // Head-only exact count so the "N products tracked" figure stays accurate
+    // even though the list above is capped at 50 rows.
+    supabase.from("items").select("*", { count: "exact", head: true }).eq("type", "product").then(({ count }) => setItemCount(count || 0));
     supabase.from("stock_ledger").select("*, items(name, unit)").order("created_at", { ascending: false }).limit(100).then(({ data }) => setMoves(data || []));
   };
   useEffect(() => { document.title = "Inventory | PHD ERP"; load(); }, []);
 
+  // Client-side filter, matching Items.tsx's own search pattern for consistency.
+  const filteredItems = items.filter(it => !q || it.name.toLowerCase().includes(q.toLowerCase()) || (it.hsn_code || "").includes(q) || (it.barcode || "").includes(q));
+
   const adjust = async () => {
     if (!form.item_id || !form.quantity) return toast.error("Item and quantity required");
-    const it = items.find(x => x.id === form.item_id);
+    const it = allItems.find(x => x.id === form.item_id);
     if (!it) return;
     await supabase.from("stock_ledger").insert({ item_id: form.item_id, movement: form.movement, quantity: +form.quantity, notes: form.notes });
     let newStock = Number(it.current_stock);
@@ -37,17 +50,21 @@ export default function Inventory() {
 
   return (
     <AdminLayout title="Inventory">
-      <div className="flex justify-between items-center mb-5">
-        <p className="text-sm text-muted-foreground">{items.length} products tracked</p>
+      <div className="flex flex-wrap items-center gap-3 mb-5">
+        <p className="text-sm text-muted-foreground shrink-0">{itemCount} products tracked</p>
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, HSN, barcode" className="pl-9 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm" />
+        </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="rounded-full btn-gradient"><Plus className="h-4 w-4 mr-1" /> Stock Adjustment</Button></DialogTrigger>
+          <DialogTrigger asChild><Button className="rounded-full btn-gradient ml-auto"><Plus className="h-4 w-4 mr-1" /> Stock Adjustment</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Stock Adjustment</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div><Label>Item</Label>
                 <Select value={form.item_id || ""} onValueChange={v => setForm({ ...form, item_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Select item" /></SelectTrigger>
-                  <SelectContent className="max-h-72">{items.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}</SelectContent>
+                  <SelectContent className="max-h-72">{allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -71,7 +88,7 @@ export default function Inventory() {
           <div className="p-5 border-b border-border/50 font-display text-sm font-semibold">Stock Levels</div>
           {/* Mobile: stacked cards */}
           <div className="md:hidden divide-y divide-border/50">
-            {items.map(it => {
+            {filteredItems.map(it => {
               const low = Number(it.current_stock) <= Number(it.low_stock_threshold || 0);
               return (
                 <div key={it.id} className="p-4">
@@ -83,18 +100,19 @@ export default function Inventory() {
                 </div>
               );
             })}
-            {items.length === 0 && <p className="p-8 text-center text-muted-foreground">No products tracked.</p>}
+            {filteredItems.length === 0 && <p className="p-8 text-center text-muted-foreground">{q ? "No products match your search" : "No products tracked."}</p>}
           </div>
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">
               <thead className="bg-muted/30 text-xs font-medium text-muted-foreground"><tr><th className="px-6 py-4 text-left">Item</th><th className="px-6 py-4 text-right">Current</th><th className="px-6 py-4 text-right">Threshold</th></tr></thead>
               <tbody className="divide-y divide-border/50">
-              {items.map(it => {
+              {filteredItems.map(it => {
                 const low = Number(it.current_stock) <= Number(it.low_stock_threshold || 0);
                 return <tr key={it.id} className="transition-colors hover:bg-muted/30"><td className="px-6 py-4 font-medium">{it.name}</td>
                   <td className={`px-6 py-4 text-right ${low ? "text-destructive font-medium" : ""}`}>{low && <AlertTriangle className="h-3.5 w-3.5 inline mr-1" />}{fmtNum(it.current_stock, 3)} {it.unit}</td>
                   <td className="px-6 py-4 text-right text-muted-foreground">{fmtNum(it.low_stock_threshold, 3)}</td></tr>;
               })}
+              {filteredItems.length === 0 && <tr><td colSpan={3} className="p-8 text-center text-muted-foreground">{q ? "No products match your search" : "No products tracked."}</td></tr>}
             </tbody>
           </table>
           </div>

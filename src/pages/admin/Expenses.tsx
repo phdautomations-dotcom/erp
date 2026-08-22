@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { fmtINR } from "@/lib/format";
 import { classifyText } from "@/lib/ai/remote";
-import { Plus, Trash2, Sparkles } from "lucide-react";
+import { Plus, Trash2, Sparkles, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { toast } from "sonner";
@@ -19,6 +19,8 @@ export default function Expenses() {
   const { hasRole } = useAuth();
   const confirm = useConfirm();
   const [rows, setRows] = useState<any[]>([]);
+  const [q, setQ] = useState("");
+  const [totalAmount, setTotalAmount] = useState(0);
   const [employees, setEmployees] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>({ expense_date: new Date().toISOString().slice(0, 10), mode: "cash", category: "Office", amount: 0 });
@@ -33,13 +35,40 @@ export default function Expenses() {
     } catch { /* silent — category stays as-is */ } finally { setSuggesting(false); }
   };
 
+  // No search: only the most recent 50 expenses (a quick recent view, not a
+  // full dump). With a search: a server-side query across description,
+  // category, mode, and the created-by profile's display name.
   const load = async () => {
-    const { data } = await supabase.from("expenses").select("*, profiles(display_name)").order("expense_date", { ascending: false });
-    setRows(data || []);
+    const term = q.trim();
+    if (term) {
+      const needle = `%${term}%`;
+      const { data } = await supabase.from("expenses")
+        .select("*, profiles!inner(display_name)")
+        .or(`description.ilike.${needle},category.ilike.${needle},mode.ilike.${needle},profiles.display_name.ilike.${needle}`)
+        .order("expense_date", { ascending: false })
+        .limit(100);
+      setRows(data || []);
+    } else {
+      const { data } = await supabase.from("expenses")
+        .select("*, profiles(display_name)")
+        .order("expense_date", { ascending: false })
+        .limit(50);
+      setRows(data || []);
+    }
     const { data: profs } = await supabase.from("profiles").select("*");
     setEmployees(profs || []);
+    // All-time total via a slim one-column aggregate query (no joins, no
+    // row limit) so the "Total" figure stays accurate even though the main
+    // list above is capped to a recent/matching window.
+    const { data: amounts } = await supabase.from("expenses").select("amount");
+    setTotalAmount((amounts || []).reduce((s, r: any) => s + Number(r.amount), 0));
   };
-  useEffect(() => { document.title = "Expenses | PHD ERP"; load(); }, []);
+  useEffect(() => { document.title = "Expenses | PHD ERP"; }, []);
+  // Debounce the search query so it doesn't fire a request on every keystroke.
+  useEffect(() => {
+    const t = setTimeout(load, q ? 300 : 0);
+    return () => clearTimeout(t);
+  }, [q]);
 
   const save = async () => {
     if (!form.amount) return toast.error("Amount required");
@@ -56,10 +85,14 @@ export default function Expenses() {
 
   return (
     <AdminLayout title="Expenses">
-      <div className="flex justify-between mb-5">
-        <p className="text-sm text-muted-foreground">Total: <span className="font-semibold text-foreground">{fmtINR(rows.reduce((s, r) => s + Number(r.amount), 0))}</span></p>
+      <div className="flex flex-wrap items-center gap-3 mb-5">
+        <p className="text-sm text-muted-foreground shrink-0">Total: <span className="font-semibold text-foreground">{fmtINR(totalAmount)}</span></p>
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by description, category, mode" className="pl-9 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm" />
+        </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="rounded-full btn-gradient"><Plus className="h-4 w-4 mr-1" /> New Expense</Button></DialogTrigger>
+          <DialogTrigger asChild><Button className="rounded-full btn-gradient ml-auto"><Plus className="h-4 w-4 mr-1" /> New Expense</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New Expense</DialogTitle></DialogHeader>
             <div className="space-y-3">
@@ -123,7 +156,7 @@ export default function Expenses() {
             </div>
           </div>
         ))}
-        {rows.length === 0 && <p className="p-12 text-center text-muted-foreground font-medium">No expenses yet.</p>}
+        {rows.length === 0 && <p className="p-12 text-center text-muted-foreground font-medium">{q ? "No expenses match your search" : "No expenses yet."}</p>}
       </div>
 
       <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
@@ -140,7 +173,7 @@ export default function Expenses() {
                   <td className="px-6 py-4 text-right">{hasRole("admin") && <Button variant="ghost" size="icon" onClick={() => del(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</td>
               </tr>
             ))}
-              {rows.length === 0 && <tr><td colSpan={6} className="p-12 text-center text-muted-foreground font-medium">No expenses yet.</td></tr>}
+              {rows.length === 0 && <tr><td colSpan={6} className="p-12 text-center text-muted-foreground font-medium">{q ? "No expenses match your search" : "No expenses yet."}</td></tr>}
           </tbody>
         </table>
         </div>

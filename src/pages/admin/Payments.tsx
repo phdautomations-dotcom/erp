@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Download, Trash2, Printer } from "lucide-react";
+import { Plus, Download, Trash2, Printer, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ export default function Payments() {
   const confirm = useConfirm();
   const [direction, setDirection] = useState<"received" | "made">("received");
   const [rows, setRows] = useState<any[]>([]);
+  const [q, setQ] = useState("");
   const [parties, setParties] = useState<any[]>([]);
   const [openDocs, setOpenDocs] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>({});
@@ -27,15 +28,39 @@ export default function Payments() {
   const [form, setForm] = useState<any>({ payment_date: new Date().toISOString().slice(0, 10), mode: "bank_transfer", amount: 0 });
   const [allocs, setAllocs] = useState<Record<string, number>>({});
 
+  // No search: only the most recent 50 payments for the active direction tab
+  // (a quick recent view, not a full dump). With a search: a server-side
+  // query across payment number/mode/party name within the same direction.
   const load = async () => {
-    const { data } = await supabase.from("payments").select("*, parties(name)").eq("direction", direction).order("payment_date", { ascending: false });
-    setRows(data || []);
+    const term = q.trim();
+    if (term) {
+      const needle = `%${term}%`;
+      const { data } = await supabase.from("payments")
+        .select("*, parties!inner(name)")
+        .eq("direction", direction)
+        .or(`payment_number.ilike.${needle},mode.ilike.${needle},parties.name.ilike.${needle}`)
+        .order("payment_date", { ascending: false })
+        .limit(100);
+      setRows(data || []);
+    } else {
+      const { data } = await supabase.from("payments")
+        .select("*, parties(name)")
+        .eq("direction", direction)
+        .order("payment_date", { ascending: false })
+        .limit(50);
+      setRows(data || []);
+    }
   };
   useEffect(() => {
-    document.title = "Payments | PHD ERP"; load();
+    document.title = "Payments | PHD ERP";
     supabase.from("parties").select("*").order("name").then(({ data }) => setParties(data || []));
     supabase.from("company_settings").select("*").limit(1).single().then(({ data }) => setSettings(data || {}));
-  }, [direction]);
+  }, []);
+  // Debounce the search query so it doesn't fire a request on every keystroke.
+  useEffect(() => {
+    const t = setTimeout(load, q ? 300 : 0);
+    return () => clearTimeout(t);
+  }, [direction, q]);
 
   useEffect(() => {
     if (!form.party_id) { setOpenDocs([]); return; }
@@ -205,12 +230,16 @@ export default function Payments() {
 
   return (
     <AdminLayout title="Payments">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+      <div className="flex flex-wrap items-center gap-3 mb-5">
         <Tabs value={direction} onValueChange={(v) => setDirection(v as any)}>
           <TabsList><TabsTrigger value="received">Received</TabsTrigger><TabsTrigger value="made">Made</TabsTrigger></TabsList>
         </Tabs>
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by number, party, mode" className="pl-9 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm" />
+        </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="rounded-full btn-gradient"><Plus className="h-4 w-4 mr-1" /> New Payment</Button></DialogTrigger>
+          <DialogTrigger asChild><Button className="rounded-full btn-gradient ml-auto"><Plus className="h-4 w-4 mr-1" /> New Payment</Button></DialogTrigger>
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader><DialogTitle>New {direction === "received" ? "Receipt" : "Payment"}</DialogTitle></DialogHeader>
             <div className="space-y-3">
@@ -302,7 +331,7 @@ export default function Payments() {
             </div>
           </div>
         ))}
-        {rows.length === 0 && <p className="p-8 text-center text-muted-foreground">No payments yet.</p>}
+        {rows.length === 0 && <p className="p-8 text-center text-muted-foreground">{q ? "No payments match your search" : "No payments yet."}</p>}
       </div>
 
       {/* Desktop: full table */}
@@ -326,7 +355,7 @@ export default function Payments() {
                 </td>
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No payments yet.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">{q ? "No payments match your search" : "No payments yet."}</td></tr>}
           </tbody>
         </table>
         </div>

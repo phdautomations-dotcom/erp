@@ -59,33 +59,57 @@ function GlobalSearch() {
     if (query.trim().length < 2) { setResults([]); setLoading(false); return; }
     setLoading(true);
     const like = `%${query}%`;
-    const [parties, items, docs, expenses] = await Promise.all([
+    const [parties, items, docs, expenses, payments, cash, leads, profiles] = await Promise.all([
       supabase.from("parties").select("id,name,phone,city").ilike("name", like).limit(4),
       supabase.from("items").select("id,name,sale_price,unit").ilike("name", like).limit(4),
       supabase.from("documents").select("id,doc_number,doc_type,total,doc_date").ilike("doc_number", like).limit(4),
       (supabase as any).from("expenses").select("id,description,amount,category").ilike("description", like).limit(3),
+      supabase.from("payments").select("id,payment_number,amount,direction").ilike("payment_number", like).limit(3),
+      (supabase as any).from("cash_ledger").select("id,description,amount,type").ilike("description", like).limit(3),
+      (supabase as any).from("leads").select("id,name,phone,status").ilike("name", like).limit(3),
+      supabase.from("profiles").select("user_id,display_name,phone").ilike("display_name", like).limit(3),
     ]);
 
     const mapped: SearchResult[] = [
       ...(parties.data || []).map((p: any) => ({
         id: p.id, label: p.name,
         sub: [p.city, p.phone].filter(Boolean).join(" · "),
-        href: "/admin/parties", icon: Users,
+        href: `/admin/parties/${p.id}`, icon: Users,
       })),
       ...(items.data || []).map((i: any) => ({
         id: i.id, label: i.name,
         sub: `${fmtINR(i.sale_price)} / ${i.unit || "pc"}`,
-        href: "/admin/items", icon: Package,
+        href: `/admin/items/${i.id}`, icon: Package,
       })),
       ...(docs.data || []).map((d: any) => ({
         id: d.id, label: d.doc_number,
         sub: `${d.doc_type?.replace("_", " ")} · ${fmtINR(d.total)}`,
-        href: "/admin/sales", icon: FileText,
+        href: `/admin/${["purchase_bill", "purchase_order"].includes(d.doc_type) ? "purchases" : "sales"}/${d.id}`, icon: FileText,
       })),
       ...(expenses.data || []).map((e: any) => ({
         id: e.id, label: e.description || e.category,
         sub: `Expense · ${fmtINR(e.amount)}`,
         href: "/admin/expenses", icon: Receipt,
+      })),
+      ...(payments.data || []).map((p: any) => ({
+        id: p.id, label: p.payment_number,
+        sub: `Payment ${p.direction === "received" ? "received" : "made"} · ${fmtINR(p.amount)}`,
+        href: "/admin/payments", icon: Wallet,
+      })),
+      ...(cash.data || []).map((c: any) => ({
+        id: c.id, label: c.description || (c.type === "in" ? "Credit entry" : "Debit entry"),
+        sub: `Cash ledger · ${fmtINR(c.amount)}`,
+        href: "/admin/cash-ledger", icon: Banknote,
+      })),
+      ...(leads.data || []).map((l: any) => ({
+        id: l.id, label: l.name,
+        sub: [l.status, l.phone].filter(Boolean).join(" · "),
+        href: "/admin/leads", icon: Inbox,
+      })),
+      ...(profiles.data || []).map((u: any) => ({
+        id: u.user_id, label: u.display_name || "Unnamed",
+        sub: [u.phone].filter(Boolean).join(" · ") || "User",
+        href: "/admin/users", icon: UserCog,
       })),
     ];
     setResults(mapped);
@@ -106,10 +130,20 @@ function GlobalSearch() {
   };
 
   return (
-    <div ref={wrapRef} className="relative hidden md:block w-60">
-      {/* Input pill */}
+    <div ref={wrapRef} className="relative">
+      {/* Mobile: icon-only trigger — the full pill doesn't fit the header at phone widths */}
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="md:hidden flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground transition-colors shrink-0"
+        style={{ boxShadow: "var(--neu-sm)", background: "hsl(220 22% 94%)" }}
+        title="Search"
+      >
+        <Search className="h-4 w-4" />
+      </button>
+
+      {/* Desktop: inline pill, always visible */}
       <div
-        className="flex items-center gap-2 px-3.5 h-9 rounded-full border transition-all"
+        className="hidden md:flex items-center gap-2 px-3.5 h-9 w-60 rounded-full border transition-all"
         style={{
           background: "hsl(220 22% 94%)",
           borderColor: open ? "hsl(212 90% 45%)" : "hsl(220 18% 86%)",
@@ -122,7 +156,7 @@ function GlobalSearch() {
           value={q}
           onChange={e => { setQ(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
-          placeholder="Search parties, invoices…"
+          placeholder="Search everything…"
           className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
         />
         {q && (
@@ -132,7 +166,29 @@ function GlobalSearch() {
         )}
       </div>
 
-      {/* Dropdown results */}
+      {/* Mobile: full-width input, only rendered while open (so autoFocus fires on each open) */}
+      {open && (
+        <div
+          className="md:hidden fixed left-3 right-3 top-16 z-[70] flex items-center gap-2 px-3.5 h-11 rounded-full border shadow-lg"
+          style={{ background: "hsl(220 22% 97%)", borderColor: "hsl(212 90% 45%)" }}
+        >
+          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+          <input
+            autoFocus
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder="Search everything…"
+            className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
+          />
+          {q && (
+            <button onClick={() => setQ("")}>
+              <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Dropdown results — shared markup, positioned per breakpoint */}
       <AnimatePresence>
         {open && (q.length >= 2) && (
           <motion.div
@@ -140,7 +196,7 @@ function GlobalSearch() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-11 left-0 w-80 rounded-2xl overflow-hidden z-50"
+            className="fixed left-3 right-3 top-28 md:absolute md:left-0 md:right-auto md:top-11 md:w-80 rounded-2xl overflow-hidden z-[70]"
             style={{
               background: "rgba(255,255,255,0.92)",
               backdropFilter: "blur(20px)",

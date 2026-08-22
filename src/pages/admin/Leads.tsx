@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fmtDate } from "@/lib/format";
 import { toast } from "sonner";
@@ -11,9 +13,33 @@ const STATUSES = ["new", "contacted", "quoted", "won", "lost"] as const;
 
 export default function Leads() {
   const [rows, setRows] = useState<any[]>([]);
+  const [q, setQ] = useState("");
   const nav = useNavigate();
-  const load = async () => { const { data } = await supabase.from("leads").select("*").order("created_at", { ascending: false }); setRows(data || []); };
-  useEffect(() => { document.title = "Leads | PHD ERP"; load(); }, []);
+
+  // No search: only the most recent 50 leads (a quick recent view, not a
+  // full dump). With a search: a server-side query across name, company,
+  // phone, email, and machine type.
+  const load = async () => {
+    const term = q.trim();
+    if (term) {
+      const needle = `%${term}%`;
+      const { data } = await supabase.from("leads")
+        .select("*")
+        .or(`name.ilike.${needle},company.ilike.${needle},phone.ilike.${needle},email.ilike.${needle},machine_type.ilike.${needle}`)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      setRows(data || []);
+    } else {
+      const { data } = await supabase.from("leads").select("*").order("created_at", { ascending: false }).limit(50);
+      setRows(data || []);
+    }
+  };
+  useEffect(() => { document.title = "Leads | PHD ERP"; }, []);
+  // Debounce the search query so it doesn't fire a request on every keystroke.
+  useEffect(() => {
+    const t = setTimeout(load, q ? 300 : 0);
+    return () => clearTimeout(t);
+  }, [q]);
 
   const updateStatus = async (id: string, status: any) => {
     await supabase.from("leads").update({ status }).eq("id", id); load();
@@ -32,6 +58,10 @@ export default function Leads() {
 
   return (
     <AdminLayout title="Leads">
+      <div className="relative max-w-sm mb-5">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, company, phone, email" className="pl-9 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm" />
+      </div>
       {/* Mobile: stacked cards — no horizontal scrolling */}
       <div className="md:hidden space-y-3">
         {rows.map(l => (
@@ -57,7 +87,7 @@ export default function Leads() {
             </div>
           </div>
         ))}
-        {rows.length === 0 && <p className="p-8 text-center text-muted-foreground">No leads yet. Submissions from the website appear here.</p>}
+        {rows.length === 0 && <p className="p-8 text-center text-muted-foreground">{q ? "No leads match your search" : "No leads yet. Submissions from the website appear here."}</p>}
       </div>
 
       <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
@@ -80,7 +110,7 @@ export default function Leads() {
                   <td className="px-6 py-4 text-right"><Button size="sm" variant="outline" onClick={() => convert(l)} className="rounded-full shadow-sm hover:shadow-md transition-all duration-300">Convert</Button></td>
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No leads yet. Submissions from the website appear here.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">{q ? "No leads match your search" : "No leads yet. Submissions from the website appear here."}</td></tr>}
           </tbody>
         </table>
         </div>

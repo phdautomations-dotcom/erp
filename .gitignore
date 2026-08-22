@@ -33,3 +33,4 @@ supabase/.temp/
 
 # Vercel CLI local project link
 .vercel
+.env*

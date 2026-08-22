@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fmtINR } from "@/lib/format";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -13,6 +14,8 @@ export default function Parties() {
   const { hasRole, canWrite } = useAuth();
   const [rows, setRows] = useState<any[]>([]);
   const [q, setQ] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [stateFilter, setStateFilter] = useState("all");
 
   const load = async () => {
     const { data, error } = await supabase.from("parties").select("*").order("name");
@@ -27,14 +30,41 @@ export default function Parties() {
     if (error) toast.error(error.message); else { toast.success("Deleted"); load(); }
   };
 
-  const filtered = rows.filter(r => !q || r.name.toLowerCase().includes(q.toLowerCase()) || (r.gstin || "").toLowerCase().includes(q.toLowerCase()));
+  const states = Array.from(new Set(rows.map(r => r.state).filter(Boolean))).sort();
+
+  const filtered = rows.filter(r => {
+    if (q && !r.name.toLowerCase().includes(q.toLowerCase()) && !(r.gstin || "").toLowerCase().includes(q.toLowerCase())) return false;
+    if (typeFilter !== "all" && r.type !== typeFilter) return false;
+    if (stateFilter !== "all" && r.state !== stateFilter) return false;
+    return true;
+  });
 
   return (
     <AdminLayout title="Parties (Customers & Vendors)">
       <div className="flex flex-wrap gap-3 items-center justify-between mb-5">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or GSTIN" className="pl-9 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm" />
+        <div className="flex flex-wrap items-center gap-3 flex-1">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or GSTIN" className="pl-9 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm" />
+          </div>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-36 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="customer">Customer</SelectItem>
+              <SelectItem value="vendor">Vendor</SelectItem>
+              <SelectItem value="both">Both</SelectItem>
+            </SelectContent>
+          </Select>
+          {states.length > 0 && (
+            <Select value={stateFilter} onValueChange={setStateFilter}>
+              <SelectTrigger className="w-40 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm"><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-64">
+                <SelectItem value="all">All States</SelectItem>
+                {states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         {canWrite && (
           <Link to="/admin/parties/new"><Button className="rounded-full bg-foreground text-background hover:bg-foreground/90"><Plus className="h-4 w-4 mr-1" /> New Party</Button></Link>

@@ -9,6 +9,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import { AvatarCropDialog } from "@/components/AvatarCropDialog";
+import { AIAssistant } from "@/components/AIAssistant";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtINR } from "@/lib/format";
 
@@ -554,6 +555,7 @@ function TopHeader({ title }: { title?: string }) {
 
 export const AdminLayout = ({ children, title }: { children: ReactNode; title?: string }) => {
   return (
+    <>
     <div
       className="w-full flex flex-col overflow-hidden"
       style={{
@@ -575,5 +577,7 @@ export const AdminLayout = ({ children, title }: { children: ReactNode; title?: 
         {children}
       </motion.main>
     </div>
+    <AIAssistant />
+    </>
   );
 };

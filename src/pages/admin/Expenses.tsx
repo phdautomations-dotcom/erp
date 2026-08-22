@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { fmtINR } from "@/lib/format";
-import { Plus, Trash2 } from "lucide-react";
+import { classifyText } from "@/lib/ai/remote";
+import { Plus, Trash2, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -19,6 +20,16 @@ export default function Expenses() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>({ expense_date: new Date().toISOString().slice(0, 10), mode: "cash", category: "Office", amount: 0 });
+  const [suggesting, setSuggesting] = useState(false);
+
+  const suggestCategory = async () => {
+    if (!form.description?.trim()) return;
+    setSuggesting(true);
+    try {
+      const suggested = await classifyText(form.description, CATEGORIES);
+      if (suggested) setForm((f: any) => ({ ...f, category: suggested }));
+    } catch { /* silent — category stays as-is */ } finally { setSuggesting(false); }
+  };
 
   const load = async () => {
     const { data } = await supabase.from("expenses").select("*, profiles(display_name)").order("expense_date", { ascending: false });
@@ -72,7 +83,12 @@ export default function Expenses() {
                     </Select>
                   </div>
                 )}
-              <div><Label>Description</Label><Input value={form.description || ""} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
+              <div><Label>Description</Label>
+                <div className="relative">
+                  <Input value={form.description || ""} onChange={e => setForm({ ...form, description: e.target.value })} onBlur={suggestCategory} className="pr-8" />
+                  {suggesting && <Sparkles className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-accent animate-pulse" />}
+                </div>
+              </div>
               <Button onClick={save} className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90">Save</Button>
             </div>
           </DialogContent>

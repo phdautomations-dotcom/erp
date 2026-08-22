@@ -42,9 +42,40 @@ export default function Items() {
             <ScanLine className="h-4 w-4" />
           </Button>
         </div>
-        {canWrite && <Link to="/admin/items/new"><Button className="rounded-full bg-foreground text-background hover:bg-foreground/90"><Plus className="h-4 w-4 mr-1" /> New Item</Button></Link>}
+        {canWrite && <Link to="/admin/items/new"><Button className="rounded-full btn-gradient"><Plus className="h-4 w-4 mr-1" /> New Item</Button></Link>}
       </div>
-    <div className="overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
+    {/* Mobile: stacked cards — no horizontal scrolling */}
+    <div className="md:hidden space-y-3">
+      {filtered.map((it) => {
+        const low = it.type === "product" && Number(it.current_stock) <= Number(it.low_stock_threshold || 0);
+        return (
+          <div key={it.id} className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <Link to={`/admin/items/${it.id}`} className="font-medium transition-colors hover:text-accent truncate block">{it.name}</Link>
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize mt-1 ${it.type === 'service' ? 'bg-indigo-500/10 text-indigo-600' : 'bg-emerald-500/10 text-emerald-600'}`}>{it.type}</span>
+              </div>
+              <p className="font-semibold shrink-0">{fmtINR(it.sale_price)}</p>
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <div className="text-xs text-muted-foreground space-x-2">
+                <span>HSN: {it.hsn_code || "—"}</span>
+                <span>GST: {it.gst_rate}%</span>
+                {it.type === "product" && (
+                  <span className={low ? "text-destructive font-medium" : ""}>
+                    {low && <AlertTriangle className="h-3 w-3 inline mr-0.5" />}Stock: {fmtNum(it.current_stock, 3)} {it.unit}
+                  </span>
+                )}
+              </div>
+              {hasRole("admin") && <Button variant="ghost" size="icon" onClick={() => del(it.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+            </div>
+          </div>
+        );
+      })}
+      {filtered.length === 0 && <p className="p-12 text-center font-medium text-muted-foreground">No items found.</p>}
+    </div>
+
+    <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-muted/30 text-xs font-medium text-muted-foreground">

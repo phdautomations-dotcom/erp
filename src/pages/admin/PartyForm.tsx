@@ -248,8 +248,8 @@ export default function PartyForm() {
           </TabsList>
         )}
         <TabsContent value="details" className="mt-0">
-          <div className="rounded-2xl border border-border bg-card p-6 space-y-4 max-w-4xl">
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div><Label>Name *</Label><Input value={form.name || ""} onChange={(e) => u("name", e.target.value)} /></div>
             <div><Label>Type</Label>
               <Select value={form.type || "customer"} onValueChange={(v) => u("type", v)}>
@@ -280,7 +280,7 @@ export default function PartyForm() {
             <div><Label>State Code</Label><Input value={form.state_code || ""} onChange={(e) => u("state_code", e.target.value)} placeholder="e.g. 06" /></div>
             <div><Label>Pincode</Label><Input value={form.pincode || ""} onChange={(e) => u("pincode", e.target.value)} /></div>
           </div>
-          <div className="sm:col-span-2">
+          <div>
             <Label>Plant / Site Location (Map Link)</Label>
             <div className="flex gap-2 mt-1.5">
               <Input value={form.map_url || ""} onChange={(e) => u("map_url", e.target.value)} placeholder="Paste Google Maps Link here" className="flex-1" />
@@ -306,7 +306,7 @@ export default function PartyForm() {
           <div><Label>Shipping Address (if different)</Label><Textarea rows={2} value={form.shipping_address || ""} onChange={(e) => u("shipping_address", e.target.value)} /></div>
           <div><Label>Notes</Label><Textarea rows={2} value={form.notes || ""} onChange={(e) => u("notes", e.target.value)} /></div>
           <div className="flex gap-3 pt-2">
-            <Button onClick={save} disabled={busy} className="rounded-full bg-foreground text-background hover:bg-foreground/90">{busy ? "Saving…" : "Save"}</Button>
+            <Button onClick={save} disabled={busy} className="rounded-full btn-gradient">{busy ? "Saving…" : "Save"}</Button>
             <Link to="/admin/parties"><Button variant="outline" className="rounded-full">Cancel</Button></Link>
           </div>
         </div>
@@ -314,7 +314,7 @@ export default function PartyForm() {
 
         {isEdit && (
           <TabsContent value="ledger" className="mt-0">
-            <div className="rounded-2xl border border-border bg-card p-6 max-w-4xl">
+            <div className="rounded-2xl border border-border bg-card p-6">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <h3 className="font-display font-semibold">Ledger</h3>
               <div className="flex flex-wrap items-center gap-2">
@@ -346,11 +346,11 @@ export default function PartyForm() {
 
       {isEdit && (
         <TabsContent value="machines" className="mt-0">
-          <div className="rounded-2xl border border-border bg-card p-6 max-w-5xl">
+          <div className="rounded-2xl border border-border bg-card p-6">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <h3 className="font-display font-semibold flex items-center gap-2"><Cpu className="h-4 w-4" /> Machines & AMC</h3>
               <Dialog open={machineOpen} onOpenChange={setMachineOpen}>
-                <DialogTrigger asChild><Button size="sm" className="rounded-full bg-foreground text-background hover:bg-foreground/90"><Plus className="h-4 w-4 mr-1" /> Add Machine</Button></DialogTrigger>
+                <DialogTrigger asChild><Button size="sm" className="rounded-full btn-gradient"><Plus className="h-4 w-4 mr-1" /> Add Machine</Button></DialogTrigger>
                 <DialogContent>
                   <DialogHeader><DialogTitle>Add Machine</DialogTitle></DialogHeader>
                   <div className="space-y-3">
@@ -363,7 +363,7 @@ export default function PartyForm() {
                       <div><Label>Installation Date</Label><Input type="date" value={machineForm.installation_date || ""} onChange={e => setMachineForm({...machineForm, installation_date: e.target.value})} /></div>
                       <div><Label>AMC Expiry Date</Label><Input type="date" value={machineForm.amc_expiry_date || ""} onChange={e => setMachineForm({...machineForm, amc_expiry_date: e.target.value})} /></div>
                     </div>
-                    <Button onClick={saveMachine} className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90">Save Machine</Button>
+                    <Button onClick={saveMachine} className="w-full rounded-full btn-gradient">Save Machine</Button>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -386,11 +386,11 @@ export default function PartyForm() {
 
       {isEdit && (
         <TabsContent value="service" className="mt-0">
-          <div className="rounded-2xl border border-border bg-card p-6 max-w-5xl">
+          <div className="rounded-2xl border border-border bg-card p-6">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <h3 className="font-display font-semibold flex items-center gap-2"><Wrench className="h-4 w-4" /> Service Visit History</h3>
             <Dialog open={visitOpen} onOpenChange={setVisitOpen}>
-              <DialogTrigger asChild><Button size="sm" className="rounded-full bg-foreground text-background hover:bg-foreground/90"><Plus className="h-4 w-4 mr-1" /> Log Visit</Button></DialogTrigger>
+              <DialogTrigger asChild><Button size="sm" className="rounded-full btn-gradient"><Plus className="h-4 w-4 mr-1" /> Log Visit</Button></DialogTrigger>
               <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
                 <DialogHeader><DialogTitle>Log Service Visit</DialogTitle></DialogHeader>
                 <div className="space-y-3">
@@ -434,12 +434,41 @@ export default function PartyForm() {
                     <div><Label>Next Visit Date</Label><Input type="date" value={visit.next_visit_date || ""} onChange={e => setVisit({ ...visit, next_visit_date: e.target.value })} /></div>
                   </div>
                   <div><Label>Notes</Label><Textarea rows={2} value={visit.notes || ""} onChange={e => setVisit({ ...visit, notes: e.target.value })} /></div>
-                  <Button onClick={saveVisit} className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90">Save Visit</Button>
+                  <Button onClick={saveVisit} className="w-full rounded-full btn-gradient">Save Visit</Button>
                 </div>
               </DialogContent>
             </Dialog>
           </div>
-          <div className="overflow-x-auto">
+          {/* Mobile: stacked cards — no horizontal scrolling */}
+          <div className="md:hidden space-y-3">
+            {visits.map(v => (
+              <div key={v.id} className="rounded-2xl border border-border/60 bg-muted/10 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium">{v.engineer_name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{v.visit_type} · {v.visit_date}</p>
+                  </div>
+                  <p className="font-semibold shrink-0">{fmtINR(v.charges)}</p>
+                </div>
+                <p className="text-xs mt-2">{v.machine_details || "—"}</p>
+                <div className="text-xs mt-1"><div className="line-clamp-2">{v.work_description}</div>{v.parts_used && <div className="text-muted-foreground">Parts: {v.parts_used}</div>}</div>
+                <div className="flex items-center justify-between mt-3">
+                  <div>
+                    <span className="inline-flex rounded-full px-2 py-0.5 text-xs bg-muted capitalize">{v.status.replace("_", " ")}</span>
+                    {v.status === 'completed' && !v.is_verified && <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold bg-yellow-500/10 text-yellow-600 ml-2">Unverified</span>}
+                    {v.is_verified && <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold bg-green-500/10 text-green-600 ml-2">Verified</span>}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {hasRole("admin") && v.status === 'completed' && !v.is_verified && <Button variant="outline" size="sm" className="h-7 text-xs rounded-full" onClick={() => verifyVisit(v.id)}>Verify</Button>}
+                    <Button variant="ghost" size="icon" onClick={() => delVisit(v.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {visits.length === 0 && <p className="py-6 text-center text-muted-foreground">No service visits logged yet.</p>}
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm min-w-[720px]">
               <thead className="text-xs text-muted-foreground border-b border-border">
                 <tr><th className="text-left py-2">Date</th><th className="text-left">Engineer</th><th className="text-left">Type</th><th className="text-left">Machine</th><th className="text-left">Work</th><th className="text-left">Status</th><th className="text-right">Charges</th><th></th></tr>

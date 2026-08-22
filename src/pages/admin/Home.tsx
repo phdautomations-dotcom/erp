@@ -23,9 +23,11 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.03, duration: 0.3 }}
               onClick={() => navigate(tile.to)}
-              className="group rounded-2xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl flex flex-col items-center justify-center gap-3 p-4 transition-all hover:-translate-y-1 hover:shadow-lg hover:border-accent/50"
+              className="group rounded-2xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl flex flex-col items-center justify-center gap-3 p-4 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-accent/20 hover:border-accent/50"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-foreground/70 transition-colors group-hover:bg-accent group-hover:text-accent-foreground">
+              <div
+                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-foreground/70 transition-all group-hover:text-white group-hover:[background-image:var(--gradient-brand)]"
+              >
                 <tile.icon className="h-5 w-5" />
               </div>
               <span className="text-sm font-semibold text-center text-foreground/85">{tile.label}</span>

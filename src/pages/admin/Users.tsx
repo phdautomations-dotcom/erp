@@ -180,7 +180,7 @@ export default function Users() {
         <p className="text-sm text-muted-foreground">Create staff accounts and manage their roles and permissions.</p>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-full bg-foreground text-background hover:bg-foreground/90">
+            <Button className="rounded-full btn-gradient">
               <Plus className="h-4 w-4 mr-1" /> New User
             </Button>
           </DialogTrigger>
@@ -201,7 +201,7 @@ export default function Users() {
                   </Select>
                 </div>
               </div>
-              <Button onClick={createUser} disabled={busy} className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90">
+              <Button onClick={createUser} disabled={busy} className="w-full rounded-full btn-gradient">
                 {busy ? "Creating…" : "Create User"}
               </Button>
             </div>
@@ -209,7 +209,47 @@ export default function Users() {
         </Dialog>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
+      {/* Mobile: stacked cards — no horizontal scrolling */}
+      <div className="md:hidden space-y-3">
+        {rows.map(u => (
+          <div key={u.id} className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-medium truncate">{u.display_name}</p>
+                <p className="text-xs text-muted-foreground">{u.phone || "—"}</p>
+              </div>
+              <Select value={u.roles[0] || ""} onValueChange={(v) => setRole(u.user_id, v)}>
+                <SelectTrigger className="h-8 w-32 shrink-0"><SelectValue placeholder="No role" /></SelectTrigger>
+                <SelectContent>{ROLES.map(r => <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-end mt-2 flex-wrap">
+              {u.roles.includes("engineer") && (
+                <>
+                  <Button variant="ghost" size="icon" title="Manage Permissions" onClick={() => openPerms(u)}>
+                    <Shield className="h-4 w-4 text-blue-500" />
+                  </Button>
+                  <Button variant="ghost" size="icon" title="View Activity Log" onClick={() => openActivity(u)}>
+                    <History className="h-4 w-4 text-purple-500" />
+                  </Button>
+                </>
+              )}
+              <Button variant="ghost" size="icon" title="Edit Profile Details" onClick={() => openProf(u)}>
+                <PenTool className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" title="Change Password" onClick={() => openPw(u)}>
+                <KeyRound className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" title="Revoke Access" onClick={() => removeRoles(u.user_id)}>
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          </div>
+        ))}
+        {rows.length === 0 && <p className="p-12 text-center text-muted-foreground font-medium">No users found.</p>}
+      </div>
+
+      <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] text-sm">
             <thead className="bg-muted/30 text-xs font-medium text-muted-foreground">
@@ -265,7 +305,7 @@ export default function Users() {
           <DialogHeader><DialogTitle>Change Password{pwUser ? ` — ${pwUser.display_name || ""}` : ""}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>New Password</Label><Input type="text" value={pwValue} onChange={e => setPwValue(e.target.value)} placeholder="Min 6 characters" /></div>
-            <Button onClick={savePw} disabled={pwBusy} className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90">
+            <Button onClick={savePw} disabled={pwBusy} className="w-full rounded-full btn-gradient">
               {pwBusy ? "Saving…" : "Update Password"}
             </Button>
           </div>
@@ -281,7 +321,7 @@ export default function Users() {
             <div><Label>Aadhar Card Number</Label><Input value={profForm.aadhar_number || ""} onChange={e => setProfForm({ ...profForm, aadhar_number: e.target.value })} /></div>
             <div><Label>PAN Card Number</Label><Input value={profForm.pan_number || ""} onChange={e => setProfForm({ ...profForm, pan_number: e.target.value.toUpperCase() })} /></div>
             <div><Label>Monthly Salary (₹)</Label><Input type="number" value={profForm.monthly_salary || 0} onChange={e => setProfForm({ ...profForm, monthly_salary: e.target.value })} /></div>
-            <Button onClick={saveProf} disabled={busy} className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90">
+            <Button onClick={saveProf} disabled={busy} className="w-full rounded-full btn-gradient">
               {busy ? "Saving…" : "Save Profile Details"}
             </Button>
           </div>
@@ -344,7 +384,7 @@ export default function Users() {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" className="rounded-full" onClick={() => setPermOpen(false)}>Cancel</Button>
-            <Button onClick={savePerms} disabled={permBusy} className="rounded-full bg-foreground text-background hover:bg-foreground/90">
+            <Button onClick={savePerms} disabled={permBusy} className="rounded-full btn-gradient">
               {permBusy ? "Saving…" : "Save Permissions"}
             </Button>
           </div>

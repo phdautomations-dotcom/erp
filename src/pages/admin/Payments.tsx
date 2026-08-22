@@ -208,7 +208,7 @@ export default function Payments() {
           <TabsList><TabsTrigger value="received">Received</TabsTrigger><TabsTrigger value="made">Made</TabsTrigger></TabsList>
         </Tabs>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="rounded-full bg-foreground text-background hover:bg-foreground/90"><Plus className="h-4 w-4 mr-1" /> New Payment</Button></DialogTrigger>
+          <DialogTrigger asChild><Button className="rounded-full btn-gradient"><Plus className="h-4 w-4 mr-1" /> New Payment</Button></DialogTrigger>
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader><DialogTitle>New {direction === "received" ? "Receipt" : "Payment"}</DialogTitle></DialogHeader>
             <div className="space-y-3">
@@ -272,12 +272,39 @@ export default function Payments() {
               ) : form.party_id ? (
                 <div className="p-4 text-center border border-dashed border-border rounded-xl text-muted-foreground text-sm">No open documents for this party.<br/>Payment will be recorded as advance.</div>
               ) : null}
-              <Button onClick={save} className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90">Save Payment</Button>
+              <Button onClick={save} className="w-full rounded-full btn-gradient">Save Payment</Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
-      <div className="overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
+      {/* Mobile: stacked cards — no horizontal scrolling */}
+      <div className="md:hidden space-y-3">
+        {rows.map(p => (
+          <div key={p.id} className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-medium truncate">{(p.parties as any)?.name}</p>
+                <p className="font-mono text-xs text-accent">{p.payment_number}</p>
+              </div>
+              <p className="font-semibold shrink-0">{fmtINR(p.amount)}</p>
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{p.payment_date}</span>
+                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 font-medium bg-muted capitalize">{p.mode.replace("_", " ")}</span>
+              </div>
+              <div className="flex items-center">
+                <Button variant="ghost" size="icon" onClick={() => printReceipt(p)} title="Print Receipt/Voucher"><Printer className="h-4 w-4 text-muted-foreground hover:text-foreground" /></Button>
+                {hasRole("admin") && <Button variant="ghost" size="icon" onClick={() => del(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+              </div>
+            </div>
+          </div>
+        ))}
+        {rows.length === 0 && <p className="p-8 text-center text-muted-foreground">No payments yet.</p>}
+      </div>
+
+      {/* Desktop: full table */}
+      <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-muted/30 text-xs font-medium text-muted-foreground"><tr>

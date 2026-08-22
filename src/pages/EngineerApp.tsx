@@ -1126,7 +1126,7 @@ export default function EngineerApp() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-lg">{DOC_LABEL[salesType]}s</h3>
                 {hasPerm(salesType as PermModule, "can_create") && (
-                  <Button onClick={() => openNewDoc(salesType)} className="rounded-full bg-foreground text-background hover:bg-foreground/90 h-9 text-sm">
+                  <Button onClick={() => openNewDoc(salesType)} className="rounded-full btn-gradient h-9 text-sm">
                     <Plus className="h-4 w-4 mr-1" /> New {DOC_LABEL[salesType]}
                   </Button>
                 )}
@@ -1161,7 +1161,7 @@ export default function EngineerApp() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-lg">{DOC_LABEL[purchaseType]}s</h3>
                 {hasPerm("purchase", "can_create") && (
-                  <Button onClick={() => openNewDoc(purchaseType)} className="rounded-full bg-foreground text-background hover:bg-foreground/90 h-9 text-sm">
+                  <Button onClick={() => openNewDoc(purchaseType)} className="rounded-full btn-gradient h-9 text-sm">
                     <Plus className="h-4 w-4 mr-1" /> New {DOC_LABEL[purchaseType]}
                   </Button>
                 )}
@@ -1188,7 +1188,7 @@ export default function EngineerApp() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-lg">My Expenses</h3>
                 {hasPerm("expenses", "can_create") && (
-                  <Button onClick={openNewExp} className="rounded-full bg-foreground text-background hover:bg-foreground/90 h-9 text-sm">
+                  <Button onClick={openNewExp} className="rounded-full btn-gradient h-9 text-sm">
                     <Plus className="h-4 w-4 mr-1" /> New Expense
                   </Button>
                 )}
@@ -1369,7 +1369,27 @@ export default function EngineerApp() {
                       {sales.length > 0 && (
                         <div className="bg-card border border-border/50 rounded-2xl p-5 shadow-sm">
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">GST by Rate (Sales)</p>
-                          <div className="overflow-x-auto">
+                          {/* Mobile: stacked cards */}
+                          <div className="md:hidden space-y-2">
+                            {[0, 5, 12, 18, 28].map(rate => {
+                              const lines = sales.flatMap(d => (d.document_lines || []).filter((l: any) => Number(l.gst_rate) === rate));
+                              if (!lines.length) return null;
+                              return (
+                                <div key={rate} className="rounded-xl border border-border/50 bg-muted/10 p-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-medium">{rate}% GST</span>
+                                    <span className="text-sm">Taxable: {fmtINR(lines.reduce((s: number, l: any) => s + Number(l.taxable), 0))}</span>
+                                  </div>
+                                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                    <span>CGST: {fmtINR(lines.reduce((s: number, l: any) => s + Number(l.cgst), 0))}</span>
+                                    <span>SGST: {fmtINR(lines.reduce((s: number, l: any) => s + Number(l.sgst), 0))}</span>
+                                    <span>IGST: {fmtINR(lines.reduce((s: number, l: any) => s + Number(l.igst), 0))}</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="hidden md:block overflow-x-auto">
                             <table className="w-full text-sm min-w-[400px]">
                               <thead><tr className="border-b border-border/50 text-xs text-muted-foreground"><th className="pb-2 text-left">Rate</th><th className="pb-2 text-right">Taxable</th><th className="pb-2 text-right">CGST</th><th className="pb-2 text-right">SGST</th><th className="pb-2 text-right">IGST</th></tr></thead>
                               <tbody>
@@ -1413,7 +1433,29 @@ export default function EngineerApp() {
                               <p className="text-xl font-bold mt-1">{fmtINR(outputGst)}</p>
                             </div>
                           </div>
-                          <div className="bg-card border border-border/50 rounded-2xl overflow-x-auto shadow-sm">
+                          {/* Mobile: stacked cards */}
+                          <div className="md:hidden space-y-2">
+                            {sales.map(d => (
+                              <div key={d.id} className="bg-card border border-border/50 rounded-xl p-3 shadow-sm">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-medium truncate">{(d.parties as any)?.name || "—"}</p>
+                                    <p className="text-xs font-mono text-muted-foreground">{d.doc_number} · {fmtDate(d.doc_date)}</p>
+                                  </div>
+                                  <p className="text-xs font-semibold shrink-0">{fmtINR(d.total)}</p>
+                                </div>
+                                <div className="flex items-center justify-between mt-1.5 text-xs text-muted-foreground">
+                                  <span className="font-mono">{(d.parties as any)?.gstin || "—"}</span>
+                                  <span>Taxable: {fmtINR(Number(d.subtotal) - Number(d.discount || 0))} · GST: {fmtINR(Number(d.cgst) + Number(d.sgst) + Number(d.igst))}</span>
+                                </div>
+                              </div>
+                            ))}
+                            <div className="bg-muted/30 rounded-xl p-3 text-xs font-bold flex justify-between">
+                              <span>Totals ({sales.length} invoices)</span>
+                              <span>{fmtINR(totalSales)}</span>
+                            </div>
+                          </div>
+                          <div className="hidden md:block bg-card border border-border/50 rounded-2xl overflow-x-auto shadow-sm">
                             <table className="w-full text-sm min-w-[600px]">
                               <thead className="bg-muted/30 text-xs text-muted-foreground">
                                 <tr><th className="p-3 text-left">Date</th><th className="p-3 text-left">Number</th><th className="p-3 text-left">Party</th><th className="p-3 text-left">GSTIN</th><th className="p-3 text-right">Taxable</th><th className="p-3 text-right">GST</th><th className="p-3 text-right">Total</th></tr>
@@ -1465,7 +1507,26 @@ export default function EngineerApp() {
                               <p className="text-xl font-bold mt-1">{fmtINR(inputGst)}</p>
                             </div>
                           </div>
-                          <div className="bg-card border border-border/50 rounded-2xl overflow-x-auto shadow-sm">
+                          {/* Mobile: stacked cards */}
+                          <div className="md:hidden space-y-2">
+                            {purchases.map(d => (
+                              <div key={d.id} className="bg-card border border-border/50 rounded-xl p-3 shadow-sm">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-medium truncate">{(d.parties as any)?.name || "—"}</p>
+                                    <p className="text-xs font-mono text-muted-foreground">{d.doc_number} · {fmtDate(d.doc_date)}</p>
+                                  </div>
+                                  <p className="text-xs font-semibold shrink-0">{fmtINR(d.total)}</p>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1.5">Taxable: {fmtINR(Number(d.subtotal) - Number(d.discount || 0))} · GST: {fmtINR(Number(d.cgst) + Number(d.sgst) + Number(d.igst))}</p>
+                              </div>
+                            ))}
+                            <div className="bg-muted/30 rounded-xl p-3 text-xs font-bold flex justify-between">
+                              <span>Totals ({purchases.length} bills)</span>
+                              <span>{fmtINR(totalPurch)}</span>
+                            </div>
+                          </div>
+                          <div className="hidden md:block bg-card border border-border/50 rounded-2xl overflow-x-auto shadow-sm">
                             <table className="w-full text-sm min-w-[500px]">
                               <thead className="bg-muted/30 text-xs text-muted-foreground">
                                 <tr><th className="p-3 text-left">Date</th><th className="p-3 text-left">Number</th><th className="p-3 text-left">Vendor</th><th className="p-3 text-right">Taxable</th><th className="p-3 text-right">GST</th><th className="p-3 text-right">Total</th></tr>
@@ -1551,25 +1612,42 @@ export default function EngineerApp() {
                         ))}
                       </div>
                       {sales.filter(d => (Number(d.total) - Number(d.paid || 0)) > 0).length > 0 && (
-                        <div className="mt-4 bg-card border border-border/50 rounded-2xl overflow-x-auto shadow-sm">
-                          <table className="w-full text-sm min-w-[480px]">
-                            <thead className="bg-muted/30 text-xs text-muted-foreground">
-                              <tr><th className="p-3 text-left">Invoice</th><th className="p-3 text-left">Party</th><th className="p-3 text-left">Date</th><th className="p-3 text-right">Total</th><th className="p-3 text-right">Paid</th><th className="p-3 text-right">Due</th></tr>
-                            </thead>
-                            <tbody className="divide-y divide-border/30">
-                              {sales.filter(d => (Number(d.total) - Number(d.paid || 0)) > 0).map(d => (
-                                <tr key={d.id} className="hover:bg-muted/20">
-                                  <td className="p-3 text-xs font-mono">{d.doc_number}</td>
-                                  <td className="p-3 text-xs">{(d.parties as any)?.name || "—"}</td>
-                                  <td className="p-3 text-xs">{fmtDate(d.doc_date)}</td>
-                                  <td className="p-3 text-xs text-right">{fmtINR(d.total)}</td>
-                                  <td className="p-3 text-xs text-right text-green-600">{fmtINR(d.paid || 0)}</td>
-                                  <td className="p-3 text-xs text-right font-bold text-red-500">{fmtINR(Number(d.total) - Number(d.paid || 0))}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
+                        <>
+                          {/* Mobile: stacked cards */}
+                          <div className="md:hidden mt-4 space-y-2">
+                            {sales.filter(d => (Number(d.total) - Number(d.paid || 0)) > 0).map(d => (
+                              <div key={d.id} className="bg-card border border-border/50 rounded-xl p-3 shadow-sm">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-mono font-medium">{d.doc_number}</p>
+                                    <p className="text-xs text-muted-foreground">{(d.parties as any)?.name || "—"} · {fmtDate(d.doc_date)}</p>
+                                  </div>
+                                  <p className="text-xs font-bold text-red-500 shrink-0">{fmtINR(Number(d.total) - Number(d.paid || 0))}</p>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">Total: {fmtINR(d.total)} · Paid: <span className="text-green-600">{fmtINR(d.paid || 0)}</span></p>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="hidden md:block mt-4 bg-card border border-border/50 rounded-2xl overflow-x-auto shadow-sm">
+                            <table className="w-full text-sm min-w-[480px]">
+                              <thead className="bg-muted/30 text-xs text-muted-foreground">
+                                <tr><th className="p-3 text-left">Invoice</th><th className="p-3 text-left">Party</th><th className="p-3 text-left">Date</th><th className="p-3 text-right">Total</th><th className="p-3 text-right">Paid</th><th className="p-3 text-right">Due</th></tr>
+                              </thead>
+                              <tbody className="divide-y divide-border/30">
+                                {sales.filter(d => (Number(d.total) - Number(d.paid || 0)) > 0).map(d => (
+                                  <tr key={d.id} className="hover:bg-muted/20">
+                                    <td className="p-3 text-xs font-mono">{d.doc_number}</td>
+                                    <td className="p-3 text-xs">{(d.parties as any)?.name || "—"}</td>
+                                    <td className="p-3 text-xs">{fmtDate(d.doc_date)}</td>
+                                    <td className="p-3 text-xs text-right">{fmtINR(d.total)}</td>
+                                    <td className="p-3 text-xs text-right text-green-600">{fmtINR(d.paid || 0)}</td>
+                                    <td className="p-3 text-xs text-right font-bold text-red-500">{fmtINR(Number(d.total) - Number(d.paid || 0))}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </>
                       )}
                     </TabsContent>
                   </Tabs>
@@ -1598,7 +1676,7 @@ export default function EngineerApp() {
                         Balance: <span className={`font-semibold ${balance < 0 ? "text-destructive" : "text-foreground"}`}>{fmtINR(balance)}</span>
                       </p>
                     </div>
-                    <Button onClick={openNewCash} className="rounded-full bg-foreground text-background hover:bg-foreground/90 h-9 text-sm">
+                    <Button onClick={openNewCash} className="rounded-full btn-gradient h-9 text-sm">
                       <Plus className="h-4 w-4 mr-1" /> New Entry
                     </Button>
                   </div>

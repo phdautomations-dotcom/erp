@@ -476,7 +476,26 @@ export default function Reports() {
             </div>
             <Button size="sm" variant="outline" onClick={printSalesRegister} disabled={!settings || sales.length === 0} className="rounded-full shadow-sm"><Printer className="h-4 w-4 mr-2" /> Print Register</Button>
           </div>
-          <div className="rounded-2xl border border-border bg-card overflow-x-auto">
+          {/* Mobile: stacked cards */}
+          <div className="md:hidden space-y-2">
+            {sales.map(d => (
+              <div key={d.id} className="rounded-xl border border-border bg-card p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{(d.parties as any)?.name}</p>
+                    <p className="font-mono text-xs text-muted-foreground">{d.doc_number} · {d.doc_date}</p>
+                  </div>
+                  <p className="font-semibold shrink-0">{fmtINR(d.total)}</p>
+                </div>
+                <div className="flex items-center justify-between mt-1.5 text-xs text-muted-foreground">
+                  <span className="font-mono">{(d.parties as any)?.gstin || "—"}</span>
+                  <span>Taxable: {fmtINR(d.subtotal - d.discount)} · GST: {fmtINR(Number(d.cgst) + Number(d.sgst) + Number(d.igst))}</span>
+                </div>
+              </div>
+            ))}
+            {sales.length === 0 && <p className="p-6 text-center text-muted-foreground text-sm">No sales in this period.</p>}
+          </div>
+          <div className="hidden md:block rounded-2xl border border-border bg-card overflow-x-auto">
             <table className="w-full text-sm min-w-[640px]">
               <thead className="bg-muted/40 text-xs"><tr><th className="text-left p-2">Date</th><th className="text-left">Number</th><th className="text-left">Party</th><th className="text-left">GSTIN</th><th className="text-right">Taxable</th><th className="text-right">GST</th><th className="text-right">Total</th></tr></thead>
               <tbody>{sales.map(d => <tr key={d.id} className="border-t border-border"><td className="p-2">{d.doc_date}</td><td className="font-mono text-xs">{d.doc_number}</td><td>{(d.parties as any)?.name}</td><td className="font-mono text-xs">{(d.parties as any)?.gstin}</td><td className="text-right">{fmtINR(d.subtotal - d.discount)}</td><td className="text-right">{fmtINR(Number(d.cgst) + Number(d.sgst) + Number(d.igst))}</td><td className="text-right">{fmtINR(d.total)}</td></tr>)}</tbody>
@@ -489,7 +508,20 @@ export default function Reports() {
             <Button size="sm" variant="outline" onClick={downloadGSTR2} disabled={purchases.length === 0} className="rounded-full shadow-sm"><Download className="h-4 w-4 mr-2" /> Export GSTR-2</Button>
             <Button size="sm" variant="outline" onClick={printPurchaseRegister} disabled={!settings || purchases.length === 0} className="rounded-full shadow-sm"><Printer className="h-4 w-4 mr-2" /> Print Register</Button>
           </div>
-          <div className="rounded-2xl border border-border bg-card overflow-x-auto">
+          {/* Mobile: stacked cards */}
+          <div className="md:hidden space-y-2">
+            {purchases.map(d => (
+              <div key={d.id} className="rounded-xl border border-border bg-card p-3 flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{(d.parties as any)?.name}</p>
+                  <p className="font-mono text-xs text-muted-foreground">{d.doc_number} · {d.doc_date}</p>
+                </div>
+                <p className="font-semibold shrink-0">{fmtINR(d.total)}</p>
+              </div>
+            ))}
+            {purchases.length === 0 && <p className="p-6 text-center text-muted-foreground text-sm">No purchases in this period.</p>}
+          </div>
+          <div className="hidden md:block rounded-2xl border border-border bg-card overflow-x-auto">
             <table className="w-full text-sm min-w-[640px]">
               <thead className="bg-muted/40 text-xs"><tr><th className="text-left p-2">Date</th><th className="text-left">Number</th><th className="text-left">Vendor</th><th className="text-right">Total</th></tr></thead>
               <tbody>{purchases.map(d => <tr key={d.id} className="border-t border-border"><td className="p-2">{d.doc_date}</td><td className="font-mono text-xs">{d.doc_number}</td><td>{(d.parties as any)?.name}</td><td className="text-right">{fmtINR(d.total)}</td></tr>)}</tbody>

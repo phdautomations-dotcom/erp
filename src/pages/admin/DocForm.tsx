@@ -24,6 +24,32 @@ const newLine = (): Line => ({ description: "", hsn_code: "", quantity: 1, unit:
 
 type DocType = "invoice" | "quotation" | "proforma" | "challan" | "purchase_order" | "purchase_bill";
 
+function LineDescriptionField({ line, index, updateLine, expandingLine, setExpandingLine }: {
+  line: Line; index: number; updateLine: (i: number, patch: Partial<Line>) => void;
+  expandingLine: number | null; setExpandingLine: (i: number | null) => void;
+}) {
+  return (
+    <div className="relative">
+      <Input value={line.description} onChange={e => updateLine(index, { description: e.target.value })} placeholder="Description" className="h-8 pr-7" />
+      <button
+        type="button"
+        title="Expand with AI"
+        disabled={expandingLine === index || !line.description?.trim()}
+        onClick={async () => {
+          setExpandingLine(index);
+          try {
+            const expanded = await expandDescription(line.description);
+            if (expanded) updateLine(index, { description: expanded });
+          } catch { /* silent */ } finally { setExpandingLine(null); }
+        }}
+        className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-accent disabled:opacity-40"
+      >
+        <Sparkles className={`h-3.5 w-3.5 ${expandingLine === index ? "animate-pulse" : ""}`} />
+      </button>
+    </div>
+  );
+}
+
 export default function DocForm({ purchase = false }: { purchase?: boolean }) {
   const { id } = useParams();
   const [search] = useSearchParams();
@@ -248,7 +274,7 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
   return (
     <AdminLayout title={`${docType.replace("_", " ").toUpperCase()} ${doc.doc_number ? `· ${doc.doc_number}` : ""}`}>
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="space-y-5">
+        <div className="space-y-5 min-w-0">
           <div className="rounded-2xl border border-border bg-card p-5 grid sm:grid-cols-4 gap-4">
             <div><Label>Document type</Label>
               <Select value={docType} onValueChange={(v) => setDocType(v as DocType)} disabled={!!isEdit}>
@@ -283,54 +309,65 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
         </div>
       </div>
 
-          <div className="rounded-2xl border border-border bg-card overflow-x-auto">
-            <table className="w-full text-sm min-w-[760px]">
-              <thead className="bg-muted/40 text-xs text-muted-foreground">
-                <tr>
-                  <th className="text-left p-2">Item / Description</th><th className="text-left">HSN</th>
-                  <th className="text-right">Qty</th><th className="text-right">Rate</th>
-                  <th className="text-right">Disc%</th><th className="text-right">GST%</th>
-                  <th className="text-right">Total</th><th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {lines.map((l, i) => (
-                  <tr key={i} className="border-t border-border align-top">
-                    <td className="p-2 min-w-[260px]">
-                      <Select value={l.item_id || ""} onValueChange={v => pickItem(i, v)}>
-                        <SelectTrigger className="mb-1 h-8"><SelectValue placeholder="Pick item" /></SelectTrigger>
-                        <SelectContent className="max-h-64">{items.map(it => <SelectItem key={it.id} value={it.id}>{it.name}</SelectItem>)}</SelectContent>
-                      </Select>
-                      <div className="relative">
-                        <Input value={l.description} onChange={e => updateLine(i, { description: e.target.value })} placeholder="Description" className="h-8 pr-7" />
-                        <button
-                          type="button"
-                          title="Expand with AI"
-                          disabled={expandingLine === i || !l.description?.trim()}
-                          onClick={async () => {
-                            setExpandingLine(i);
-                            try {
-                              const expanded = await expandDescription(l.description);
-                              if (expanded) updateLine(i, { description: expanded });
-                            } catch { /* silent */ } finally { setExpandingLine(null); }
-                          }}
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-accent disabled:opacity-40"
-                        >
-                          <Sparkles className={`h-3.5 w-3.5 ${expandingLine === i ? "animate-pulse" : ""}`} />
-                        </button>
-                      </div>
-                    </td>
-                    <td><Input value={l.hsn_code || ""} onChange={e => updateLine(i, { hsn_code: e.target.value })} className="h-8 w-20" /></td>
-                    <td><Input type="number" step="0.001" value={l.quantity} onFocus={e => e.target.select()} onChange={e => updateLine(i, { quantity: e.target.value === "" ? 0 : +e.target.value })} className="h-8 w-20 text-right" /></td>
-                    <td><Input type="number" step="0.01" value={l.rate} onFocus={e => e.target.select()} onChange={e => updateLine(i, { rate: e.target.value === "" ? 0 : +e.target.value })} className="h-8 w-24 text-right" /></td>
-                    <td><Input type="number" step="0.01" value={l.discount_pct} onFocus={e => e.target.select()} onChange={e => updateLine(i, { discount_pct: e.target.value === "" ? 0 : +e.target.value })} className="h-8 w-16 text-right" /></td>
-                    <td><Input type="number" step="0.01" value={l.gst_rate} onFocus={e => e.target.select()} onChange={e => updateLine(i, { gst_rate: e.target.value === "" ? 0 : +e.target.value })} className="h-8 w-16 text-right" /></td>
-                    <td className="text-right pr-2 font-medium">{fmtINR(l.total)}</td>
-                    <td><Button variant="ghost" size="icon" onClick={() => setLines(ls => ls.filter((_, idx) => idx !== i))}><Trash2 className="h-4 w-4 text-destructive" /></Button></td>
+          <div className="rounded-2xl border border-border bg-card">
+            {/* Mobile: stacked cards — no horizontal scrolling */}
+            <div className="md:hidden divide-y divide-border">
+              {lines.map((l, i) => (
+                <div key={i} className="p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Select value={l.item_id || ""} onValueChange={v => pickItem(i, v)}>
+                      <SelectTrigger className="h-8 flex-1"><SelectValue placeholder="Pick item" /></SelectTrigger>
+                      <SelectContent className="max-h-64">{items.map(it => <SelectItem key={it.id} value={it.id}>{it.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <Button variant="ghost" size="icon" className="shrink-0" onClick={() => setLines(ls => ls.filter((_, idx) => idx !== i))}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </div>
+                  <LineDescriptionField line={l} index={i} updateLine={updateLine} expandingLine={expandingLine} setExpandingLine={setExpandingLine} />
+                  <div className="grid grid-cols-3 gap-2">
+                    <div><Label className="text-[10px] text-muted-foreground">HSN</Label><Input value={l.hsn_code || ""} onChange={e => updateLine(i, { hsn_code: e.target.value })} className="h-8" /></div>
+                    <div><Label className="text-[10px] text-muted-foreground">Qty</Label><Input type="number" step="0.001" value={l.quantity} onFocus={e => e.target.select()} onChange={e => updateLine(i, { quantity: e.target.value === "" ? 0 : +e.target.value })} className="h-8 text-right" /></div>
+                    <div><Label className="text-[10px] text-muted-foreground">Rate</Label><Input type="number" step="0.01" value={l.rate} onFocus={e => e.target.select()} onChange={e => updateLine(i, { rate: e.target.value === "" ? 0 : +e.target.value })} className="h-8 text-right" /></div>
+                    <div><Label className="text-[10px] text-muted-foreground">Disc%</Label><Input type="number" step="0.01" value={l.discount_pct} onFocus={e => e.target.select()} onChange={e => updateLine(i, { discount_pct: e.target.value === "" ? 0 : +e.target.value })} className="h-8 text-right" /></div>
+                    <div><Label className="text-[10px] text-muted-foreground">GST%</Label><Input type="number" step="0.01" value={l.gst_rate} onFocus={e => e.target.select()} onChange={e => updateLine(i, { gst_rate: e.target.value === "" ? 0 : +e.target.value })} className="h-8 text-right" /></div>
+                    <div><Label className="text-[10px] text-muted-foreground">Total</Label><div className="h-8 flex items-center justify-end font-medium text-sm">{fmtINR(l.total)}</div></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: full table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm min-w-[760px]">
+                <thead className="bg-muted/40 text-xs text-muted-foreground">
+                  <tr>
+                    <th className="text-left p-2">Item / Description</th><th className="text-left">HSN</th>
+                    <th className="text-right">Qty</th><th className="text-right">Rate</th>
+                    <th className="text-right">Disc%</th><th className="text-right">GST%</th>
+                    <th className="text-right">Total</th><th></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {lines.map((l, i) => (
+                    <tr key={i} className="border-t border-border align-top">
+                      <td className="p-2 min-w-[260px]">
+                        <Select value={l.item_id || ""} onValueChange={v => pickItem(i, v)}>
+                          <SelectTrigger className="mb-1 h-8"><SelectValue placeholder="Pick item" /></SelectTrigger>
+                          <SelectContent className="max-h-64">{items.map(it => <SelectItem key={it.id} value={it.id}>{it.name}</SelectItem>)}</SelectContent>
+                        </Select>
+                        <LineDescriptionField line={l} index={i} updateLine={updateLine} expandingLine={expandingLine} setExpandingLine={setExpandingLine} />
+                      </td>
+                      <td><Input value={l.hsn_code || ""} onChange={e => updateLine(i, { hsn_code: e.target.value })} className="h-8 w-20" /></td>
+                      <td><Input type="number" step="0.001" value={l.quantity} onFocus={e => e.target.select()} onChange={e => updateLine(i, { quantity: e.target.value === "" ? 0 : +e.target.value })} className="h-8 w-20 text-right" /></td>
+                      <td><Input type="number" step="0.01" value={l.rate} onFocus={e => e.target.select()} onChange={e => updateLine(i, { rate: e.target.value === "" ? 0 : +e.target.value })} className="h-8 w-24 text-right" /></td>
+                      <td><Input type="number" step="0.01" value={l.discount_pct} onFocus={e => e.target.select()} onChange={e => updateLine(i, { discount_pct: e.target.value === "" ? 0 : +e.target.value })} className="h-8 w-16 text-right" /></td>
+                      <td><Input type="number" step="0.01" value={l.gst_rate} onFocus={e => e.target.select()} onChange={e => updateLine(i, { gst_rate: e.target.value === "" ? 0 : +e.target.value })} className="h-8 w-16 text-right" /></td>
+                      <td className="text-right pr-2 font-medium">{fmtINR(l.total)}</td>
+                      <td><Button variant="ghost" size="icon" onClick={() => setLines(ls => ls.filter((_, idx) => idx !== i))}><Trash2 className="h-4 w-4 text-destructive" /></Button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
             <div className="p-3 border-t border-border">
               <Button variant="outline" size="sm" onClick={() => setLines(ls => [...ls, newLine()])}><Plus className="h-4 w-4 mr-1" /> Add Line</Button>
             </div>
@@ -364,7 +401,7 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
               <div className="flex justify-between pt-2 border-t border-border font-display text-lg font-semibold"><dt>Total</dt><dd>{fmtINR(totals.total)}</dd></div>
             </dl>
             <div className="mt-4 space-y-2">
-              <Button onClick={save} disabled={busy} className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90">{busy ? "Saving…" : "Save"}</Button>
+              <Button onClick={save} disabled={busy} className="w-full rounded-full btn-gradient">{busy ? "Saving…" : "Save"}</Button>
               <Button onClick={downloadPDF} variant="outline" className="w-full rounded-full"><Download className="h-4 w-4 mr-1" /> Download PDF</Button>
             </div>
           </div>

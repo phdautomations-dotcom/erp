@@ -40,7 +40,7 @@ export default function Inventory() {
       <div className="flex justify-between items-center mb-5">
         <p className="text-sm text-muted-foreground">{items.length} products tracked</p>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="rounded-full bg-foreground text-background hover:bg-foreground/90"><Plus className="h-4 w-4 mr-1" /> Stock Adjustment</Button></DialogTrigger>
+          <DialogTrigger asChild><Button className="rounded-full btn-gradient"><Plus className="h-4 w-4 mr-1" /> Stock Adjustment</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Stock Adjustment</DialogTitle></DialogHeader>
             <div className="space-y-3">
@@ -60,7 +60,7 @@ export default function Inventory() {
                 <div><Label>Quantity</Label><Input type="number" step="0.001" value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} /></div>
               </div>
               <div><Label>Notes</Label><Input value={form.notes || ""} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
-              <Button onClick={adjust} className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90">Save</Button>
+              <Button onClick={adjust} className="w-full rounded-full btn-gradient">Save</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -69,7 +69,23 @@ export default function Inventory() {
       <div className="grid lg:grid-cols-2 gap-5">
         <div className="overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
           <div className="p-5 border-b border-border/50 font-display text-sm font-semibold">Stock Levels</div>
-          <div className="overflow-x-auto">
+          {/* Mobile: stacked cards */}
+          <div className="md:hidden divide-y divide-border/50">
+            {items.map(it => {
+              const low = Number(it.current_stock) <= Number(it.low_stock_threshold || 0);
+              return (
+                <div key={it.id} className="p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-medium truncate">{it.name}</p>
+                    <p className={`shrink-0 text-sm ${low ? "text-destructive font-medium" : ""}`}>{low && <AlertTriangle className="h-3.5 w-3.5 inline mr-1" />}{fmtNum(it.current_stock, 3)} {it.unit}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Threshold: {fmtNum(it.low_stock_threshold, 3)}</p>
+                </div>
+              );
+            })}
+            {items.length === 0 && <p className="p-8 text-center text-muted-foreground">No products tracked.</p>}
+          </div>
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">
               <thead className="bg-muted/30 text-xs font-medium text-muted-foreground"><tr><th className="px-6 py-4 text-left">Item</th><th className="px-6 py-4 text-right">Current</th><th className="px-6 py-4 text-right">Threshold</th></tr></thead>
               <tbody className="divide-y divide-border/50">
@@ -85,7 +101,23 @@ export default function Inventory() {
         </div>
         <div className="overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
           <div className="p-5 border-b border-border/50 font-display text-sm font-semibold">Recent Movements</div>
-          <div className="overflow-x-auto">
+          {/* Mobile: stacked cards */}
+          <div className="md:hidden divide-y divide-border/50">
+            {moves.map(m => (
+              <div key={m.id} className="p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-medium truncate">{(m.items as any)?.name}</p>
+                  <p className="font-semibold shrink-0">{fmtNum(m.quantity, 3)}</p>
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-xs text-muted-foreground">{fmtDate(m.created_at)}</span>
+                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${m.movement === 'in' ? 'bg-green-500/10 text-green-600' : m.movement === 'out' ? 'bg-red-500/10 text-red-600' : 'bg-muted text-muted-foreground'}`}>{m.movement}</span>
+                </div>
+              </div>
+            ))}
+            {moves.length === 0 && <p className="p-8 text-center text-muted-foreground">No movements yet.</p>}
+          </div>
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">
               <thead className="bg-muted/30 text-xs font-medium text-muted-foreground"><tr><th className="px-6 py-4 text-left">Date</th><th className="px-6 py-4 text-left">Item</th><th className="px-6 py-4 text-left">Type</th><th className="px-6 py-4 text-right">Qty</th></tr></thead>
               <tbody className="divide-y divide-border/50">

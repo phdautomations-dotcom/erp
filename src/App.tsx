@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -9,7 +9,6 @@ import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
 // Every route is its own chunk, downloaded only when a user actually visits
 // it — otherwise a single visit to the login page would pull in every admin
 // page (and heavy libs like jspdf/recharts) up front.
-const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Home = lazy(() => import("./pages/admin/Home"));
@@ -49,7 +48,7 @@ const App = () => (
         <AuthProvider>
           <Suspense fallback={<RouteFallback />}>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Navigate to="/admin" replace />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/verify/:id" element={<Verify />} />
               <Route element={<ProtectedRoute />}>

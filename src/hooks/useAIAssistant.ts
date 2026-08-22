@@ -5,6 +5,7 @@ import { chatRemote, extractDocDraft } from "@/lib/ai/remote";
 import { fmtINR, calcLineTax } from "@/lib/format";
 import {
   getDashboardSnapshot, findParties, getPartyBalance, getCashLedgerSummary, getRecentDocuments,
+  findItems, getOverdueInvoices,
 } from "@/lib/ai/tools";
 
 export type Msg = { role: "user" | "assistant"; content: string };
@@ -26,9 +27,14 @@ const wantsCreateDoc = (q: string) =>
   /\b(invoice|bill|quotation|quote|purchase|proforma|challan)\b/.test(q);
 
 const SYSTEM_PROMPT =
-  "You are a helpful assistant built into PHD Automations' internal ERP app. " +
-  "Answer briefly and only using the FACTS given to you below the user's question — never invent numbers. " +
+  "You are Saffyre AI, the assistant built into PHD Automations' internal ERP app. " +
+  "Answer briefly and only using the FACTS given below the user's latest question — never invent numbers. " +
+  "Use the earlier turns in this conversation for context (e.g. \"uska\"/\"waha ka\" refers back to whatever party/document was just discussed), but never restate old FACTS as if they were just given again. " +
   "If no facts are given, answer generally and helpfully in 1-3 sentences. Reply in the same language style (Hindi/English mix is fine) as the question.";
+
+// How many prior turns to carry forward for follow-up questions like
+// "uska balance kitna hai" (referring to a party named two messages ago).
+const HISTORY_TURNS = 6;
 
 // Cheap keyword-based intent routing — the model is unreliable at picking
 // tools itself, so retrieval is done in plain JS and the model is only
@@ -74,8 +80,33 @@ const buildFacts = async (question: string, parties: any[]): Promise<string> => 
   }
 
   if (/stock|inventory|item/.test(q)) {
-    const snap = await getDashboardSnapshot(supabase);
-    facts.push(`${snap.lowStock} item(s) are currently at or below their low-stock threshold.`);
+    // Try to match a specific item by name first ("bearing 6205 ka stock
+    // kitna hai") before falling back to the aggregate low-stock count.
+    const words = question.split(/\s+/).filter(w => w.length > 2);
+    let matchedItem = false;
+    for (const w of words) {
+      const found = await findItems(supabase, w, 3);
+      if (found.length) {
+        matchedItem = true;
+        for (const it of found) {
+          facts.push(`Item "${it.name}": current stock ${it.current_stock} ${it.unit || ""}, sale price ${fmtINR(it.sale_price)}${Number(it.current_stock) <= Number(it.low_stock_threshold || 0) ? " (LOW STOCK)" : ""}.`);
+        }
+        break;
+      }
+    }
+    if (!matchedItem) {
+      const snap = await getDashboardSnapshot(supabase);
+      facts.push(`${snap.lowStock} item(s) are currently at or below their low-stock threshold.`);
+    }
+  }
+
+  if (/pending|overdue|due|outstanding|udhaar|kiska.*(payment|paisa)/.test(q) && !matchedParty) {
+    const overdue = await getOverdueInvoices(supabase, 5);
+    if (overdue.length) {
+      facts.push(`Oldest unpaid invoices: ${overdue.map((d: any) => `${d.doc_number} · ${(d.parties as any)?.name || "-"} · due ${fmtINR(d.due)} (dated ${d.doc_date})`).join("; ")}.`);
+    } else {
+      facts.push("No unpaid invoices right now — all invoices are fully paid.");
+    }
   }
 
   if (/expense|kharch|expenditure/.test(q)) {
@@ -105,6 +136,9 @@ export function useAIAssistant(onDraftReady?: (draft: MatchedDraft) => void) {
   const [thinking, setThinking] = useState(false);
   const partiesRef = useRef<any[] | null>(null);
   const itemsRef = useRef<any[] | null>(null);
+  // ask() is a stable useCallback ([] deps) — a ref keeps its view of prior
+  // turns current without recreating the callback on every message.
+  const messagesRef = useRef<Msg[]>([]);
   const navigate = useNavigate();
 
   const getParties = async () => {
@@ -163,31 +197,43 @@ export function useAIAssistant(onDraftReady?: (draft: MatchedDraft) => void) {
     return `Draft ready — ${party.name} ke liye ${draft.doc_type.replace("_", " ")} form khul raha hai (${lines.length} line item). Review karke Save karna.`;
   };
 
+  const pushMessage = (m: Msg) => {
+    setMessages(prev => {
+      const next = [...prev, m];
+      messagesRef.current = next;
+      return next;
+    });
+  };
+
   const ask = useCallback(async (question: string) => {
     if (!question.trim()) return;
-    setMessages(prev => [...prev, { role: "user", content: question }]);
+    // Snapshot history before this turn is added — these are the prior
+    // turns for context, not including the question we're about to ask.
+    const history = messagesRef.current.slice(-HISTORY_TURNS).map(m => ({ role: m.role, content: m.content }));
+    pushMessage({ role: "user", content: question });
     setThinking(true);
     try {
       if (wantsCreateDoc(question.toLowerCase())) {
         const reply = await createDocDraft(question);
-        setMessages(prev => [...prev, { role: "assistant", content: reply }]);
+        pushMessage({ role: "assistant", content: reply });
         return;
       }
       const parties = await getParties();
       const facts = await buildFacts(question, parties);
       const reply = await chatRemote([
         { role: "system", content: SYSTEM_PROMPT },
+        ...history,
         { role: "user", content: `${question}\n\nFACTS:\n${facts}` },
       ]);
-      setMessages(prev => [...prev, { role: "assistant", content: reply || "Sorry, I couldn't generate a response." }]);
+      pushMessage({ role: "assistant", content: reply || "Sorry, I couldn't generate a response." });
     } catch (err: any) {
-      setMessages(prev => [...prev, { role: "assistant", content: `AI request failed: ${err?.message || err}` }]);
+      pushMessage({ role: "assistant", content: `AI request failed: ${err?.message || err}` });
     } finally {
       setThinking(false);
     }
   }, []);
 
-  const clear = useCallback(() => setMessages([]), []);
+  const clear = useCallback(() => { setMessages([]); messagesRef.current = []; }, []);
 
   return { messages, ask, clear, thinking };
 }

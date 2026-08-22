@@ -134,7 +134,7 @@ export default function ItemForm() {
           </div>
           <div><Label>Description</Label><Textarea rows={2} value={form.description || ""} onChange={(e) => u("description", e.target.value)} /></div>
           <div className="flex gap-3 pt-2">
-            <Button onClick={save} disabled={busy} className="rounded-full bg-foreground text-background hover:bg-foreground/90">{busy ? "Saving…" : "Save"}</Button>
+            <Button onClick={save} disabled={busy} className="rounded-full btn-gradient">{busy ? "Saving…" : "Save"}</Button>
             <Link to="/admin/items"><Button variant="outline" className="rounded-full">Cancel</Button></Link>
           </div>
         </div>

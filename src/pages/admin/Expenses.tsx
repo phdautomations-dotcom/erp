@@ -53,7 +53,7 @@ export default function Expenses() {
       <div className="flex justify-between mb-5">
         <p className="text-sm text-muted-foreground">Total: <span className="font-semibold text-foreground">{fmtINR(rows.reduce((s, r) => s + Number(r.amount), 0))}</span></p>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="rounded-full bg-foreground text-background hover:bg-foreground/90"><Plus className="h-4 w-4 mr-1" /> New Expense</Button></DialogTrigger>
+          <DialogTrigger asChild><Button className="rounded-full btn-gradient"><Plus className="h-4 w-4 mr-1" /> New Expense</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New Expense</DialogTitle></DialogHeader>
             <div className="space-y-3">
@@ -89,12 +89,38 @@ export default function Expenses() {
                   {suggesting && <Sparkles className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-accent animate-pulse" />}
                 </div>
               </div>
-              <Button onClick={save} className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90">Save</Button>
+              <Button onClick={save} className="w-full rounded-full btn-gradient">Save</Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
-      <div className="overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
+      {/* Mobile: stacked cards — no horizontal scrolling */}
+      <div className="md:hidden space-y-3">
+        {rows.map(r => (
+          <div key={r.id} className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-medium">{r.category}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {r.description}
+                  {r.category === 'Salaries' && r.profiles?.display_name && <span className="text-emerald-600 font-medium ml-1">(Paid to: {r.profiles.display_name})</span>}
+                </p>
+              </div>
+              <p className="font-semibold shrink-0">{fmtINR(r.amount)}</p>
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{r.expense_date}</span>
+                <span className="inline-flex rounded-full px-2 py-0.5 font-medium bg-muted capitalize">{r.mode.replace("_", " ")}</span>
+              </div>
+              {hasRole("admin") && <Button variant="ghost" size="icon" onClick={() => del(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+            </div>
+          </div>
+        ))}
+        {rows.length === 0 && <p className="p-12 text-center text-muted-foreground font-medium">No expenses yet.</p>}
+      </div>
+
+      <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-muted/30 text-xs font-medium text-muted-foreground"><tr><th className="px-6 py-4 text-left">Date</th><th className="px-6 py-4 text-left">Category</th><th className="px-6 py-4 text-left">Description</th><th className="px-6 py-4 text-left">Mode</th><th className="px-6 py-4 text-right">Amount</th><th className="px-6 py-4"></th></tr></thead>

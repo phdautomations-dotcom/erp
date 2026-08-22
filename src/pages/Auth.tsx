@@ -76,13 +76,13 @@ export default function Auth() {
           <img src={logo} alt="PHD Automations" className="h-14 w-auto object-contain" />
         </Link>
         <div className="relative z-10 rounded-3xl bg-card/60 backdrop-blur-xl border border-border/50 shadow-2xl ring-gradient p-8 transition-all hover:shadow-accent/10">
-          <h1 className="font-display text-2xl font-semibold tracking-tight text-center bg-gradient-to-r from-foreground via-foreground/80 to-accent bg-clip-text text-transparent">PHD Login</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-center bg-gradient-to-r from-foreground via-accent to-[hsl(243_75%_59%)] bg-clip-text text-transparent">PHD Login</h1>
           <p className="text-sm text-muted-foreground text-center mt-1">Sign in to manage billing & operations</p>
 
           <form onSubmit={handleLogin} className="space-y-4 mt-6">
             <div><Label className="text-muted-foreground">Email</Label><Input name="email" type="email" required autoComplete="email" className="bg-background/50 border-border/50 focus:border-accent" /></div>
             <div><Label className="text-muted-foreground">Password</Label><Input name="password" type="password" required autoComplete="current-password" className="bg-background/50 border-border/50 focus:border-accent" /></div>
-            <Button type="submit" disabled={busy} className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 rounded-full font-medium transition-all shadow-md hover:shadow-lg mt-2">
+            <Button type="submit" disabled={busy} className="w-full h-11 btn-gradient rounded-full font-medium transition-all shadow-md hover:shadow-lg mt-2">
               {busy ? "Signing in…" : "Sign in"}
             </Button>
           </form>

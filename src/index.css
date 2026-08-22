@@ -54,6 +54,11 @@
 
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
+    /* ── Brand gradient: blue → indigo, used for primary CTAs and accents ── */
+    --gradient-brand: linear-gradient(135deg, hsl(212 90% 45%), hsl(243 75% 59%));
+    --gradient-brand-start: 212 90% 45%;
+    --gradient-brand-end: 243 75% 59%;
+
     /* ── Sidebar (kept for the unused shadcn sidebar primitive; not used by AdminLayout) ── */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 30% 20%;
@@ -132,6 +137,33 @@
   .hover-lift:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-glow);
+  }
+
+  /* Brand gradient — primary CTAs and key accents (blue → indigo) */
+  .btn-gradient {
+    background-image: var(--gradient-brand);
+    color: white;
+  }
+  .btn-gradient:hover {
+    opacity: 0.92;
+  }
+
+  /* Subtle 1px gradient ring around a card, e.g. the login card */
+  .ring-gradient {
+    position: relative;
+  }
+  .ring-gradient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background-image: var(--gradient-brand);
+    opacity: 0.4;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
 }
 

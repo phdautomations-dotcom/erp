@@ -76,7 +76,7 @@ export default function Settings() {
             <h3 className="font-display font-semibold">Default Terms</h3>
             <Textarea rows={5} value={s.terms || ""} onChange={e => u("terms", e.target.value)} />
           </div>
-          <Button onClick={save} disabled={busy} className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90">{busy ? "Saving…" : "Save Settings"}</Button>
+          <Button onClick={save} disabled={busy} className="w-full rounded-full btn-gradient">{busy ? "Saving…" : "Save Settings"}</Button>
         </div>
       </div>
     </AdminLayout>

@@ -542,10 +542,10 @@ function TopHeader({ title }: { title?: string }) {
         <UserAvatarMenu />
       </div>
 
-      {/* Orange accent underline strip */}
+      {/* Brand accent underline strip */}
       <div
         className="h-0.5 w-full shrink-0"
-        style={{ background: "linear-gradient(90deg, hsl(212 90% 45%), hsl(200 90% 58%) 40%, transparent)" }}
+        style={{ background: "linear-gradient(90deg, hsl(212 90% 45%), hsl(243 75% 59%) 40%, transparent)" }}
       />
     </header>
   );
@@ -572,7 +572,7 @@ export const AdminLayout = ({ children, title }: { children: ReactNode; title?: 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: "easeOut" }}
-        className="flex-1 overflow-y-auto p-4 lg:p-6"
+        className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6"
       >
         {children}
       </motion.main>

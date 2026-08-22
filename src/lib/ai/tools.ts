@@ -60,3 +60,19 @@ export const getRecentDocuments = async (supabase: any, docType: string, limit =
     .eq("doc_type", docType).order("created_at", { ascending: false }).limit(limit);
   return data || [];
 };
+
+export const findItems = async (supabase: any, query: string, limit = 5) => {
+  const { data } = await supabase.from("items").select("name, unit, sale_price, current_stock, low_stock_threshold").ilike("name", `%${query}%`).limit(limit);
+  return data || [];
+};
+
+// Invoices with an outstanding balance (total > paid), oldest first — the
+// same "who owes us and since when" view a collections follow-up needs.
+export const getOverdueInvoices = async (supabase: any, limit = 5) => {
+  const { data } = await supabase.from("documents").select("doc_number, doc_date, total, paid, parties(name)")
+    .eq("doc_type", "invoice").neq("status", "cancelled").order("doc_date", { ascending: true }).limit(50);
+  return (data || [])
+    .filter((d: any) => Number(d.total) - Number(d.paid || 0) > 0.01)
+    .slice(0, limit)
+    .map((d: any) => ({ ...d, due: Number(d.total) - Number(d.paid || 0) }));
+};

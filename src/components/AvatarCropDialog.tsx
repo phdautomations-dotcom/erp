@@ -51,7 +51,7 @@ export const AvatarCropDialog = ({ imageSrc, open, onCancel, onConfirm, busy }: 
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="flex-1 rounded-full" onClick={onCancel} disabled={busy}>Cancel</Button>
-          <Button className="flex-1 rounded-full bg-foreground text-background hover:bg-foreground/90" onClick={confirm} disabled={busy || !croppedArea}>
+          <Button className="flex-1 rounded-full btn-gradient" onClick={confirm} disabled={busy || !croppedArea}>
             {busy ? "Saving…" : "Save photo"}
           </Button>
         </div>

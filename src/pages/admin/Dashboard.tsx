@@ -316,7 +316,7 @@ export default function Dashboard() {
         </div>
 
         <div className="relative z-10 flex flex-col gap-2">
-          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground via-foreground/80 to-accent bg-clip-text text-transparent flex items-center gap-3">
+          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground via-accent to-[hsl(243_75%_59%)] bg-clip-text text-transparent flex items-center gap-3">
             Welcome back{user?.email ? `, ${user.email.split('@')[0]}` : ''} <span className="inline-block animate-pulse">👋</span>
           </h1>
           <p className="text-sm text-muted-foreground">Here is what's happening with your CNC/VMC operations today.</p>
@@ -329,7 +329,7 @@ export default function Dashboard() {
                 <Upload className="mr-2 h-4 w-4" />
                 {isImporting ? "Restoring..." : "Restore"}
               </Button>
-              <Button onClick={downloadBackup} disabled={isExporting || isImporting} variant="default" className="rounded-full shadow-sm transition-all duration-300 hover:shadow-md bg-foreground text-background hover:bg-foreground/90">
+              <Button onClick={downloadBackup} disabled={isExporting || isImporting} variant="default" className="rounded-full shadow-sm transition-all duration-300 hover:shadow-md btn-gradient">
                 <Download className="mr-2 h-4 w-4" />
                 {isExporting ? "Exporting..." : "Backup"}
               </Button>
@@ -354,7 +354,10 @@ export default function Dashboard() {
                 <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground/80">{c.label}</span>
                 <div className="font-display text-3xl font-semibold tracking-tight text-foreground">{c.value}</div>
               </div>
-              <div className={`relative z-10 flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 ${c.accent ? 'bg-accent text-accent-foreground shadow-lg shadow-accent/40' : 'bg-muted text-muted-foreground group-hover:bg-accent/10 group-hover:text-accent'}`}>
+              <div
+                className={`relative z-10 flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 ${c.accent ? 'text-white shadow-lg shadow-accent/40' : 'bg-muted text-muted-foreground group-hover:bg-accent/10 group-hover:text-accent'}`}
+                style={c.accent ? { backgroundImage: "var(--gradient-brand)" } : undefined}
+              >
                 <c.icon className="h-5 w-5" />
               </div>
             </div>
@@ -387,6 +390,12 @@ export default function Dashboard() {
         <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={pnlChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+              <defs>
+                <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(212 90% 45%)" />
+                  <stop offset="100%" stopColor="hsl(243 75% 59%)" />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
               <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
               <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatYAxis} />
@@ -404,7 +413,7 @@ export default function Dashboard() {
               <Bar dataKey="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]}>
                  <LabelList dataKey="Expenses" position="top" formatter={formatLabel} fontSize={10} fill="hsl(var(--muted-foreground))" />
               </Bar>
-              <Bar dataKey="Profit" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Profit" fill="url(#profitGradient)" radius={[4, 4, 0, 0]} />
               <Line type="monotone" dataKey="Profit" name="Profit Trend" stroke="#eab308" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
             </ComposedChart>
           </ResponsiveContainer>
@@ -434,48 +443,84 @@ export default function Dashboard() {
               <p className="mt-1 text-xs text-muted-foreground">Create your first invoice or purchase bill to see it here.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto flex-1">
-              <table className="w-full min-w-0 table-fixed text-sm">
-                <thead className="bg-muted/30 text-xs font-medium text-muted-foreground">
-                  <tr>
-                    <th className="px-6 py-4 text-left">Date</th>
-                    <th className="px-6 py-4 text-left">Type</th>
-                    <th className="px-6 py-4 text-left">Number</th>
-                    <th className="px-6 py-4 text-left">Party</th>
-                    <th className="px-6 py-4 text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {recent.map((d) => (
-                    <tr key={d.id} className="transition-colors hover:bg-muted/30">
-                      <td className="whitespace-nowrap px-6 py-4 text-muted-foreground">{d.doc_date}</td>
-                      <td className="whitespace-nowrap px-6 py-4 capitalize">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          d.doc_type === "invoice" ? "bg-green-500/10 text-green-600" :
-                          d.doc_type === "purchase_bill" ? "bg-blue-500/10 text-blue-600" :
-                          "bg-blue-500/10 text-blue-600"
-                        }`}>
-                          {d.doc_type.replace("_", " ")}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 font-mono text-xs">
-                        <Link to={`/admin/sales/${d.id}`} className="font-medium transition-colors hover:text-accent">
+            <>
+              {/* Mobile: stacked cards — no overlap/no horizontal scroll */}
+              <div className="md:hidden divide-y divide-border/50">
+                {recent.map((d) => (
+                  <div key={d.id} className="p-4 hover:bg-muted/30 transition-colors">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <Link to={`/admin/sales/${d.id}`} className="font-medium font-mono text-xs transition-colors hover:text-accent">
                           {d.doc_number}
                         </Link>
-                      </td>
-                      <td className="px-6 py-4 font-medium">{(d.parties as any)?.name}</td>
-                      <td className="px-6 py-4 text-right font-semibold">
+                        <p className="font-medium text-sm truncate mt-0.5">{(d.parties as any)?.name}</p>
+                      </div>
+                      <div className="text-right shrink-0">
                         {["quotation", "proforma"].includes(d.doc_type) ? (
                           <span className="rounded-full bg-muted/50 px-2 py-0.5 text-xs italic text-muted-foreground">Pipeline</span>
                         ) : (
-                          fmtINR(d.total)
+                          <span className="font-semibold">{fmtINR(d.total)}</span>
                         )}
-                      </td>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
+                        d.doc_type === "invoice" ? "bg-green-500/10 text-green-600" :
+                        d.doc_type === "purchase_bill" ? "bg-blue-500/10 text-blue-600" :
+                        "bg-blue-500/10 text-blue-600"
+                      }`}>
+                        {d.doc_type.replace("_", " ")}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{d.doc_date}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: full table */}
+              <div className="hidden md:block overflow-x-auto flex-1">
+                <table className="w-full min-w-0 table-fixed text-sm">
+                  <thead className="bg-muted/30 text-xs font-medium text-muted-foreground">
+                    <tr>
+                      <th className="px-6 py-4 text-left">Date</th>
+                      <th className="px-6 py-4 text-left">Type</th>
+                      <th className="px-6 py-4 text-left">Number</th>
+                      <th className="px-6 py-4 text-left">Party</th>
+                      <th className="px-6 py-4 text-right">Total</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-border/50">
+                    {recent.map((d) => (
+                      <tr key={d.id} className="transition-colors hover:bg-muted/30">
+                        <td className="whitespace-nowrap px-6 py-4 text-muted-foreground">{d.doc_date}</td>
+                        <td className="whitespace-nowrap px-6 py-4 capitalize">
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            d.doc_type === "invoice" ? "bg-green-500/10 text-green-600" :
+                            d.doc_type === "purchase_bill" ? "bg-blue-500/10 text-blue-600" :
+                            "bg-blue-500/10 text-blue-600"
+                          }`}>
+                            {d.doc_type.replace("_", " ")}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-mono text-xs">
+                          <Link to={`/admin/sales/${d.id}`} className="font-medium transition-colors hover:text-accent">
+                            {d.doc_number}
+                          </Link>
+                        </td>
+                        <td className="px-6 py-4 font-medium truncate">{(d.parties as any)?.name}</td>
+                        <td className="px-6 py-4 text-right font-semibold">
+                          {["quotation", "proforma"].includes(d.doc_type) ? (
+                            <span className="rounded-full bg-muted/50 px-2 py-0.5 text-xs italic text-muted-foreground">Pipeline</span>
+                          ) : (
+                            fmtINR(d.total)
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </motion.div>
 

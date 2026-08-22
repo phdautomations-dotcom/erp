@@ -119,7 +119,25 @@ export default function Attendance() {
         </TabsList>
 
         <TabsContent value="payroll" className="mt-0">
-          <div className="rounded-3xl border border-border/50 bg-card/50 overflow-x-auto shadow-sm backdrop-blur-xl">
+          {/* Mobile: stacked cards */}
+          <div className="md:hidden space-y-3">
+            {payroll.map(p => (
+              <div key={p.id} className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-medium text-accent cursor-pointer hover:underline" onClick={() => { setEmpData(p); setEmpOpen(true); }} title="View Calendar">{p.name}</p>
+                  <p className="font-bold text-destructive shrink-0">{fmtINR(p.outstanding)}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
+                  <span>Salary: <span className="text-foreground">{fmtINR(p.monthlySalary)}</span></span>
+                  <span className="text-right">Present: <span className="font-semibold text-blue-600">{p.daysPresent} days</span></span>
+                  <span>Earned: <span className="text-foreground">{fmtINR(p.earned)}</span></span>
+                  <span className="text-right">Paid: <span className="font-semibold text-emerald-600">{fmtINR(p.paid)}</span></span>
+                </div>
+              </div>
+            ))}
+            {payroll.length === 0 && !loading && <p className="p-8 text-center text-muted-foreground">No payroll data for this month.</p>}
+          </div>
+          <div className="hidden md:block rounded-3xl border border-border/50 bg-card/50 overflow-x-auto shadow-sm backdrop-blur-xl">
             <table className="w-full text-sm min-w-[700px]">
               <thead className="bg-muted/40 text-xs text-muted-foreground border-b border-border/50"><tr><th className="text-left p-4">Employee</th><th className="text-right p-4">Monthly Salary</th><th className="text-right p-4">Days Present</th><th className="text-right p-4">Earned (This Month)</th><th className="text-right p-4">Paid via Expenses</th><th className="text-right p-4">Outstanding</th></tr></thead>
               <tbody className="divide-y divide-border/50">
@@ -136,7 +154,29 @@ export default function Attendance() {
         </TabsContent>
 
         <TabsContent value="logs" className="mt-0">
-          <div className="rounded-3xl border border-border/50 bg-card/50 overflow-x-auto shadow-sm backdrop-blur-xl">
+          {/* Mobile: stacked cards */}
+          <div className="md:hidden space-y-3">
+            {logs.map(l => (
+              <div key={l.id} className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-medium">{l.profiles?.display_name}</p>
+                    <p className="text-xs text-muted-foreground">{fmtDate(l.date)}</p>
+                  </div>
+                  <span className="capitalize"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${l.status === 'leave_approved' ? 'bg-purple-500/10 text-purple-600' : l.status === 'leave_pending' ? 'bg-orange-500/10 text-orange-600' : 'bg-muted text-muted-foreground'}`}>{(l.status || 'unknown').replace('_', ' ')}</span></span>
+                </div>
+                <div className="flex items-center justify-between mt-2 text-xs">
+                  <div className="flex items-center gap-3">
+                    {l.punch_in ? (<div className="flex items-center gap-1"><span className="text-muted-foreground">In:</span><span className="text-emerald-600 font-medium">{new Date(l.punch_in).toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'})}</span>{l.punch_in_loc && <a href={l.punch_in_loc} target="_blank" rel="noreferrer" className="text-blue-500 hover:text-blue-700" title="View on Map"><MapPin className="h-3.5 w-3.5"/></a>}</div>) : null}
+                    {l.punch_out ? (<div className="flex items-center gap-1"><span className="text-muted-foreground">Out:</span><span className="text-orange-600 font-medium">{new Date(l.punch_out).toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'})}</span>{l.punch_out_loc && <a href={l.punch_out_loc} target="_blank" rel="noreferrer" className="text-blue-500 hover:text-blue-700" title="View on Map"><MapPin className="h-3.5 w-3.5"/></a>}</div>) : null}
+                  </div>
+                  <span className="font-semibold">{l.total_hours ? `${l.total_hours} hrs` : "—"}</span>
+                </div>
+              </div>
+            ))}
+            {logs.length === 0 && !loading && <p className="p-8 text-center text-muted-foreground">No attendance logs found.</p>}
+          </div>
+          <div className="hidden md:block rounded-3xl border border-border/50 bg-card/50 overflow-x-auto shadow-sm backdrop-blur-xl">
             <table className="w-full text-sm min-w-[800px]">
               <thead className="bg-muted/40 text-xs text-muted-foreground border-b border-border/50"><tr><th className="text-left p-4">Date</th><th className="text-left p-4">Employee</th><th className="text-left p-4">Punch In</th><th className="text-left p-4">Punch Out</th><th className="text-left p-4">Status</th><th className="text-right p-4">Total Hours</th></tr></thead>
               <tbody className="divide-y divide-border/50">
@@ -156,7 +196,26 @@ export default function Attendance() {
         </TabsContent>
 
         <TabsContent value="leaves" className="mt-0">
-          <div className="rounded-3xl border border-border/50 bg-card/50 overflow-x-auto shadow-sm backdrop-blur-xl">
+          {/* Mobile: stacked cards */}
+          <div className="md:hidden space-y-3">
+            {pendingLeaves.map(l => (
+              <div key={l.id} className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium">{l.profiles?.display_name}</p>
+                    <p className="font-mono text-xs text-muted-foreground">{fmtDate(l.date)}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">{l.leave_reason}</p>
+                <div className="flex items-center gap-2 mt-3">
+                  <Button size="sm" onClick={() => updateLeave(l.id, 'leave_approved')} className="bg-green-600 hover:bg-green-700 h-8 text-xs rounded-full flex-1"><CheckCircle className="h-3.5 w-3.5 mr-1" /> Approve</Button>
+                  <Button size="sm" variant="destructive" onClick={() => updateLeave(l.id, 'leave_rejected')} className="h-8 text-xs rounded-full flex-1"><XCircle className="h-3.5 w-3.5 mr-1" /> Reject</Button>
+                </div>
+              </div>
+            ))}
+            {pendingLeaves.length === 0 && !loading && <p className="p-8 text-center text-muted-foreground">No pending leave requests. 🎉</p>}
+          </div>
+          <div className="hidden md:block rounded-3xl border border-border/50 bg-card/50 overflow-x-auto shadow-sm backdrop-blur-xl">
             <table className="w-full text-sm min-w-[700px]">
               <thead className="bg-muted/40 text-xs text-muted-foreground border-b border-border/50"><tr><th className="text-left p-4">Employee</th><th className="text-left p-4">Leave Date</th><th className="text-left p-4">Reason</th><th className="text-right p-4">Action</th></tr></thead>
               <tbody className="divide-y divide-border/50">

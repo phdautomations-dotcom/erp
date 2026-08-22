@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
-import { Plus, Trash2, Download, ArrowRight, ScanLine, Sparkles } from "lucide-react";
+import { Plus, Trash2, Download, ArrowRight, ScanLine, Sparkles, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { fmtINR, calcLineTax, todayFY, peekNextDocNumber, reserveDocNumber } from "@/lib/format";
 import { expandDescription } from "@/lib/ai/remote";
 import { generateDocPDF } from "@/lib/pdf";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { toast } from "sonner";
 
 interface Line {
@@ -55,8 +56,16 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
   const [search] = useSearchParams();
   const nav = useNavigate();
   const isEdit = id && id !== "new";
+  const confirm = useConfirm();
   const initialType = (search.get("type") as string) || (purchase ? "purchase_bill" : "invoice");
   const [docType, setDocType] = useState<DocType>(initialType as DocType);
+  // Existing documents open read-only — editing requires an explicit unlock +
+  // confirmation. New documents are editable immediately (nothing to protect yet).
+  const [locked, setLocked] = useState(!!isEdit);
+  const requestEdit = async () => {
+    if (!(await confirm({ title: "Edit this document?", description: "Unlock this document for editing.", confirmText: "Edit" }))) return;
+    setLocked(false);
+  };
 
   const [parties, setParties] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
@@ -255,6 +264,7 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
     setBusy(false);
     setDoc((d: any) => ({ ...d, doc_number: docNumber, id: docId }));
     toast.success("Saved");
+    if (isEdit) setLocked(true);
     if (!isEdit) nav(`/admin/${purchase ? "purchases" : "sales"}/${docId}`, { replace: true });
     return docId;
   };
@@ -275,6 +285,7 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
     <AdminLayout title={`${docType.replace("_", " ").toUpperCase()} ${doc.doc_number ? `· ${doc.doc_number}` : ""}`}>
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-5 min-w-0">
+          <fieldset disabled={locked} className="contents">
           <div className="rounded-2xl border border-border bg-card p-5 grid sm:grid-cols-4 gap-4">
             <div><Label>Document type</Label>
               <Select value={docType} onValueChange={(v) => setDocType(v as DocType)} disabled={!!isEdit}>
@@ -377,6 +388,7 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
             <div><Label>Notes</Label><Textarea rows={3} value={doc.notes || ""} onChange={e => setDoc({ ...doc, notes: e.target.value })} /></div>
             <div><Label>Terms</Label><Textarea rows={3} value={doc.terms || ""} onChange={e => setDoc({ ...doc, terms: e.target.value })} placeholder={settings.terms} /></div>
           </div>
+          </fieldset>
         </div>
 
         <aside className="space-y-4">
@@ -386,7 +398,7 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
               <div className="flex justify-between"><dt className="text-muted-foreground">Subtotal</dt><dd>{fmtINR(totals.subtotal)}</dd></div>
               <div className="flex justify-between"><dt className="text-muted-foreground">Line discount</dt><dd>-{fmtINR(totals.lineDisc)}</dd></div>
               <div className="flex justify-between items-center gap-2"><dt className="text-muted-foreground">Extra discount</dt>
-                <Input type="number" step="0.01" value={doc.discount || 0} onChange={e => setDoc({ ...doc, discount: +e.target.value })} className="h-7 w-24 text-right" />
+                <Input type="number" step="0.01" value={doc.discount || 0} onChange={e => setDoc({ ...doc, discount: +e.target.value })} className="h-7 w-24 text-right" disabled={locked} />
               </div>
               <div className="flex justify-between"><dt className="text-muted-foreground">Taxable</dt><dd>{fmtINR(totals.taxable)}</dd></div>
               {doc.is_igst ? (
@@ -401,7 +413,11 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
               <div className="flex justify-between pt-2 border-t border-border font-display text-lg font-semibold"><dt>Total</dt><dd>{fmtINR(totals.total)}</dd></div>
             </dl>
             <div className="mt-4 space-y-2">
-              <Button onClick={save} disabled={busy} className="w-full rounded-full btn-gradient">{busy ? "Saving…" : "Save"}</Button>
+              {locked ? (
+                <Button onClick={requestEdit} className="w-full rounded-full btn-gradient"><Pencil className="h-4 w-4 mr-1.5" /> Edit</Button>
+              ) : (
+                <Button onClick={save} disabled={busy} className="w-full rounded-full btn-gradient">{busy ? "Saving…" : "Save"}</Button>
+              )}
               <Button onClick={downloadPDF} variant="outline" className="w-full rounded-full"><Download className="h-4 w-4 mr-1" /> Download PDF</Button>
             </div>
           </div>

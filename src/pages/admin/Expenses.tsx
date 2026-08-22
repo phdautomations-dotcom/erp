@@ -63,7 +63,7 @@ export default function Expenses() {
           <DialogContent>
             <DialogHeader><DialogTitle>New Expense</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label>Date</Label><Input type="date" value={form.expense_date} onChange={e => setForm({ ...form, expense_date: e.target.value })} /></div>
                 <div><Label>Amount</Label><Input type="number" step="0.01" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} /></div>
                 <div><Label>Category</Label>

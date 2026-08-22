@@ -80,7 +80,7 @@ export default function Users() {
   };
 
   const removeRoles = async (userId: string) => {
-    if (!(await confirm("Revoke all access for this user?"))) return;
+    if (!(await confirm({ title: "Revoke all access for this user?", confirmText: "Revoke", variant: "destructive" }))) return;
     await supabase.from("user_roles").delete().eq("user_id", userId);
     load();
   };
@@ -108,7 +108,10 @@ export default function Users() {
     toast.success("Password updated"); setPwOpen(false);
   };
 
-  const openProf = (u: any) => { setProfUser(u); setProfForm(u); setProfOpen(true); };
+  const openProf = async (u: any) => {
+    if (!(await confirm({ title: "Edit profile?", description: `Open ${u.display_name || "this user"}'s profile for editing.`, confirmText: "Edit" }))) return;
+    setProfUser(u); setProfForm(u); setProfOpen(true);
+  };
   const saveProf = async () => {
     setBusy(true);
     const { error } = await (supabase as any).from("profiles").update({

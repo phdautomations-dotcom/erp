@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
+import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 const itemSchema = z.object({
@@ -32,10 +34,20 @@ export default function ItemForm() {
   const { id } = useParams();
   const nav = useNavigate();
   const isEdit = id && id !== "new";
+  const confirm = useConfirm();
   const [form, setForm] = useState<any>({ type: "product", unit: "Nos", gst_rate: 18, sale_price: 0, purchase_price: 0, opening_stock: 0 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [busy, setBusy] = useState(false);
   const [printQty, setPrintQty] = useState(1);
+  // Existing items open read-only — editing requires an explicit unlock +
+  // confirmation, so nothing changes by accident. New items are editable
+  // immediately since there's nothing yet to protect.
+  const [locked, setLocked] = useState(!!isEdit);
+
+  const requestEdit = async () => {
+    if (!(await confirm({ title: "Edit this item?", description: "Unlock this item's details for editing.", confirmText: "Edit" }))) return;
+    setLocked(false);
+  };
 
   useEffect(() => {
     document.title = isEdit ? "Edit Item | PHD ERP" : "New Item | PHD ERP";
@@ -108,42 +120,46 @@ export default function ItemForm() {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 rounded-2xl border border-border bg-card p-6 space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
-            <div><Label>Name *</Label><Input value={form.name || ""} onChange={(e) => u("name", e.target.value)} /></div>
+            <div><Label>Name *</Label><Input value={form.name || ""} onChange={(e) => u("name", e.target.value)} disabled={locked} /></div>
             <div><Label>Type</Label>
-              <Select value={form.type} onValueChange={(v) => u("type", v)}>
+              <Select value={form.type} onValueChange={(v) => u("type", v)} disabled={locked}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="product">Product / Spare Part</SelectItem><SelectItem value="service">Service</SelectItem></SelectContent>
               </Select>
             </div>
-            <div><Label>HSN / SAC Code</Label><Input value={form.hsn_code || ""} onChange={(e) => u("hsn_code", e.target.value)} /></div>
-            <div><Label>Unit</Label><Input value={form.unit || ""} onChange={(e) => u("unit", e.target.value)} placeholder="Nos, Set, Hr…" /></div>
-            <div><Label>Sale Price (₹) *</Label><Input type="number" step="0.01" value={form.sale_price ?? 0} onChange={(e) => u("sale_price", e.target.value)} /></div>
-            <div><Label>Purchase Price (₹)</Label><Input type="number" step="0.01" value={form.purchase_price ?? 0} onChange={(e) => u("purchase_price", e.target.value)} /></div>
+            <div><Label>HSN / SAC Code</Label><Input value={form.hsn_code || ""} onChange={(e) => u("hsn_code", e.target.value)} disabled={locked} /></div>
+            <div><Label>Unit</Label><Input value={form.unit || ""} onChange={(e) => u("unit", e.target.value)} placeholder="Nos, Set, Hr…" disabled={locked} /></div>
+            <div><Label>Sale Price (₹) *</Label><Input type="number" step="0.01" value={form.sale_price ?? 0} onChange={(e) => u("sale_price", e.target.value)} disabled={locked} /></div>
+            <div><Label>Purchase Price (₹)</Label><Input type="number" step="0.01" value={form.purchase_price ?? 0} onChange={(e) => u("purchase_price", e.target.value)} disabled={locked} /></div>
             <div><Label>GST Rate (%)</Label>
-              <Select value={String(form.gst_rate ?? 18)} onValueChange={(v) => u("gst_rate", v)}>
+              <Select value={String(form.gst_rate ?? 18)} onValueChange={(v) => u("gst_rate", v)} disabled={locked}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{[0, 5, 12, 18, 28].map(r => <SelectItem key={r} value={String(r)}>{r}%</SelectItem>)}</SelectContent>
               </Select>
             </div>
             {form.type === "product" && (
               <>
-                <div><Label>Opening Stock</Label><Input type="number" step="0.001" value={form.opening_stock ?? 0} onChange={(e) => u("opening_stock", e.target.value)} disabled={!!isEdit} /></div>
-                <div><Label>Low-Stock Threshold</Label><Input type="number" step="0.001" value={form.low_stock_threshold ?? 0} onChange={(e) => u("low_stock_threshold", e.target.value)} /></div>
+                <div><Label>Opening Stock</Label><Input type="number" step="0.001" value={form.opening_stock ?? 0} onChange={(e) => u("opening_stock", e.target.value)} disabled={locked || !!isEdit} /></div>
+                <div><Label>Low-Stock Threshold</Label><Input type="number" step="0.001" value={form.low_stock_threshold ?? 0} onChange={(e) => u("low_stock_threshold", e.target.value)} disabled={locked} /></div>
               </>
             )}
           </div>
-          <div><Label>Description</Label><Textarea rows={2} value={form.description || ""} onChange={(e) => u("description", e.target.value)} /></div>
+          <div><Label>Description</Label><Textarea rows={2} value={form.description || ""} onChange={(e) => u("description", e.target.value)} disabled={locked} /></div>
           <div className="flex gap-3 pt-2">
-            <Button onClick={save} disabled={busy} className="rounded-full btn-gradient">{busy ? "Saving…" : "Save"}</Button>
-            <Link to="/admin/items"><Button variant="outline" className="rounded-full">Cancel</Button></Link>
+            {locked ? (
+              <Button onClick={requestEdit} className="rounded-full btn-gradient"><Pencil className="h-4 w-4 mr-1.5" /> Edit</Button>
+            ) : (
+              <Button onClick={async () => { await save(); if (isEdit) setLocked(true); }} disabled={busy} className="rounded-full btn-gradient">{busy ? "Saving…" : "Save"}</Button>
+            )}
+            <Link to="/admin/items"><Button variant="outline" className="rounded-full">{locked ? "Back" : "Cancel"}</Button></Link>
           </div>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-6">
           <h3 className="font-display font-semibold mb-3">Barcode</h3>
           <div className="flex gap-2 mb-3">
-            <Input value={form.barcode || ""} onChange={(e) => u("barcode", e.target.value)} placeholder="Auto / scan" />
-            <Button variant="outline" onClick={() => u("barcode", genBarcode())}>Generate</Button>
+            <Input value={form.barcode || ""} onChange={(e) => u("barcode", e.target.value)} placeholder="Auto / scan" disabled={locked} />
+            <Button variant="outline" onClick={() => u("barcode", genBarcode())} disabled={locked}>Generate</Button>
           </div>
           {form.barcode && (
             <>

@@ -37,7 +37,8 @@ export default function CashLedger() {
   useEffect(() => { document.title = "Cash Ledger | PHD ERP"; load(); }, []);
 
   const openNew = () => { setEditingId(null); setForm(emptyForm()); setOpen(true); };
-  const openEdit = (r: any) => {
+  const openEdit = async (r: any) => {
+    if (!(await confirm({ title: "Edit this cash entry?", confirmText: "Edit" }))) return;
     setEditingId(r.id);
     setForm({ entry_date: r.entry_date, type: r.type, amount: r.amount, description: r.description || "", party_id: r.party_id || "" });
     setOpen(true);
@@ -95,10 +96,10 @@ export default function CashLedger() {
           <DialogContent>
             <DialogHeader><DialogTitle>{editingId ? "Edit Cash Entry" : "New Cash Entry"}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label>Date</Label><Input type="date" value={form.entry_date} onChange={e => setForm({ ...form, entry_date: e.target.value })} /></div>
                 <div><Label>Amount</Label><Input type="number" step="0.01" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} /></div>
-                <div className="col-span-2"><Label>Type</Label>
+                <div className="sm:col-span-2"><Label>Type</Label>
                   <Select value={form.type} onValueChange={v => setForm({ ...form, type: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>

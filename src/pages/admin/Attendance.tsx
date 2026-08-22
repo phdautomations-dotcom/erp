@@ -115,10 +115,15 @@ export default function Attendance() {
       </div>
 
       <Tabs defaultValue="payroll">
-        <TabsList className="mb-4 bg-card border border-border/50 h-auto p-1.5 rounded-2xl">
-          <TabsTrigger value="payroll" className="rounded-xl px-4 py-2"><Calculator className="h-4 w-4 mr-2"/> Payroll & Overview</TabsTrigger>
-          <TabsTrigger value="logs" className="rounded-xl px-4 py-2"><CalendarClock className="h-4 w-4 mr-2"/> Daily Logs</TabsTrigger>
-          <TabsTrigger value="leaves" className="rounded-xl px-4 py-2 text-orange-600 data-[state=active]:text-orange-600"><CalendarCheck2 className="h-4 w-4 mr-2"/> Leave Requests {pendingLeaves.length > 0 && <span className="ml-1.5 bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full text-xs">{pendingLeaves.length}</span>}</TabsTrigger>
+        <TabsList className="mb-4 bg-card border border-border/50 h-auto p-1.5 rounded-2xl flex flex-wrap gap-1">
+          <TabsTrigger value="payroll" className="rounded-xl px-4 py-2">
+            <Calculator className="h-4 w-4 mr-2 shrink-0"/> <span className="sm:hidden">Payroll</span><span className="hidden sm:inline">Payroll & Overview</span>
+          </TabsTrigger>
+          <TabsTrigger value="logs" className="rounded-xl px-4 py-2"><CalendarClock className="h-4 w-4 mr-2 shrink-0"/> Daily Logs</TabsTrigger>
+          <TabsTrigger value="leaves" className="rounded-xl px-4 py-2 text-orange-600 data-[state=active]:text-orange-600">
+            <CalendarCheck2 className="h-4 w-4 mr-2 shrink-0"/> <span className="sm:hidden">Leaves</span><span className="hidden sm:inline">Leave Requests</span>
+            {pendingLeaves.length > 0 && <span className="ml-1.5 bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full text-xs">{pendingLeaves.length}</span>}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="payroll" className="mt-0">
@@ -336,9 +341,9 @@ export default function Attendance() {
       <Dialog open={holOpen} onOpenChange={setHolOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Manage Company Holidays</DialogTitle></DialogHeader>
-          <div className="bg-muted/30 border border-border/50 rounded-xl p-4 flex gap-3 items-end">
-            <div className="flex-1"><Label>Date</Label><Input type="date" value={newHolDate} onChange={e=>setNewHolDate(e.target.value)} className="mt-1" /></div>
-            <div className="flex-[2]"><Label>Holiday Name</Label><Input value={newHolName} onChange={e=>setNewHolName(e.target.value)} placeholder="e.g. Diwali" className="mt-1" /></div>
+          <div className="bg-muted/30 border border-border/50 rounded-xl p-4 flex flex-col sm:flex-row gap-3 sm:items-end">
+            <div className="sm:flex-1"><Label>Date</Label><Input type="date" value={newHolDate} onChange={e=>setNewHolDate(e.target.value)} className="mt-1" /></div>
+            <div className="sm:flex-[2]"><Label>Holiday Name</Label><Input value={newHolName} onChange={e=>setNewHolName(e.target.value)} placeholder="e.g. Diwali" className="mt-1" /></div>
             <Button onClick={addHoliday} className="bg-foreground text-background">Add</Button>
           </div>
           <div className="mt-4 border border-border/50 rounded-xl overflow-hidden">

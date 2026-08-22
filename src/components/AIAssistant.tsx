@@ -115,6 +115,13 @@ export const AIAssistant = ({ onDraftReady }: { onDraftReady?: (draft: MatchedDr
                 <p className="text-sm font-semibold leading-tight">Saffyre AI</p>
                 <p className="text-[10px] text-white/70 leading-tight">Saffyre Intelligence Labs</p>
               </div>
+              <button
+                onClick={() => setOpen(false)}
+                title="Close"
+                className="h-8 w-8 shrink-0 rounded-full bg-white/15 hover:bg-white/25 transition-colors flex items-center justify-center"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
             <div ref={scrollRef} className="flex-1 px-4 py-3 overflow-y-auto">

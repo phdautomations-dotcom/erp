@@ -338,7 +338,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((c, i) => (
           <motion.div
             key={c.label}
@@ -421,7 +421,7 @@ export default function Dashboard() {
       </motion.div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 flex flex-col gap-6">
+        <div className="w-full min-w-0 lg:col-span-2 flex flex-col gap-6">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -566,7 +566,7 @@ export default function Dashboard() {
         </motion.div>
         </div>
 
-        <div className="flex flex-col gap-6">
+        <div className="w-full min-w-0 flex flex-col gap-6">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}

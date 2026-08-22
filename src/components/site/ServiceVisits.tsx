@@ -188,15 +188,15 @@ export default function ServiceVisits() {
       </div>
 
       <div className="overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
-        <div className="p-4 border-b border-border/50 overflow-x-auto">
+        <div className="p-4 border-b border-border/50">
           <Tabs value={filter} onValueChange={setFilter} className="w-full">
-            <TabsList className="bg-background/50 backdrop-blur">
-              <TabsTrigger value="all">All Visits</TabsTrigger>
+            <TabsList className="flex flex-wrap h-auto bg-background/50 backdrop-blur">
+              <TabsTrigger value="all"><span className="sm:hidden">All</span><span className="hidden sm:inline">All Visits</span></TabsTrigger>
               <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
-              <TabsTrigger value="in_progress">In Progress</TabsTrigger>
+              <TabsTrigger value="in_progress"><span className="sm:hidden">In Prog.</span><span className="hidden sm:inline">In Progress</span></TabsTrigger>
               <TabsTrigger value="completed">Completed</TabsTrigger>
-              <TabsTrigger value="unverified" className="text-yellow-600 data-[state=active]:text-yellow-600">Pending Verification</TabsTrigger>
-              <TabsTrigger value="amc_due" className="text-orange-600 data-[state=active]:text-orange-600">AMC Due (30 Days)</TabsTrigger>
+              <TabsTrigger value="unverified" className="text-yellow-600 data-[state=active]:text-yellow-600"><span className="sm:hidden">Pending</span><span className="hidden sm:inline">Pending Verification</span></TabsTrigger>
+              <TabsTrigger value="amc_due" className="text-orange-600 data-[state=active]:text-orange-600"><span className="sm:hidden">AMC Due</span><span className="hidden sm:inline">AMC Due (30 Days)</span></TabsTrigger>
             </TabsList>
           </Tabs>
         </div>

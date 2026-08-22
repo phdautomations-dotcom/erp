@@ -420,9 +420,9 @@ export default function Reports() {
 
   return (
     <AdminLayout title="Reports">
-      <div className="flex flex-wrap gap-3 mb-5">
-        <div><Label>From</Label><Input type="date" value={from} onChange={e => setFrom(e.target.value)} /></div>
-        <div><Label>To</Label><Input type="date" value={to} onChange={e => setTo(e.target.value)} /></div>
+      <div className="flex flex-col sm:flex-row gap-3 mb-5">
+        <div className="w-full sm:w-auto"><Label>From</Label><Input type="date" value={from} onChange={e => setFrom(e.target.value)} /></div>
+        <div className="w-full sm:w-auto"><Label>To</Label><Input type="date" value={to} onChange={e => setTo(e.target.value)} /></div>
       </div>
 
       <Tabs defaultValue="pl">

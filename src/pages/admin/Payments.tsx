@@ -220,7 +220,7 @@ export default function Payments() {
                   <SelectContent className="max-h-72">{parties.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div><Label>Date</Label><Input type="date" value={form.payment_date} onChange={e => setForm({ ...form, payment_date: e.target.value })} /></div>
                 <div><Label>Amount (₹)</Label><Input type="number" step="0.01" value={form.amount} onChange={e => { setForm({ ...form, amount: e.target.value }); setAllocs({}); }} /></div>
                 <div><Label>Mode</Label>

@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Trash2, Wrench, Cpu, Printer, MapPin, Map } from "lucide-react";
+import { Plus, Trash2, Wrench, Cpu, Printer, MapPin, Map, Pencil } from "lucide-react";
 import { INDIAN_STATES } from "@/lib/states";
 import { fmtINR, fmtNum, fmtDate } from "@/lib/format";
 import { toast } from "sonner";
@@ -45,6 +45,13 @@ export default function PartyForm() {
   const { hasRole } = useAuth();
   const confirm = useConfirm();
   const isEdit = id && id !== "new";
+  // Existing parties open read-only — editing requires an explicit unlock +
+  // confirmation. New parties are editable immediately (nothing to protect yet).
+  const [locked, setLocked] = useState(!!isEdit);
+  const requestEdit = async () => {
+    if (!(await confirm({ title: "Edit this party?", description: "Unlock this party's details for editing.", confirmText: "Edit" }))) return;
+    setLocked(false);
+  };
   const [settings, setSettings] = useState<Settings | null>(null);
   const [form, setForm] = useState<any>({ type: "customer", opening_balance: 0 });
   const [ledger, setLedger] = useState<any[]>([]);
@@ -160,6 +167,7 @@ export default function PartyForm() {
       setBusy(false);
       if (error) return toast.error(error.message);
       toast.success("Saved");
+      setLocked(true);
     } else {
       const { data: u } = await supabase.auth.getUser();
       const { data, error } = await supabase.from("parties").insert({ ...payload, created_by: u.user?.id }).select().single();
@@ -242,15 +250,16 @@ export default function PartyForm() {
     <AdminLayout title={isEdit ? `Party · ${form.name || ""}` : "New Party"}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {isEdit && (
-          <TabsList className="mb-6 bg-card/50 backdrop-blur border border-border/50 p-1.5 h-auto rounded-2xl flex w-full sm:w-fit gap-1 overflow-x-auto justify-start">
-            <TabsTrigger value="details" className="rounded-xl px-4 py-2">Party Details</TabsTrigger>
-            <TabsTrigger value="machines" className="rounded-xl px-4 py-2">Machines & AMC</TabsTrigger>
+          <TabsList className="mb-6 bg-card/50 backdrop-blur border border-border/50 p-1.5 h-auto rounded-2xl flex flex-wrap gap-1">
+            <TabsTrigger value="details" className="rounded-xl px-4 py-2"><span className="sm:hidden">Details</span><span className="hidden sm:inline">Party Details</span></TabsTrigger>
+            <TabsTrigger value="machines" className="rounded-xl px-4 py-2"><span className="sm:hidden">Machines</span><span className="hidden sm:inline">Machines & AMC</span></TabsTrigger>
             <TabsTrigger value="ledger" className="rounded-xl px-4 py-2">Ledger</TabsTrigger>
-            <TabsTrigger value="service" className="rounded-xl px-4 py-2">Service Log</TabsTrigger>
+            <TabsTrigger value="service" className="rounded-xl px-4 py-2"><span className="sm:hidden">Service</span><span className="hidden sm:inline">Service Log</span></TabsTrigger>
           </TabsList>
         )}
         <TabsContent value="details" className="mt-0">
           <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+          <fieldset disabled={locked} className="contents">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div><Label>Name *</Label><Input value={form.name || ""} onChange={(e) => u("name", e.target.value)} /></div>
             <div><Label>Type</Label>
@@ -307,8 +316,13 @@ export default function PartyForm() {
           </div>
           <div><Label>Shipping Address (if different)</Label><Textarea rows={2} value={form.shipping_address || ""} onChange={(e) => u("shipping_address", e.target.value)} /></div>
           <div><Label>Notes</Label><Textarea rows={2} value={form.notes || ""} onChange={(e) => u("notes", e.target.value)} /></div>
+          </fieldset>
           <div className="flex gap-3 pt-2">
-            <Button onClick={save} disabled={busy} className="rounded-full btn-gradient">{busy ? "Saving…" : "Save"}</Button>
+            {locked ? (
+              <Button onClick={requestEdit} className="rounded-full btn-gradient"><Pencil className="h-4 w-4 mr-1.5" /> Edit</Button>
+            ) : (
+              <Button onClick={save} disabled={busy} className="rounded-full btn-gradient">{busy ? "Saving…" : "Save"}</Button>
+            )}
             <Link to="/admin/parties"><Button variant="outline" className="rounded-full">Cancel</Button></Link>
           </div>
         </div>
@@ -357,11 +371,11 @@ export default function PartyForm() {
                   <DialogHeader><DialogTitle>Add Machine</DialogTitle></DialogHeader>
                   <div className="space-y-3">
                     <div><Label>Machine Name / Type *</Label><Input placeholder="e.g. CNC Lathe" value={machineForm.name || ""} onChange={e => setMachineForm({...machineForm, name: e.target.value})} /></div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div><Label>Brand & Model</Label><Input placeholder="e.g. Haas ST-20" value={machineForm.model || ""} onChange={e => setMachineForm({...machineForm, model: e.target.value})} /></div>
                       <div><Label>Serial Number</Label><Input value={machineForm.serial_number || ""} onChange={e => setMachineForm({...machineForm, serial_number: e.target.value})} /></div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div><Label>Installation Date</Label><Input type="date" value={machineForm.installation_date || ""} onChange={e => setMachineForm({...machineForm, installation_date: e.target.value})} /></div>
                       <div><Label>AMC Expiry Date</Label><Input type="date" value={machineForm.amc_expiry_date || ""} onChange={e => setMachineForm({...machineForm, amc_expiry_date: e.target.value})} /></div>
                     </div>
@@ -396,7 +410,7 @@ export default function PartyForm() {
               <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
                 <DialogHeader><DialogTitle>Log Service Visit</DialogTitle></DialogHeader>
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div><Label>Visit Date</Label><Input type="date" value={visit.visit_date} onChange={e => setVisit({ ...visit, visit_date: e.target.value })} /></div>
                     <div><Label>Engineer</Label>
                       <Select value={visit.engineer_user_id || "unassigned"} onValueChange={v => {
@@ -431,7 +445,7 @@ export default function PartyForm() {
                 <div><Label>Machine Details *</Label><Input placeholder="Type manually or select above" value={visit.machine_details || ""} onChange={e => setVisit({ ...visit, machine_details: e.target.value })} /></div>
                   <div><Label>Work Description *</Label><Textarea rows={3} value={visit.work_description || ""} onChange={e => setVisit({ ...visit, work_description: e.target.value })} /></div>
                   <div><Label>Parts Used</Label><Textarea rows={2} value={visit.parts_used || ""} onChange={e => setVisit({ ...visit, parts_used: e.target.value })} /></div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div><Label>Charges (₹)</Label><Input type="number" step="0.01" value={visit.charges} onChange={e => setVisit({ ...visit, charges: e.target.value })} /></div>
                     <div><Label>Next Visit Date</Label><Input type="date" value={visit.next_visit_date || ""} onChange={e => setVisit({ ...visit, next_visit_date: e.target.value })} /></div>
                   </div>

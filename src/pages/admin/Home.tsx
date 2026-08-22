@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { AdminLayout, NAV } from "@/components/admin/AdminLayout";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -16,12 +15,9 @@ export default function Home() {
     <AdminLayout>
       <div className="h-full flex flex-col">
         <div className="flex-1 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 auto-rows-fr gap-4">
-          {tiles.map((tile, i) => (
-            <motion.button
+          {tiles.map((tile) => (
+            <button
               key={tile.to}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.03, duration: 0.3 }}
               onClick={() => navigate(tile.to)}
               className="group shine-hover rounded-2xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl flex flex-col items-center justify-center gap-3 p-4 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-accent/20 hover:border-accent/50"
             >
@@ -31,7 +27,7 @@ export default function Home() {
                 <tile.icon className="h-5 w-5" />
               </div>
               <span className="text-sm font-semibold text-center text-foreground/85">{tile.label}</span>
-            </motion.button>
+            </button>
           ))}
         </div>
 

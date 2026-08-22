@@ -301,7 +301,8 @@ export default function EngineerApp() {
   };
 
   const openNewCash = () => { setEditingCashId(null); setCashForm(emptyCashForm()); setCashSheet(true); };
-  const openEditCash = (r: any) => {
+  const openEditCash = async (r: any) => {
+    if (!(await confirm({ title: "Edit this cash entry?", confirmText: "Edit" }))) return;
     setEditingCashId(r.id);
     setCashForm({ entry_date: r.entry_date, type: r.type, amount: r.amount, description: r.description || "", party_id: r.party_id || "" });
     setCashSheet(true);
@@ -677,6 +678,7 @@ export default function EngineerApp() {
 
   const openEditDoc = async (doc: any) => {
     if (!hasPerm(DOC_MODULE[doc.doc_type], "can_view")) return toast.error("No permission to view this document.");
+    if (!(await confirm({ title: "Edit this document?", confirmText: "Edit" }))) return;
     setEditingDoc(doc); setActiveDocType(doc.doc_type);
     setDocForm({ party_id: doc.party_id || "", doc_date: doc.doc_date, notes: doc.notes || "", status: doc.status });
     setPreviewDocNumber(doc.doc_number || "");
@@ -743,7 +745,8 @@ export default function EngineerApp() {
     setExpSheet(true);
   };
 
-  const openEditExp = (exp: any) => {
+  const openEditExp = async (exp: any) => {
+    if (!(await confirm({ title: "Edit this expense?", confirmText: "Edit" }))) return;
     setEditingExp(exp);
     setExpForm({ expense_date: exp.expense_date, category: exp.category, mode: exp.mode, amount: exp.amount, description: exp.description || "", paid_to: exp.paid_to || "" });
     setExpSheet(true);
@@ -1018,16 +1021,16 @@ export default function EngineerApp() {
 
       {/* Tabs */}
       <Tabs defaultValue="dashboard" className="w-full max-w-6xl mx-auto px-4 md:px-8 mt-6 md:mt-10">
-        <div className="overflow-x-auto pb-1 mb-6 md:mb-10">
-          <TabsList className="flex bg-card border border-border/50 shadow-sm rounded-full p-1.5 h-12 w-max min-w-full gap-1">
-            <TabsTrigger value="dashboard"  className="rounded-full text-xs md:text-sm px-4 h-full whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all">Dashboard</TabsTrigger>
-            {salesPerm    && <TabsTrigger value="sales"     className="rounded-full text-xs md:text-sm px-4 h-full whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />Sales</TabsTrigger>}
-            {purchasePerm && <TabsTrigger value="purchases" className="rounded-full text-xs md:text-sm px-4 h-full whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all flex items-center gap-1.5"><ShoppingCart className="h-3.5 w-3.5" />Purchases</TabsTrigger>}
-            {expensesPerm && <TabsTrigger value="expenses"  className="rounded-full text-xs md:text-sm px-4 h-full whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all flex items-center gap-1.5"><Receipt className="h-3.5 w-3.5" />Expenses</TabsTrigger>}
-            {reportsPerm  && <TabsTrigger value="reports"   className="rounded-full text-xs md:text-sm px-4 h-full whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all flex items-center gap-1.5"><BarChart3 className="h-3.5 w-3.5" />Reports</TabsTrigger>}
-            <TabsTrigger value="cashledger" className="rounded-full text-xs md:text-sm px-4 h-full whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all flex items-center gap-1.5"><Banknote className="h-3.5 w-3.5" />Cash Ledger</TabsTrigger>
-            <TabsTrigger value="calendar"  className="rounded-full text-xs md:text-sm px-4 h-full whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all">My Calendar</TabsTrigger>
-            <TabsTrigger value="leave"     className="rounded-full text-xs md:text-sm px-4 h-full whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all">Apply Leave</TabsTrigger>
+        <div className="mb-6 md:mb-10">
+          <TabsList className="flex flex-wrap h-auto bg-card border border-border/50 shadow-sm rounded-full p-1.5 gap-1">
+            <TabsTrigger value="dashboard"  className="rounded-full text-xs md:text-sm px-4 py-2 whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all">Dashboard</TabsTrigger>
+            {salesPerm    && <TabsTrigger value="sales"     className="rounded-full text-xs md:text-sm px-4 py-2 whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />Sales</TabsTrigger>}
+            {purchasePerm && <TabsTrigger value="purchases" className="rounded-full text-xs md:text-sm px-4 py-2 whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all flex items-center gap-1.5"><ShoppingCart className="h-3.5 w-3.5" />Purchases</TabsTrigger>}
+            {expensesPerm && <TabsTrigger value="expenses"  className="rounded-full text-xs md:text-sm px-4 py-2 whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all flex items-center gap-1.5"><Receipt className="h-3.5 w-3.5" />Expenses</TabsTrigger>}
+            {reportsPerm  && <TabsTrigger value="reports"   className="rounded-full text-xs md:text-sm px-4 py-2 whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all flex items-center gap-1.5"><BarChart3 className="h-3.5 w-3.5" />Reports</TabsTrigger>}
+            <TabsTrigger value="cashledger" className="rounded-full text-xs md:text-sm px-4 py-2 whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all flex items-center gap-1.5"><Banknote className="h-3.5 w-3.5" />Cash Ledger</TabsTrigger>
+            <TabsTrigger value="calendar"  className="rounded-full text-xs md:text-sm px-4 py-2 whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all">My Calendar</TabsTrigger>
+            <TabsTrigger value="leave"     className="rounded-full text-xs md:text-sm px-4 py-2 whitespace-nowrap data-[state=active]:bg-foreground data-[state=active]:text-background transition-all">Apply Leave</TabsTrigger>
           </TabsList>
         </div>
 
@@ -1778,7 +1781,7 @@ export default function EngineerApp() {
         <TabsContent value="leave" className="mt-0">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-card border border-border/50 rounded-3xl p-6 md:p-10 shadow-sm space-y-6 max-w-xl mx-auto">
             <h3 className="font-semibold text-xl md:text-2xl flex items-center gap-2"><CalendarCheck2 className="h-6 w-6 text-accent" /> Apply for Leave</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div><Label className="text-muted-foreground text-sm">Start Date *</Label><Input type="date" value={leaveForm.startDate} onChange={e => setLeaveForm({ ...leaveForm, startDate: e.target.value })} className="mt-2 rounded-2xl h-14 bg-secondary/30 focus:border-accent" /></div>
               <div><Label className="text-muted-foreground text-sm">End Date <span className="font-normal text-xs">(Optional)</span></Label><Input type="date" value={leaveForm.endDate} onChange={e => setLeaveForm({ ...leaveForm, endDate: e.target.value })} className="mt-2 rounded-2xl h-14 bg-secondary/30 focus:border-accent" /></div>
             </div>

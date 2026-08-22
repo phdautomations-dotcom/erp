@@ -26,7 +26,11 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
   const resolveRef = useRef<(value: boolean) => void>();
 
   const confirm = useCallback<ConfirmFn>((opts) => {
-    setOptions(typeof opts === "string" ? { description: opts } : opts);
+    // The plain-string shorthand is only ever used for delete confirmations
+    // in this app (edit-unlock and other confirms always pass the options
+    // object) — so default it to a red "Delete" button. Pass the options
+    // object explicitly for anything that isn't a delete.
+    setOptions(typeof opts === "string" ? { description: opts, confirmText: "Delete", variant: "destructive" } : opts);
     setOpen(true);
     return new Promise<boolean>((resolve) => { resolveRef.current = resolve; });
   }, []);
@@ -51,7 +55,7 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
               onClick={() => settle(true)}
               className={options.variant === "destructive" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "btn-gradient"}
             >
-              {options.confirmText || "Delete"}
+              {options.confirmText || "Confirm"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

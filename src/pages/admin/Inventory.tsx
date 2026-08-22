@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { fmtNum } from "@/lib/format";
+import { fmtNum, fmtDate } from "@/lib/format";
 import { toast } from "sonner";
 import { Plus, AlertTriangle } from "lucide-react";
 
@@ -89,7 +89,7 @@ export default function Inventory() {
             <table className="w-full min-w-[640px] text-sm">
               <thead className="bg-muted/30 text-xs font-medium text-muted-foreground"><tr><th className="px-6 py-4 text-left">Date</th><th className="px-6 py-4 text-left">Item</th><th className="px-6 py-4 text-left">Type</th><th className="px-6 py-4 text-right">Qty</th></tr></thead>
               <tbody className="divide-y divide-border/50">
-                {moves.map(m => <tr key={m.id} className="transition-colors hover:bg-muted/30"><td className="whitespace-nowrap px-6 py-4 text-muted-foreground">{new Date(m.created_at).toLocaleDateString()}</td><td className="px-6 py-4 font-medium">{(m.items as any)?.name}</td><td className="px-6 py-4 capitalize"><span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${m.movement === 'in' ? 'bg-green-500/10 text-green-600' : m.movement === 'out' ? 'bg-red-500/10 text-red-600' : 'bg-muted text-muted-foreground'}`}>{m.movement}</span></td><td className="px-6 py-4 text-right font-semibold">{fmtNum(m.quantity, 3)}</td></tr>)}
+                {moves.map(m => <tr key={m.id} className="transition-colors hover:bg-muted/30"><td className="whitespace-nowrap px-6 py-4 text-muted-foreground">{fmtDate(m.created_at)}</td><td className="px-6 py-4 font-medium">{(m.items as any)?.name}</td><td className="px-6 py-4 capitalize"><span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${m.movement === 'in' ? 'bg-green-500/10 text-green-600' : m.movement === 'out' ? 'bg-red-500/10 text-red-600' : 'bg-muted text-muted-foreground'}`}>{m.movement}</span></td><td className="px-6 py-4 text-right font-semibold">{fmtNum(m.quantity, 3)}</td></tr>)}
             </tbody>
           </table>
           </div>

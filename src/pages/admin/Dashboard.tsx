@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { fmtINR } from "@/lib/format";
+import { fmtINR, fmtDate } from "@/lib/format";
 import { Wallet, FileText, AlertTriangle, Inbox, Download, Upload, Settings, Wrench, PhoneCall, BarChart3, ClipboardCheck, TrendingUp, Users, Banknote, Sparkles, Copy, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -584,7 +584,7 @@ export default function Dashboard() {
                       </div>
                       <div className="text-xs text-muted-foreground line-clamp-1 mb-3">{`${machine.name} ${machine.model || ""} (SN: ${machine.serial_number || "—"})`}</div>
                       <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs font-mono bg-muted px-2 py-1 rounded-md">{new Date(machine.amc_expiry_date).toLocaleDateString('en-GB')}</span>
+                        <span className="text-xs font-mono bg-muted px-2 py-1 rounded-md">{fmtDate(machine.amc_expiry_date)}</span>
                         {(machine.parties as any)?.phone && (
                           <a href={`tel:${(machine.parties as any)?.phone}`} className="inline-flex items-center justify-center rounded-full h-7 w-7 bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors">
                             <PhoneCall className="h-3 w-3" />

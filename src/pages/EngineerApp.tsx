@@ -888,7 +888,7 @@ export default function EngineerApp() {
                 </div>
                 <div>
                   <h2 className="font-semibold text-base md:text-lg leading-tight">{selectedVisit.machine_details || "General Service"}</h2>
-                  <div className="text-xs md:text-sm text-muted-foreground mt-1 flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {new Date(selectedVisit.visit_date).toLocaleDateString("en-GB")}</div>
+                  <div className="text-xs md:text-sm text-muted-foreground mt-1 flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {fmtDate(selectedVisit.visit_date)}</div>
                 </div>
               </div>
               <div className="space-y-3 md:space-y-4">
@@ -1100,7 +1100,7 @@ export default function EngineerApp() {
                       </div>
                       <div className="relative z-10 space-y-2 mt-4">
                         <div className="flex items-center text-sm md:text-base text-muted-foreground"><Wrench className="h-4 w-4 md:h-5 md:w-5 mr-3 text-foreground/40 shrink-0" /><span className="line-clamp-1">{v.machine_details || "General Service"}</span></div>
-                        <div className="flex items-center text-sm md:text-base text-muted-foreground"><Calendar className="h-4 w-4 md:h-5 md:w-5 mr-3 text-foreground/40 shrink-0" />{new Date(v.visit_date).toLocaleDateString("en-GB")}</div>
+                        <div className="flex items-center text-sm md:text-base text-muted-foreground"><Calendar className="h-4 w-4 md:h-5 md:w-5 mr-3 text-foreground/40 shrink-0" />{fmtDate(v.visit_date)}</div>
                       </div>
                     </motion.div>
                   ))}

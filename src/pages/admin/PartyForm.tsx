@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, Trash2, Wrench, Cpu, Printer, MapPin, Map } from "lucide-react";
 import { INDIAN_STATES } from "@/lib/states";
-import { fmtINR, fmtNum } from "@/lib/format";
+import { fmtINR, fmtNum, fmtDate } from "@/lib/format";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import jsPDF from "jspdf";
@@ -185,7 +185,7 @@ export default function PartyForm() {
 
     pdf.setFontSize(9);
     pdf.setFont("helvetica", "normal");
-    const dateRange = `From: ${new Date(ledgerFrom).toLocaleDateString('en-GB')} To: ${new Date(ledgerTo).toLocaleDateString('en-GB')}`;
+    const dateRange = `From: ${fmtDate(ledgerFrom)} To: ${fmtDate(ledgerTo)}`;
     pdf.text(dateRange, pdf.internal.pageSize.getWidth() - 12, y, { align: "right" });
     y += 10;
 
@@ -199,7 +199,7 @@ export default function PartyForm() {
     const body = filteredLedger.map(l => {
         const runningBalance = openingBalance + l.balance;
         return [
-            new Date(l.date).toLocaleDateString('en-GB'),
+            fmtDate(l.date),
             l.ref,
             l.debit ? fmtNum(l.debit) : "",
             l.credit ? fmtNum(l.credit) : "",
@@ -375,7 +375,7 @@ export default function PartyForm() {
                   <div className="font-semibold">{m.name}</div>
                   <div className="text-sm text-muted-foreground">{m.model || "—"}</div>
                   <div className="text-xs text-muted-foreground mt-2 font-mono">SN: {m.serial_number || "—"}</div>
-                  {m.amc_expiry_date && <div className="mt-3 inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-600">AMC Exp: {new Date(m.amc_expiry_date).toLocaleDateString('en-GB')}</div>}
+                  {m.amc_expiry_date && <div className="mt-3 inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-600">AMC Exp: {fmtDate(m.amc_expiry_date)}</div>}
                 </div>
               ))}
               {machines.length === 0 && <div className="col-span-full py-8 text-center text-muted-foreground border border-dashed border-border rounded-xl">No machines added yet.</div>}

@@ -1,15 +1,20 @@
 // Calls the Vercel serverless proxy (api/ai-chat.js), which holds the
 // Gemini free-tier API key server-side. Never called with the key itself
 // in the browser.
+import { supabase } from "@/integrations/supabase/client";
+
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
 const callAI = async (
   messages: ChatMessage[],
   opts: { json?: boolean; maxOutputTokens?: number } = {},
 ): Promise<string> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error("You must be signed in to use the AI assistant.");
+
   const res = await fetch("/api/ai-chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
     body: JSON.stringify({ messages, json: opts.json, maxOutputTokens: opts.maxOutputTokens }),
   });
   const data = await res.json().catch(() => ({}));

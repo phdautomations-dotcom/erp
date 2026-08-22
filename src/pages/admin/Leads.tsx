@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { fmtINR } from "@/lib/format";
+import { fmtDate } from "@/lib/format";
 import { toast } from "sonner";
 
 const STATUSES = ["new", "contacted", "quoted", "won", "lost"] as const;
@@ -39,7 +39,7 @@ export default function Leads() {
             <tbody className="divide-y divide-border/50">
             {rows.map(l => (
                 <tr key={l.id} className="transition-colors hover:bg-muted/30 align-top">
-                  <td className="whitespace-nowrap px-6 py-4 text-muted-foreground">{new Date(l.created_at).toLocaleDateString()}</td>
+                  <td className="whitespace-nowrap px-6 py-4 text-muted-foreground">{fmtDate(l.created_at)}</td>
                   <td className="px-6 py-4 font-medium">{l.name}</td><td className="px-6 py-4">{l.company}</td>
                   <td className="px-6 py-4"><div className="text-xs font-medium">{l.phone}</div><div className="text-xs text-muted-foreground">{l.email}</div></td>
                   <td className="px-6 py-4 text-muted-foreground">{l.machine_type}</td>

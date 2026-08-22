@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, FileText, AlertCircle, Sparkles } from "lucide-react";
-import { fmtINR } from "@/lib/format";
+import { fmtINR, fmtDate } from "@/lib/format";
 
 export default function Verify() {
   const { id } = useParams();
@@ -13,7 +13,7 @@ export default function Verify() {
     const fetchDoc = async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("*, parties(name, phone)")
+        .select("doc_number, doc_date, total, parties(name)")
         .eq("id", id)
         .single();
         
@@ -51,7 +51,7 @@ export default function Verify() {
           </div>
           <div className="flex justify-between border-b border-gray-100 pb-3">
             <span className="text-gray-500 text-sm">Date</span>
-            <span className="font-medium">{new Date(data.doc_date).toLocaleDateString()}</span>
+            <span className="font-medium">{fmtDate(data.doc_date)}</span>
           </div>
           <div className="flex flex-col border-b border-gray-100 pb-3">
             <span className="text-gray-500 text-sm mb-1">Billed To</span>

@@ -21,6 +21,7 @@ export default function Reports() {
   const [parties, setParties] = useState<any[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const dateRange = `From: ${fmtDate(from)} To: ${fmtDate(to)}`;
 
   useEffect(() => {
     document.title = "Reports | PHD ERP";
@@ -266,7 +267,7 @@ export default function Reports() {
     if (purchases.length === 0) return toast.error("No purchase data in this period.");
     const headers = ["Date", "Bill Number", "Vendor Name", "GSTIN", "State", "Taxable Value", "CGST", "SGST", "IGST", "Total Amount"];
     const csvRows = purchases.map(d => {
-      const date = new Date(d.doc_date).toLocaleDateString('en-GB');
+      const date = fmtDate(d.doc_date);
       const p = (d.parties as any) || {};
       const esc = (s: any) => `"${String(s || '').replace(/"/g, '""')}"`;
       return [
@@ -291,7 +292,6 @@ export default function Reports() {
 
     pdf.setFontSize(9);
     pdf.setFont("helvetica", "normal");
-    const dateRange = `From: ${new Date(from).toLocaleDateString('en-GB')} To: ${new Date(to).toLocaleDateString('en-GB')}`;
     pdf.text(dateRange, pdf.internal.pageSize.getWidth() - 12, y, { align: "right" });
     y += 10;
 
@@ -344,7 +344,6 @@ export default function Reports() {
 
     pdf.setFontSize(9);
     pdf.setFont("helvetica", "normal");
-    const dateRange = `From: ${new Date(from).toLocaleDateString('en-GB')} To: ${new Date(to).toLocaleDateString('en-GB')}`;
     pdf.text(dateRange, pdf.internal.pageSize.getWidth() - 12, y, { align: "right" });
     y += 10;
 
@@ -395,7 +394,6 @@ export default function Reports() {
 
     pdf.setFontSize(9);
     pdf.setFont("helvetica", "normal");
-    const dateRange = `From: ${new Date(from).toLocaleDateString('en-GB')} To: ${new Date(to).toLocaleDateString('en-GB')}`;
     pdf.text(dateRange, pdf.internal.pageSize.getWidth() - 12, y, { align: "right" });
     y += 10;
 

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { fmtINR } from "@/lib/format";
+import { fmtINR, fmtDate } from "@/lib/format";
 import { toast } from "sonner";
 import { MapPin, Clock, Calculator, CalendarClock, CalendarCheck2, CheckCircle, XCircle, Palmtree, Trash2 } from "lucide-react";
 
@@ -142,7 +142,7 @@ export default function Attendance() {
               <tbody className="divide-y divide-border/50">
                 {logs.map(l => (
                   <tr key={l.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="p-4">{new Date(l.date).toLocaleDateString('en-GB')}</td><td className="p-4 font-medium">{l.profiles?.display_name}</td>
+                    <td className="p-4">{fmtDate(l.date)}</td><td className="p-4 font-medium">{l.profiles?.display_name}</td>
                     <td className="p-4">{l.punch_in ? (<div className="flex items-center gap-2"><span className="text-emerald-600 font-medium">{new Date(l.punch_in).toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'})}</span>{l.punch_in_loc && <a href={l.punch_in_loc} target="_blank" rel="noreferrer" className="text-blue-500 hover:text-blue-700" title="View on Map"><MapPin className="h-4 w-4"/></a>}</div>) : "—"}</td>
                     <td className="p-4">{l.punch_out ? (<div className="flex items-center gap-2"><span className="text-orange-600 font-medium">{new Date(l.punch_out).toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'})}</span>{l.punch_out_loc && <a href={l.punch_out_loc} target="_blank" rel="noreferrer" className="text-blue-500 hover:text-blue-700" title="View on Map"><MapPin className="h-4 w-4"/></a>}</div>) : <span className="text-muted-foreground text-xs italic">Working/None</span>}</td>
                     <td className="p-4 capitalize"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${l.status === 'leave_approved' ? 'bg-purple-500/10 text-purple-600' : l.status === 'leave_pending' ? 'bg-orange-500/10 text-orange-600' : 'bg-muted text-muted-foreground'}`}>{(l.status || 'unknown').replace('_', ' ')}</span></td>
@@ -163,7 +163,7 @@ export default function Attendance() {
                 {pendingLeaves.map(l => (
                   <tr key={l.id} className="hover:bg-muted/30 transition-colors">
                     <td className="p-4 font-medium">{l.profiles?.display_name}</td>
-                    <td className="p-4 font-mono text-xs">{new Date(l.date).toLocaleDateString('en-GB')}</td>
+                    <td className="p-4 font-mono text-xs">{fmtDate(l.date)}</td>
                     <td className="p-4 text-muted-foreground">{l.leave_reason}</td>
                     <td className="p-4 text-right space-x-2">
                       <Button size="sm" onClick={() => updateLeave(l.id, 'leave_approved')} className="bg-green-600 hover:bg-green-700 h-8 text-xs rounded-full"><CheckCircle className="h-3.5 w-3.5 mr-1" /> Approve</Button>
@@ -285,7 +285,7 @@ export default function Attendance() {
               <tbody className="divide-y divide-border/50">
                 {holidays.map(h => (
                   <tr key={h.id}>
-                    <td className="p-3 font-medium">{new Date(h.date).toLocaleDateString('en-GB')}</td>
+                    <td className="p-3 font-medium">{fmtDate(h.date)}</td>
                     <td className="p-3">{h.name}</td>
                     <td className="p-3 text-right"><Button variant="ghost" size="icon" onClick={()=>delHoliday(h.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button></td>
                   </tr>

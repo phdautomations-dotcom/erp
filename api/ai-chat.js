@@ -16,6 +16,21 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Require a real logged-in ERP user so this endpoint (and the Gemini
+  // quota it spends) can't be called by anyone who just finds the URL.
+  const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+  if (!token) {
+    res.status(401).json({ error: "Not authenticated." });
+    return;
+  }
+  const authCheck = await fetch(`${process.env.VITE_SUPABASE_URL}/auth/v1/user`, {
+    headers: { Authorization: `Bearer ${token}`, apikey: process.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+  });
+  if (!authCheck.ok) {
+    res.status(401).json({ error: "Not authenticated." });
+    return;
+  }
+
   const { messages, json, maxOutputTokens } = req.body || {};
   if (!Array.isArray(messages) || messages.length === 0) {
     res.status(400).json({ error: "messages array is required" });

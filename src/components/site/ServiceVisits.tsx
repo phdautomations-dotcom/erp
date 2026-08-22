@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { fmtINR } from "@/lib/format";
+import { fmtINR, fmtDate } from "@/lib/format";
 import { Wrench, Clock, CheckCircle, AlertTriangle, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -121,7 +121,7 @@ export default function ServiceVisits() {
     pdf.setFont("helvetica", "bold");
     pdf.text("Service Info", 120, y);
     pdf.setFont("helvetica", "normal");
-    pdf.text(`Date: ${new Date(v.visit_date).toLocaleDateString('en-GB')}`, 120, y + 6);
+    pdf.text(`Date: ${fmtDate(v.visit_date)}`, 120, y + 6);
     pdf.text(`Engineer: ${v.engineer_name || 'Unassigned'}`, 120, y + 11);
     pdf.text(`Visit Type: ${v.visit_type}`, 120, y + 16);
     pdf.text(`Status: ${v.status.replace('_', ' ')}`, 120, y + 21);
@@ -166,7 +166,7 @@ export default function ServiceVisits() {
       head: [['Service Charges', 'Next Scheduled Visit']],
       body: [[
         fmtINR(v.charges || 0),
-        v.next_visit_date ? new Date(v.next_visit_date).toLocaleDateString('en-GB') : 'Not Scheduled'
+        v.next_visit_date ? fmtDate(v.next_visit_date) : 'Not Scheduled'
       ]],
       headStyles: { fillColor: [240, 240, 240], textColor: 15, fontStyle: 'bold' },
       styles: { fontSize: 11, cellPadding: 4, valign: 'middle' },
@@ -230,7 +230,7 @@ export default function ServiceVisits() {
                 displayData.map((v) => (
                   <tr key={v.id} className="transition-colors hover:bg-muted/30 align-top">
                     <td className="whitespace-nowrap px-6 py-4">
-                      <div className="font-medium">{new Date(v.visit_date).toLocaleDateString('en-GB')}</div>
+                      <div className="font-medium">{fmtDate(v.visit_date)}</div>
                       <div className="text-xs text-muted-foreground capitalize mt-1">{v.visit_type}</div>
                     </td>
                     <td className="px-6 py-4 font-medium">

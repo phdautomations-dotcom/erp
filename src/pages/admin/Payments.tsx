@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { fmtINR, todayFY } from "@/lib/format";
+import { fmtINR, todayFY, fmtDate } from "@/lib/format";
 import { generateReceiptPDF } from "@/lib/pdf";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -136,7 +136,7 @@ export default function Payments() {
         <div class="header">
           <div>
             <h1 class="title">${title}</h1>
-            <div class="subtitle">Receipt No: <strong>${p.payment_number}</strong><br/>Date: <strong>${new Date(p.payment_date).toLocaleDateString('en-GB')}</strong></div>
+            <div class="subtitle">Receipt No: <strong>${p.payment_number}</strong><br/>Date: <strong>${fmtDate(p.payment_date)}</strong></div>
           </div>
           <div style="text-align: right;">
             <h2 style="margin:0; font-size:20px; color:#2563eb;">${settings.name || 'PHD Automations'}</h2>

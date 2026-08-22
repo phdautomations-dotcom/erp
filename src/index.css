@@ -27,8 +27,8 @@
     --muted: 220 18% 90%;
     --muted-foreground: 220 12% 50%;
 
-    /* ── Accent: orange ── */
-    --accent: 22 95% 52%;
+    /* ── Accent: blue ── */
+    --accent: 212 90% 45%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 55%;
@@ -36,7 +36,7 @@
 
     --border: 220 18% 86%;
     --input: 220 18% 86%;
-    --ring: 22 95% 52%;
+    --ring: 212 90% 45%;
     --radius: 0.875rem;
 
     /* ── Neumorphic shadows ── */
@@ -50,19 +50,19 @@
     /* ── Glass shadows ── */
     --glass-shadow: 0 8px 32px hsl(220 30% 15% / 0.10),
                     0 2px 8px  hsl(220 30% 15% / 0.06);
-    --shadow-glow:  0 8px 30px hsl(22 95% 52% / 0.30);
+    --shadow-glow:  0 8px 30px hsl(212 90% 45% / 0.30);
 
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
-    /* ── Sidebar ── */
-    --sidebar-background: 215 65% 8%;
-    --sidebar-foreground: 0 0% 85%;
-    --sidebar-primary: 22 95% 52%;
+    /* ── Sidebar (kept for the unused shadcn sidebar primitive; not used by AdminLayout) ── */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 30% 20%;
+    --sidebar-primary: 212 90% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 50% 15%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 215 40% 16%;
-    --sidebar-ring: 22 95% 52%;
+    --sidebar-accent: 210 30% 96%;
+    --sidebar-accent-foreground: 220 30% 20%;
+    --sidebar-border: 214 20% 90%;
+    --sidebar-ring: 212 90% 45%;
   }
 
   .dark {
@@ -72,19 +72,19 @@
     --card-foreground: 210 30% 92%;
     --popover: 220 25% 11%;
     --popover-foreground: 210 30% 92%;
-    --primary: 22 95% 52%;
+    --primary: 212 90% 45%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 22% 16%;
     --secondary-foreground: 210 30% 90%;
     --muted: 220 22% 16%;
     --muted-foreground: 220 12% 55%;
-    --accent: 22 95% 52%;
+    --accent: 212 90% 45%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
     --border: 220 22% 20%;
     --input: 220 22% 20%;
-    --ring: 22 95% 52%;
+    --ring: 212 90% 45%;
     --neu-out: 6px 6px 16px hsl(220 30% 5%), -6px -6px 16px hsl(220 20% 14%);
     --neu-in:  inset 4px 4px 10px hsl(220 30% 5%), inset -4px -4px 10px hsl(220 20% 14%);
     --neu-sm:  3px 3px 8px hsl(220 30% 5%), -3px -3px 8px hsl(220 20% 14%);

@@ -264,7 +264,7 @@ export default function Dashboard() {
     let color = 'text-red-600 bg-red-500/10';
     if (att) {
       if (att.status === 'leave_approved') { status = 'On Leave'; color = 'text-purple-600 bg-purple-500/10'; }
-      else if (att.status === 'leave_pending') { status = 'Leave Pending'; color = 'text-orange-600 bg-orange-500/10'; }
+      else if (att.status === 'leave_pending') { status = 'Leave Pending'; color = 'text-blue-600 bg-blue-500/10'; }
       else if (att.status === 'leave_rejected') { status = 'Leave Rejected'; color = 'text-red-600 bg-red-500/10'; }
       else if (att.punch_in || att.status === 'present') { status = 'Present'; color = 'text-green-600 bg-green-500/10'; }
     }
@@ -433,7 +433,7 @@ export default function Dashboard() {
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                           d.doc_type === "invoice" ? "bg-green-500/10 text-green-600" :
                           d.doc_type === "purchase_bill" ? "bg-blue-500/10 text-blue-600" :
-                          "bg-orange-500/10 text-orange-600"
+                          "bg-blue-500/10 text-blue-600"
                         }`}>
                           {d.doc_type.replace("_", " ")}
                         </span>
@@ -533,8 +533,8 @@ export default function Dashboard() {
           transition={{ delay: 0.4, duration: 0.5 }}
           className="overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl flex flex-col"
         >
-          <div className="flex items-center justify-between border-b border-border/50 p-6 bg-orange-500/5">
-            <h2 className="font-display text-lg font-semibold tracking-tight flex items-center gap-2 text-orange-600 dark:text-orange-400">
+          <div className="flex items-center justify-between border-b border-border/50 p-6 bg-blue-500/5">
+            <h2 className="font-display text-lg font-semibold tracking-tight flex items-center gap-2 text-blue-600 dark:text-blue-400">
               <Wrench className="h-5 w-5" /> Service Alerts
             </h2>
           </div>
@@ -553,7 +553,7 @@ export default function Dashboard() {
                     <div key={machine.id} className="p-4 transition-colors hover:bg-muted/30">
                       <div className="flex justify-between items-start mb-1">
                         <span className="font-medium text-sm line-clamp-1">{(machine.parties as any)?.name}</span>
-                        <span className={`text-xs font-semibold whitespace-nowrap px-2 py-0.5 rounded-full ${isOverdue ? 'bg-red-500/10 text-red-600' : 'bg-orange-500/10 text-orange-600'}`}>
+                        <span className={`text-xs font-semibold whitespace-nowrap px-2 py-0.5 rounded-full ${isOverdue ? 'bg-red-500/10 text-red-600' : 'bg-blue-500/10 text-blue-600'}`}>
                           {isOverdue ? 'AMC Expired' : 'AMC Expiring'}
                         </span>
                       </div>

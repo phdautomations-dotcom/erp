@@ -1,9 +1,9 @@
 import { ReactNode, useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, FileText, ShoppingCart, Wallet, Wrench,
-  Boxes, Receipt, BarChart3, Inbox, Settings, UserCog, LogOut, Menu,
+  Boxes, Receipt, BarChart3, Inbox, Settings, UserCog, LogOut, Home,
   ClipboardList, Bell, Search, ChevronRight, X, Building2, Camera, Banknote,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,12 +11,11 @@ import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import { AvatarCropDialog } from "@/components/AvatarCropDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtINR } from "@/lib/format";
-import logo from "@/assets/logo.png";
 
 // ─── Nav config ───────────────────────────────────────────────────────────────
 
-const NAV = [
-  { to: "/admin",            label: "Dashboard",       icon: LayoutDashboard, end: true },
+export const NAV = [
+  { to: "/admin/dashboard", label: "Dashboard",       icon: LayoutDashboard, end: true },
   { to: "/admin/parties",    label: "Parties",         icon: Users },
   { to: "/admin/items",      label: "Items",           icon: Package },
   { to: "/admin/sales",      label: "Sales",           icon: FileText },
@@ -32,121 +31,6 @@ const NAV = [
   { to: "/admin/users",      label: "Users",           icon: UserCog, adminOnly: true },
   { to: "/admin/settings",   label: "Settings",        icon: Settings },
 ];
-
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
-
-let savedScrollY = 0;
-
-function Sidebar({ onClose }: { onClose?: () => void }) {
-  const { hasRole, user, signOut, roles } = useAuth();
-  const navigate = useNavigate();
-  const navRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (navRef.current) navRef.current.scrollTop = savedScrollY;
-  }, []);
-
-  const initial = (user?.email?.[0] ?? "A").toUpperCase();
-
-  return (
-    <div
-      className="flex flex-col h-full"
-      style={{ background: "hsl(215 65% 8%)" }}
-    >
-      {/* Logo */}
-      <div className="px-5 pt-5 pb-4" style={{ borderBottom: "1px solid hsl(215 40% 16%)" }}>
-        <div className="flex items-center justify-between">
-          <NavLink to="/admin" onClick={onClose}>
-            <img src={logo} alt="PHD" className="h-8 w-auto brightness-0 invert opacity-90" />
-          </NavLink>
-          {onClose && (
-            <button onClick={onClose} className="text-white/40 hover:text-white/80 transition-colors">
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-        <p className="mt-2.5 text-[10px] font-bold uppercase tracking-widest" style={{ color: "hsl(22 95% 58%)" }}>
-          ERP &amp; Billing
-        </p>
-      </div>
-
-      {/* Nav */}
-      <nav
-        ref={navRef}
-        onScroll={(e) => { savedScrollY = e.currentTarget.scrollTop; }}
-        className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5"
-      >
-        {NAV.filter(n => !n.adminOnly || hasRole("admin")).map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            onClick={onClose}
-            className={({ isActive }) =>
-              [
-                "relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200",
-                isActive ? "text-white" : "text-white/45 hover:text-white/80 hover:bg-white/5",
-              ].join(" ")
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && (
-                  <motion.div
-                    layoutId="nav-pill"
-                    className="absolute inset-0 rounded-xl z-0"
-                    style={{ background: "hsl(22 95% 52%)" }}
-                    transition={{ type: "spring", stiffness: 380, damping: 34 }}
-                  />
-                )}
-                <item.icon className="h-4 w-4 shrink-0 relative z-10" />
-                <span className="flex-1 relative z-10">{item.label}</span>
-                {isActive && <ChevronRight className="h-3 w-3 relative z-10 text-white/60 shrink-0" />}
-              </>
-            )}
-          </NavLink>
-        ))}
-      </nav>
-
-      {/* User footer — flush to bottom, no extra space */}
-      <div className="px-3 pb-4 pt-3 shrink-0" style={{ borderTop: "1px solid hsl(215 40% 16%)" }}>
-        {/* User chip */}
-        <div
-          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl mb-2"
-          style={{ background: "hsl(215 55% 13%)" }}
-        >
-          {user?.user_metadata?.avatar_url ? (
-            <img
-              src={user.user_metadata.avatar_url}
-              alt="avatar"
-              className="h-10 w-10 rounded-full object-cover shrink-0"
-            />
-          ) : (
-            <div
-              className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-              style={{ background: "hsl(22 95% 52%)" }}
-            >
-              {initial}
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-semibold text-white/90 truncate">{user?.email?.split("@")[0]}</p>
-            <p className="text-[10px] capitalize" style={{ color: "hsl(22 95% 65%)" }}>{roles.join(", ")}</p>
-          </div>
-        </div>
-
-        {/* Sign out */}
-        <button
-          onClick={async () => { await signOut(); navigate("/auth"); }}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] text-white/40 hover:text-white/75 hover:bg-white/5 transition-all"
-        >
-          <LogOut className="h-3.5 w-3.5" />
-          Sign out
-        </button>
-      </div>
-    </div>
-  );
-}
 
 // ─── Global Search ────────────────────────────────────────────────────────────
 
@@ -227,7 +111,7 @@ function GlobalSearch() {
         className="flex items-center gap-2 px-3.5 h-9 rounded-full border transition-all"
         style={{
           background: "hsl(220 22% 94%)",
-          borderColor: open ? "hsl(22 95% 52%)" : "hsl(220 18% 86%)",
+          borderColor: open ? "hsl(212 90% 45%)" : "hsl(220 18% 86%)",
           boxShadow: open ? "var(--neu-in)" : "var(--neu-sm)",
         }}
       >
@@ -273,16 +157,16 @@ function GlobalSearch() {
                   <li key={r.id}>
                     <button
                       onClick={() => pick(r.href)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-orange-50 transition-colors text-left group"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 transition-colors text-left group"
                     >
                       <div
                         className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ background: "hsl(22 95% 52% / 0.12)" }}
+                        style={{ background: "hsl(212 90% 45% / 0.12)" }}
                       >
-                        <r.icon className="h-3.5 w-3.5" style={{ color: "hsl(22 95% 52%)" }} />
+                        <r.icon className="h-3.5 w-3.5" style={{ color: "hsl(212 90% 45%)" }} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-orange-600 transition-colors">{r.label}</p>
+                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-blue-600 transition-colors">{r.label}</p>
                         <p className="text-[11px] text-muted-foreground truncate">{r.sub}</p>
                       </div>
                       <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
@@ -394,7 +278,7 @@ function NotificationsPanel() {
         {unread > 0 && (
           <span
             className="absolute -top-1 -right-1 h-4 w-4 rounded-full ring-2 ring-white flex items-center justify-center text-[9px] font-bold text-white"
-            style={{ background: "hsl(22 95% 52%)" }}
+            style={{ background: "hsl(212 90% 45%)" }}
           >
             {unread > 9 ? "9+" : unread}
           </span>
@@ -427,7 +311,7 @@ function NotificationsPanel() {
                 {unread > 0 && (
                   <span
                     className="text-[11px] font-semibold px-2 py-0.5 rounded-full text-white"
-                    style={{ background: "hsl(22 95% 52%)" }}
+                    style={{ background: "hsl(212 90% 45%)" }}
                   >
                     {unread}
                   </span>
@@ -436,7 +320,7 @@ function NotificationsPanel() {
               {unread > 0 && (
                 <button
                   onClick={() => setNotifs([])}
-                  className="text-[11px] text-muted-foreground hover:text-orange-600 transition-colors"
+                  className="text-[11px] text-muted-foreground hover:text-blue-600 transition-colors"
                 >
                   Mark all read
                 </button>
@@ -456,16 +340,16 @@ function NotificationsPanel() {
                   <li key={n.id}>
                     <button
                       onClick={() => { setNotifs(prev => prev.filter(x => x.id !== n.id)); navigate(n.href); setOpen(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-50 transition-colors text-left group"
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left group"
                     >
                       <div
                         className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0"
-                        style={{ background: "hsl(22 95% 52% / 0.12)" }}
+                        style={{ background: "hsl(212 90% 45% / 0.12)" }}
                       >
-                        <n.icon className="h-4 w-4" style={{ color: "hsl(22 95% 52%)" }} />
+                        <n.icon className="h-4 w-4" style={{ color: "hsl(212 90% 45%)" }} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-orange-600 transition-colors">{n.title}</p>
+                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-blue-600 transition-colors">{n.title}</p>
                         <p className="text-[11px] text-muted-foreground truncate">{n.sub}</p>
                       </div>
                       {n.time && (
@@ -521,14 +405,14 @@ function UserAvatarMenu() {
             src={avatarUrl}
             alt="avatar"
             className="h-11 w-11 rounded-xl object-cover"
-            style={{ boxShadow: "0 4px 12px hsl(22 95% 52% / 0.4)" }}
+            style={{ boxShadow: "0 4px 12px hsl(212 90% 45% / 0.4)" }}
           />
         ) : (
           <div
             className="h-11 w-11 rounded-xl flex items-center justify-center text-base font-bold text-white"
             style={{
-              background: "linear-gradient(135deg, hsl(22 95% 52%), hsl(30 100% 58%))",
-              boxShadow: "0 4px 12px hsl(22 95% 52% / 0.4)",
+              background: "linear-gradient(135deg, hsl(212 90% 45%), hsl(200 90% 55%))",
+              boxShadow: "0 4px 12px hsl(212 90% 45% / 0.4)",
             }}
           >
             {initial}
@@ -560,7 +444,7 @@ function UserAvatarMenu() {
                 ) : (
                   <div
                     className="h-14 w-14 rounded-xl flex items-center justify-center text-lg font-bold text-white"
-                    style={{ background: "linear-gradient(135deg, hsl(22 95% 52%), hsl(30 100% 58%))" }}
+                    style={{ background: "linear-gradient(135deg, hsl(212 90% 45%), hsl(200 90% 55%))" }}
                   >
                     {initial}
                   </div>
@@ -584,7 +468,7 @@ function UserAvatarMenu() {
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-orange-50 transition-colors text-left text-[13px] text-foreground hover:text-orange-600 disabled:opacity-60"
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-blue-50 transition-colors text-left text-[13px] text-foreground hover:text-blue-600 disabled:opacity-60"
               >
                 <Camera className="h-3.5 w-3.5 shrink-0" />
                 {uploading ? "Uploading…" : "Upload photo"}
@@ -609,7 +493,8 @@ function UserAvatarMenu() {
 
 // ─── Top header ───────────────────────────────────────────────────────────────
 
-function TopHeader({ title, onMenuClick }: { title?: string; onMenuClick: () => void }) {
+function TopHeader({ title }: { title?: string }) {
+  const navigate = useNavigate();
   return (
     <header
       className="shrink-0 z-30 flex flex-col"
@@ -622,13 +507,14 @@ function TopHeader({ title, onMenuClick }: { title?: string; onMenuClick: () => 
       }}
     >
       <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
-        {/* Mobile hamburger */}
+        {/* Home — back to the tile launcher */}
         <button
-          className="lg:hidden flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground transition-colors"
+          onClick={() => navigate("/admin")}
+          title="Home"
+          className="flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-accent transition-colors shrink-0"
           style={{ boxShadow: "var(--neu-sm)", background: "hsl(220 22% 94%)" }}
-          onClick={onMenuClick}
         >
-          <Menu className="h-4.5 w-4.5" />
+          <Home className="h-4.5 w-4.5" />
         </button>
 
         {/* Breadcrumb */}
@@ -658,7 +544,7 @@ function TopHeader({ title, onMenuClick }: { title?: string; onMenuClick: () => 
       {/* Orange accent underline strip */}
       <div
         className="h-0.5 w-full shrink-0"
-        style={{ background: "linear-gradient(90deg, hsl(22 95% 52%), hsl(30 100% 60%) 40%, transparent)" }}
+        style={{ background: "linear-gradient(90deg, hsl(212 90% 45%), hsl(200 90% 58%) 40%, transparent)" }}
       />
     </header>
   );
@@ -667,11 +553,9 @@ function TopHeader({ title, onMenuClick }: { title?: string; onMenuClick: () => 
 // ─── Layout root ──────────────────────────────────────────────────────────────
 
 export const AdminLayout = ({ children, title }: { children: ReactNode; title?: string }) => {
-  const [mobileOpen, setMobileOpen] = useState(false);
-
   return (
     <div
-      className="w-full flex overflow-hidden"
+      className="w-full flex flex-col overflow-hidden"
       style={{
         background: "hsl(220 22% 94%)",
         zoom: 0.9,
@@ -679,57 +563,17 @@ export const AdminLayout = ({ children, title }: { children: ReactNode; title?: 
         maxHeight: "calc(100vh / 0.9)",
       } as any}
     >
-      {/* Desktop sidebar */}
-      <aside
-        className="hidden lg:flex flex-col w-[236px] shrink-0 overflow-hidden z-20"
-        style={{
-          height: "calc(100vh / 0.9)",
-          boxShadow: "2px 0 24px hsl(220 30% 15% / 0.18)",
-        }}
+      <TopHeader title={title} />
+
+      <motion.main
+        key={title}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="flex-1 overflow-y-auto p-4 lg:p-6"
       >
-        <Sidebar />
-      </aside>
-
-      {/* Right panel */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ height: "calc(100vh / 0.9)" }}>
-        <TopHeader title={title} onMenuClick={() => setMobileOpen(true)} />
-
-        <motion.main
-          key={title}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          className="flex-1 overflow-y-auto p-4 lg:p-6"
-        >
-          {children}
-        </motion.main>
-      </div>
-
-      {/* Mobile drawer */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <>
-            <motion.div
-              key="backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
-              onClick={() => setMobileOpen(false)}
-            />
-            <motion.aside
-              key="drawer"
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 340, damping: 34 }}
-              className="fixed left-0 top-0 bottom-0 z-50 w-[240px]"
-            >
-              <Sidebar onClose={() => setMobileOpen(false)} />
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+        {children}
+      </motion.main>
     </div>
   );
 };

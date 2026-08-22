@@ -939,7 +939,7 @@ export default function EngineerApp() {
                   <img src={avatarUrl} alt="avatar" className="h-16 w-16 md:h-20 md:w-20 rounded-full object-cover ring-2 ring-background/20" />
                 ) : (
                   <div className="h-16 w-16 md:h-20 md:w-20 rounded-full flex items-center justify-center text-2xl font-bold text-white ring-2 ring-background/20"
-                    style={{ background: "linear-gradient(135deg, hsl(22 95% 52%), hsl(30 100% 58%))" }}>
+                    style={{ background: "linear-gradient(135deg, hsl(212 90% 45%), hsl(200 90% 55%))" }}>
                     {(user?.email?.[0] ?? "E").toUpperCase()}
                   </div>
                 )}

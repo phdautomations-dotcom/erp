@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import Home from "./pages/admin/Home";
 import Dashboard from "./pages/admin/Dashboard";
 import Parties from "./pages/admin/Parties";
 import PartyForm from "./pages/admin/PartyForm";
@@ -42,7 +43,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/verify/:id" element={<Verify />} />
             <Route element={<ProtectedRoute />}>
-              <Route path="/admin" element={<Dashboard />} />
+              <Route path="/admin" element={<Home />} />
+              <Route path="/admin/dashboard" element={<Dashboard />} />
               <Route path="/admin/parties" element={<Parties />} />
               <Route path="/admin/parties/:id" element={<PartyForm />} />
               <Route path="/admin/items" element={<Items />} />

@@ -4,12 +4,14 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { fmtINR } from "@/lib/format";
-import { Wallet, FileText, AlertTriangle, Inbox, Download, Upload, Settings, Wrench, PhoneCall, BarChart3, ClipboardCheck, TrendingUp, Users, Banknote } from "lucide-react";
+import { Wallet, FileText, AlertTriangle, Inbox, Download, Upload, Settings, Wrench, PhoneCall, BarChart3, ClipboardCheck, TrendingUp, Users, Banknote, Sparkles, Copy, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { draftPaymentReminder } from "@/lib/ai/remote";
 
 const formatYAxis = (v: number) => {
   if (v === 0) return '₹0';
@@ -28,6 +30,24 @@ export default function Dashboard() {
   const [recent, setRecent] = useState<any[]>([]);
   const [dueServices, setDueServices] = useState<any[]>([]);
   const [topOutstanding, setTopOutstanding] = useState<any[]>([]);
+  const [reminderFor, setReminderFor] = useState<any>(null);
+  const [reminderText, setReminderText] = useState("");
+  const [reminderLoading, setReminderLoading] = useState(false);
+
+  const openReminder = async (customer: any) => {
+    setReminderFor(customer);
+    setReminderText("");
+    setReminderLoading(true);
+    try {
+      const facts = `Customer: ${customer.name}. Amount overdue: ${fmtINR(customer.amount)}. Business: PHD Automations (CNC/VMC/HMC repair services).`;
+      const draft = await draftPaymentReminder(facts);
+      setReminderText(draft);
+    } catch (e: any) {
+      setReminderText(`Could not draft a message: ${e?.message || e}`);
+    } finally {
+      setReminderLoading(false);
+    }
+  };
   const [pnlChartData, setPnlChartData] = useState<any[]>([]);
   const [rawDocs, setRawDocs] = useState<any[]>([]);
   const [rawExps, setRawExps] = useState<any[]>([]);
@@ -485,8 +505,13 @@ export default function Dashboard() {
                       </div>
                       {customer.phone && <div className="text-xs text-muted-foreground mt-1">📞 {customer.phone}</div>}
                     </div>
-                    <div className="text-right font-semibold text-destructive">
-                      {fmtINR(customer.amount)}
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:text-accent" title="Draft AI reminder" onClick={() => openReminder(customer)}>
+                        <Sparkles className="h-3.5 w-3.5" />
+                      </Button>
+                      <div className="text-right font-semibold text-destructive">
+                        {fmtINR(customer.amount)}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -575,6 +600,36 @@ export default function Dashboard() {
         </motion.div>
         </div>
       </div>
+
+      <Dialog open={!!reminderFor} onOpenChange={(v) => !v && setReminderFor(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-accent" /> Reminder for {reminderFor?.name}</DialogTitle></DialogHeader>
+          {reminderLoading ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">Drafting…</p>
+          ) : (
+            <>
+              <textarea
+                value={reminderText}
+                onChange={(e) => setReminderText(e.target.value)}
+                rows={5}
+                className="w-full rounded-xl border border-border/50 bg-background/50 p-3 text-sm resize-none"
+              />
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 rounded-full" onClick={() => { navigator.clipboard.writeText(reminderText); toast.success("Copied"); }}>
+                  <Copy className="h-4 w-4 mr-1.5" /> Copy
+                </Button>
+                {reminderFor?.phone && (
+                  <a href={`https://wa.me/${String(reminderFor.phone).replace(/\D/g, "")}?text=${encodeURIComponent(reminderText)}`} target="_blank" rel="noreferrer" className="flex-1">
+                    <Button className="w-full rounded-full bg-green-600 hover:bg-green-700 text-white">
+                      <MessageCircle className="h-4 w-4 mr-1.5" /> WhatsApp
+                    </Button>
+                  </a>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }

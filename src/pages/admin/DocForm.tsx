@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
-import { Plus, Trash2, Download, ArrowRight, ScanLine } from "lucide-react";
+import { Plus, Trash2, Download, ArrowRight, ScanLine, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { fmtINR, calcLineTax, todayFY, peekNextDocNumber, reserveDocNumber } from "@/lib/format";
+import { expandDescription } from "@/lib/ai/remote";
 import { generateDocPDF } from "@/lib/pdf";
 import { toast } from "sonner";
 
@@ -41,6 +42,7 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
   const [scanVal, setScanVal] = useState("");
   const [lines, setLines] = useState<Line[]>([newLine()]);
   const [busy, setBusy] = useState(false);
+  const [expandingLine, setExpandingLine] = useState<number | null>(null);
   const [suggestedDocNumber, setSuggestedDocNumber] = useState("");
 
   useEffect(() => {
@@ -65,6 +67,23 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
       });
     }
   }, [id, isEdit]);
+
+  // Prefill from an AI-drafted invoice/purchase (see useAIAssistant.ts) —
+  // the assistant never saves directly, it only hands off a draft here for
+  // the user to review and Save through the normal, already-safe flow.
+  useEffect(() => {
+    if (isEdit) return;
+    const raw = sessionStorage.getItem("ai_doc_draft");
+    if (!raw) return;
+    sessionStorage.removeItem("ai_doc_draft");
+    try {
+      const draft = JSON.parse(raw);
+      if (draft.doc_type !== docType) return;
+      setDoc((d: any) => ({ ...d, party_id: draft.party_id, notes: draft.notes || d.notes }));
+      if (draft.lines?.length) setLines(draft.lines);
+      toast.success("AI draft loaded — review and Save.");
+    } catch { /* ignore malformed draft */ }
+  }, [isEdit, docType]);
 
   // Auto IGST when party state differs from company state
   useEffect(() => {
@@ -282,7 +301,24 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
                         <SelectTrigger className="mb-1 h-8"><SelectValue placeholder="Pick item" /></SelectTrigger>
                         <SelectContent className="max-h-64">{items.map(it => <SelectItem key={it.id} value={it.id}>{it.name}</SelectItem>)}</SelectContent>
                       </Select>
-                      <Input value={l.description} onChange={e => updateLine(i, { description: e.target.value })} placeholder="Description" className="h-8" />
+                      <div className="relative">
+                        <Input value={l.description} onChange={e => updateLine(i, { description: e.target.value })} placeholder="Description" className="h-8 pr-7" />
+                        <button
+                          type="button"
+                          title="Expand with AI"
+                          disabled={expandingLine === i || !l.description?.trim()}
+                          onClick={async () => {
+                            setExpandingLine(i);
+                            try {
+                              const expanded = await expandDescription(l.description);
+                              if (expanded) updateLine(i, { description: expanded });
+                            } catch { /* silent */ } finally { setExpandingLine(null); }
+                          }}
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-accent disabled:opacity-40"
+                        >
+                          <Sparkles className={`h-3.5 w-3.5 ${expandingLine === i ? "animate-pulse" : ""}`} />
+                        </button>
+                      </div>
                     </td>
                     <td><Input value={l.hsn_code || ""} onChange={e => updateLine(i, { hsn_code: e.target.value })} className="h-8 w-20" /></td>
                     <td><Input type="number" step="0.001" value={l.quantity} onFocus={e => e.target.select()} onChange={e => updateLine(i, { quantity: e.target.value === "" ? 0 : +e.target.value })} className="h-8 w-20 text-right" /></td>

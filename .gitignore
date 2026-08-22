@@ -30,3 +30,6 @@ dist-ssr
 
 # Supabase CLI local session cache
 supabase/.temp/
+
+.vercel
+.env*

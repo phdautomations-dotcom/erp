@@ -345,7 +345,7 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 + 0.1, duration: 0.4, ease: "easeOut" }}
-            className={`group relative overflow-hidden rounded-3xl border border-border/50 bg-card/50 p-6 shadow-sm backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/10 hover:border-accent/50 dark:hover:shadow-accent/5 ${c.to ? "cursor-pointer" : ""}`}
+            className={`group shine-hover relative overflow-hidden rounded-3xl border border-border/50 bg-card/50 p-6 shadow-sm backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/10 hover:border-accent/50 dark:hover:shadow-accent/5 ${c.to ? "cursor-pointer" : ""}`}
             onClick={() => c.to && navigate(c.to)}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />

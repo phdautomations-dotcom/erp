@@ -143,9 +143,32 @@
   .btn-gradient {
     background-image: var(--gradient-brand);
     color: white;
+    position: relative;
+    overflow: hidden;
   }
   .btn-gradient:hover {
     opacity: 0.92;
+  }
+
+  /* Diagonal light-sweep on hover — baked into .btn-gradient, and available
+     standalone (via .shine-hover) for non-gradient surfaces like tiles/cards. */
+  .btn-gradient::after,
+  .shine-hover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 30%, hsl(0 0% 100% / 0.35) 50%, transparent 70%);
+    transform: translateX(-120%);
+    transition: transform 0.7s ease;
+    pointer-events: none;
+  }
+  .btn-gradient:hover::after,
+  .shine-hover:hover::after {
+    transform: translateX(120%);
+  }
+  .shine-hover {
+    position: relative;
+    overflow: hidden;
   }
 
   /* Subtle 1px gradient ring around a card, e.g. the login card */

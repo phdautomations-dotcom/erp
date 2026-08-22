@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Settings, Sparkles } from "lucide-react";
+import { Settings, Sparkles, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const loginSchema = z.object({
@@ -21,6 +21,7 @@ export default function Auth() {
   const location = useLocation();
   const from = location.state?.from?.pathname || "/admin";
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     document.title = "Admin Login | PHD Automations";
@@ -55,7 +56,17 @@ export default function Auth() {
       {/* Animated Glowing Background */}
       <div className="fixed inset-0 z-0 pointer-events-none flex justify-center items-center overflow-hidden">
         <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15], rotate: [0, 90, 0] }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }} className="absolute -top-[20%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-accent/20 blur-[120px] mix-blend-multiply dark:mix-blend-screen" />
-        <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.1, 0.2, 0.1], rotate: [0, -90, 0] }} transition={{ duration: 20, repeat: Infinity, ease: "linear", delay: 2 }} className="absolute top-[40%] -right-[10%] w-[40vw] h-[40vw] rounded-full bg-blue-500/20 blur-[120px] mix-blend-multiply dark:mix-blend-screen" />
+        <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.1, 0.2, 0.1], rotate: [0, -90, 0] }} transition={{ duration: 20, repeat: Infinity, ease: "linear", delay: 2 }} className="absolute top-[40%] -right-[10%] w-[40vw] h-[40vw] rounded-full bg-[hsl(243_75%_59%)]/20 blur-[120px] mix-blend-multiply dark:mix-blend-screen" />
+        {/* Subtle dot-grid for depth */}
+        <div
+          className="absolute inset-0 opacity-[0.4] dark:opacity-[0.25]"
+          style={{
+            backgroundImage: "radial-gradient(hsl(var(--foreground) / 0.08) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+            WebkitMaskImage: "radial-gradient(ellipse 60% 50% at 50% 40%, black 40%, transparent 100%)",
+            maskImage: "radial-gradient(ellipse 60% 50% at 50% 40%, black 40%, transparent 100%)",
+          }}
+        />
       </div>
 
       <motion.div
@@ -75,15 +86,54 @@ export default function Auth() {
         <Link to="/" className="flex justify-center mb-8 relative z-10">
           <img src={logo} alt="PHD Automations" className="h-14 w-auto object-contain" />
         </Link>
-        <div className="relative z-10 rounded-3xl bg-card/60 backdrop-blur-xl border border-border/50 shadow-2xl ring-gradient p-8 transition-all hover:shadow-accent/10">
-          <h1 className="font-display text-2xl font-semibold tracking-tight text-center bg-gradient-to-r from-foreground via-accent to-[hsl(243_75%_59%)] bg-clip-text text-transparent">PHD Login</h1>
-          <p className="text-sm text-muted-foreground text-center mt-1">Sign in to manage billing & operations</p>
+        <div className="relative z-10 rounded-3xl bg-card/60 backdrop-blur-xl border border-border/50 shadow-2xl ring-gradient p-9 transition-all hover:shadow-accent/10">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent text-center mb-2">Enterprise ERP</p>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-center bg-gradient-to-r from-foreground via-accent to-[hsl(243_75%_59%)] bg-clip-text text-transparent">
+            Welcome back
+          </h1>
+          <p className="text-sm text-muted-foreground text-center mt-1.5">Sign in to manage billing & operations</p>
 
-          <form onSubmit={handleLogin} className="space-y-4 mt-6">
-            <div><Label className="text-muted-foreground">Email</Label><Input name="email" type="email" required autoComplete="email" className="bg-background/50 border-border/50 focus:border-accent" /></div>
-            <div><Label className="text-muted-foreground">Password</Label><Input name="password" type="password" required autoComplete="current-password" className="bg-background/50 border-border/50 focus:border-accent" /></div>
-            <Button type="submit" disabled={busy} className="w-full h-11 btn-gradient rounded-full font-medium transition-all shadow-md hover:shadow-lg mt-2">
-              {busy ? "Signing in…" : "Sign in"}
+          <form onSubmit={handleLogin} className="space-y-4 mt-8">
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Email</Label>
+              <div className="relative mt-1.5">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+                <Input
+                  name="email" type="email" required autoComplete="email" placeholder="you@company.com"
+                  className="h-12 rounded-xl pl-10 bg-background/50 border-border/50 focus-visible:border-accent focus-visible:ring-accent/30 focus-visible:ring-offset-0 transition-shadow"
+                />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Password</Label>
+              <div className="relative mt-1.5">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+                <Input
+                  name="password" type={showPassword ? "text" : "password"} required autoComplete="current-password" placeholder="••••••••"
+                  className="h-12 rounded-xl pl-10 pr-11 bg-background/50 border-border/50 focus-visible:border-accent focus-visible:ring-accent/30 focus-visible:ring-offset-0 transition-shadow"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  tabIndex={-1}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <Button
+              type="submit" disabled={busy}
+              className="group w-full h-12 btn-gradient rounded-full font-semibold transition-all shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/30 mt-2"
+            >
+              <span className="relative flex items-center justify-center gap-1.5">
+                {busy ? "Signing in…" : (
+                  <>
+                    Sign in
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </>
+                )}
+              </span>
             </Button>
           </form>
         </div>

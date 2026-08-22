@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue } from "framer-motion";
 import { X, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,11 +15,37 @@ import saffyreLogo from "@/assets/saffyre-logo-256.png";
 // Pass this to have the draft handed to your own create-document UI
 // (e.g. EngineerApp opens its doc sheet prefilled). Omit it (admin) and
 // the hook falls back to navigating to the admin create-document route.
+const POS_KEY = "saffyre_ai_btn_pos";
+
 export const AIAssistant = ({ onDraftReady }: { onDraftReady?: (draft: MatchedDraft) => void }) => {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const { messages, ask, thinking } = useAIAssistant(onDraftReady);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const constraintsRef = useRef<HTMLDivElement>(null);
+  // Dragged position persists per-browser (fixed bottom-5 right-5 is the
+  // origin; x/y are just the offset from there) so it stays where you left
+  // it across reloads.
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const dragDistance = useRef(0);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(POS_KEY);
+      if (saved) {
+        const { x: sx, y: sy } = JSON.parse(saved);
+        x.set(sx);
+        y.set(sy);
+      }
+    } catch { /* localStorage unavailable — just start at the default spot */ }
+  }, []);
+
+  const persistPosition = () => {
+    try {
+      localStorage.setItem(POS_KEY, JSON.stringify({ x: x.get(), y: y.get() }));
+    } catch { /* ignore */ }
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -33,12 +59,23 @@ export const AIAssistant = ({ onDraftReady }: { onDraftReady?: (draft: MatchedDr
 
   return (
     <>
+      {/* Full-viewport, invisible — just gives the button somewhere to be dragged within */}
+      <div ref={constraintsRef} className="fixed inset-0 pointer-events-none z-[59]" />
+
       <motion.button
-        onClick={() => setOpen(v => !v)}
+        drag
+        dragConstraints={constraintsRef}
+        dragElastic={0.05}
+        dragMomentum={false}
+        style={{ x, y }}
+        onDragStart={() => { dragDistance.current = 0; }}
+        onDrag={(_, info) => { dragDistance.current += Math.abs(info.delta.x) + Math.abs(info.delta.y); }}
+        onDragEnd={persistPosition}
+        onClick={() => { if (dragDistance.current > 6) return; setOpen(v => !v); }}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
-        className="fixed bottom-5 right-5 z-[60] h-24 w-24 flex items-center justify-center"
-        title="Saffyre AI"
+        className="fixed bottom-5 right-5 z-[60] h-24 w-24 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none"
+        title="Saffyre AI — drag to move"
       >
         {open ? (
           <span className="h-14 w-14 rounded-full bg-foreground text-background shadow-xl shadow-black/20 flex items-center justify-center">
@@ -48,6 +85,7 @@ export const AIAssistant = ({ onDraftReady }: { onDraftReady?: (draft: MatchedDr
           <img
             src={saffyreLogo}
             alt="Saffyre AI"
+            draggable={false}
             className="h-24 w-24 object-contain"
             style={{ filter: "drop-shadow(0 6px 18px hsl(228 70% 55% / 0.45))" }}
           />

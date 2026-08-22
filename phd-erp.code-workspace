@@ -3,5 +3,12 @@
     { "name": "erp-main", "path": "." },
     { "name": "phd-website", "path": "../phd-website" }
   ],
-  "settings": {}
+  "settings": {
+    "git.postCommitCommand": "push",
+    "git.confirmSync": false,
+    "git.enableSmartCommit": true,
+    "git.suggestSmartCommit": false,
+    "git.confirmEmptyCommits": false,
+    "git.autofetch": true
+  }
 }

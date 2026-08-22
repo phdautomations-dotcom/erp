@@ -8,9 +8,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { fmtINR, fmtDate } from "@/lib/format";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { MapPin, Clock, Calculator, CalendarClock, CalendarCheck2, CheckCircle, XCircle, Palmtree, Trash2 } from "lucide-react";
 
 export default function Attendance() {
+  const confirm = useConfirm();
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [logs, setLogs] = useState<any[]>([]);
   const [payroll, setPayroll] = useState<any[]>([]);
@@ -93,6 +95,7 @@ export default function Attendance() {
   };
 
   const delHoliday = async (id: string) => {
+    if (!(await confirm("Delete this holiday?"))) return;
     const { error } = await supabase.from("company_holidays").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Holiday removed!");

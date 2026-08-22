@@ -8,10 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fmtINR } from "@/lib/format";
 import { useAuth } from "@/hooks/useAuth";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { toast } from "sonner";
 
 export default function Parties() {
   const { hasRole, canWrite } = useAuth();
+  const confirm = useConfirm();
   const [rows, setRows] = useState<any[]>([]);
   const [q, setQ] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -25,7 +27,7 @@ export default function Parties() {
   useEffect(() => { document.title = "Parties | PHD ERP"; load(); }, []);
 
   const del = async (id: string) => {
-    if (!confirm("Delete this party?")) return;
+    if (!(await confirm("Delete this party?"))) return;
     const { error } = await supabase.from("parties").delete().eq("id", id);
     if (error) toast.error(error.message); else { toast.success("Deleted"); load(); }
   };

@@ -10,12 +10,14 @@ import { fmtINR } from "@/lib/format";
 import { classifyText } from "@/lib/ai/remote";
 import { Plus, Trash2, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { toast } from "sonner";
 
 const CATEGORIES = ["Travel", "Office", "Tools", "Salaries", "Rent", "Utilities", "Marketing", "Misc"];
 
 export default function Expenses() {
   const { hasRole } = useAuth();
+  const confirm = useConfirm();
   const [rows, setRows] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
@@ -46,7 +48,11 @@ export default function Expenses() {
     if (error) return toast.error(error.message);
     toast.success("Saved"); setOpen(false); setForm({ expense_date: new Date().toISOString().slice(0, 10), mode: "cash", category: "Office", amount: 0 }); load();
   };
-  const del = async (id: string) => { await supabase.from("expenses").delete().eq("id", id); load(); };
+  const del = async (id: string) => {
+    if (!(await confirm("Delete this expense?"))) return;
+    await supabase.from("expenses").delete().eq("id", id);
+    load();
+  };
 
   return (
     <AdminLayout title="Expenses">

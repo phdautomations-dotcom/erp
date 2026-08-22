@@ -12,10 +12,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { fmtINR, todayFY, fmtDate } from "@/lib/format";
 import { generateReceiptPDF } from "@/lib/pdf";
 import { useAuth } from "@/hooks/useAuth";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { toast } from "sonner";
 
 export default function Payments() {
   const { hasRole } = useAuth();
+  const confirm = useConfirm();
   const [direction, setDirection] = useState<"received" | "made">("received");
   const [rows, setRows] = useState<any[]>([]);
   const [parties, setParties] = useState<any[]>([]);
@@ -84,7 +86,7 @@ export default function Payments() {
   };
 
   const del = async (id: string) => {
-    if (!confirm("Delete payment? Allocations will be reversed.")) return;
+    if (!(await confirm("Delete payment? Allocations will be reversed."))) return;
     const { data: a } = await supabase.from("payment_allocations").select("*").eq("payment_id", id);
     for (const al of a || []) {
       const { data: d } = await supabase.from("documents").select("paid,total").eq("id", al.document_id).single();

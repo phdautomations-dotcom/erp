@@ -9,10 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { fmtINR, fmtNum } from "@/lib/format";
 import { useAuth } from "@/hooks/useAuth";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { toast } from "sonner";
 
 export default function Items() {
   const { hasRole, canWrite } = useAuth();
+  const confirm = useConfirm();
   const [rows, setRows] = useState<any[]>([]);
   const [q, setQ] = useState("");
   const [scanOpen, setScanOpen] = useState(false);
@@ -26,7 +28,7 @@ export default function Items() {
   useEffect(() => { document.title = "Items | PHD ERP"; load(); }, []);
 
   const del = async (id: string) => {
-    if (!confirm("Delete this item?")) return;
+    if (!(await confirm("Delete this item?"))) return;
     const { error } = await supabase.from("items").delete().eq("id", id);
     if (error) toast.error(error.message); else { toast.success("Deleted"); load(); }
   };

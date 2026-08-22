@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -253,6 +254,7 @@ function FilterBar({ search, onSearch, month, onMonth, from, onFrom, to, onTo, o
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function EngineerApp() {
+  const confirm = useConfirm();
   // ── Service visits state (existing) ──
   const [visits, setVisits] = useState<any[]>([]);
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
@@ -770,7 +772,7 @@ export default function EngineerApp() {
   };
 
   const deleteExpense = async (exp: any) => {
-    if (!confirm("Delete this expense?")) return;
+    if (!(await confirm("Delete this expense?"))) return;
     await (supabase as any).from("expenses").delete().eq("id", exp.id);
     await logActivity("deleted", "expenses", exp.id, `₹${exp.amount} – ${exp.category}`);
     toast.success("Expense deleted"); loadBusinessData();

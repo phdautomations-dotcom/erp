@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fmtINR } from "@/lib/format";
 import { useAuth } from "@/hooks/useAuth";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { toast } from "sonner";
 
 const SALES_TYPES = ["invoice", "quotation", "proforma", "challan"] as const;
@@ -19,6 +20,7 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
   const [type, setType] = useState<string>(initialType);
   const [rows, setRows] = useState<any[]>([]);
   const { hasRole } = useAuth();
+  const confirm = useConfirm();
   const nav = useNavigate();
 
   // Reset type when switching between Sales and Purchases
@@ -37,7 +39,7 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
   useEffect(() => { document.title = `${purchase ? "Purchases" : "Sales"} | PHD ERP`; load(); }, [type, purchase]);
 
   const del = async (id: string) => {
-    if (!confirm("Delete this document?")) return;
+    if (!(await confirm("Delete this document?"))) return;
     const { error } = await supabase.from("documents").delete().eq("id", id);
     if (error) toast.error(error.message); else { toast.success("Deleted"); load(); }
   };

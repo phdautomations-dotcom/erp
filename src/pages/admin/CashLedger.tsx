@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { fmtINR, fmtDate } from "@/lib/format";
 import { Plus, Trash2, Edit2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { toast } from "sonner";
 
 const emptyForm = () => ({ entry_date: new Date().toISOString().slice(0, 10), type: "in", amount: 0, description: "", party_id: "" });
@@ -16,6 +17,7 @@ const currentMonth = () => new Date().toISOString().slice(0, 7);
 
 export default function CashLedger() {
   const { hasRole, user } = useAuth();
+  const confirm = useConfirm();
   const [rows, setRows] = useState<any[]>([]);
   const [parties, setParties] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
@@ -56,7 +58,11 @@ export default function CashLedger() {
     load();
   };
 
-  const del = async (id: string) => { await supabase.from("cash_ledger" as any).delete().eq("id", id); load(); };
+  const del = async (id: string) => {
+    if (!(await confirm("Delete this cash entry?"))) return;
+    await supabase.from("cash_ledger" as any).delete().eq("id", id);
+    load();
+  };
 
   let running = 0;
   const withBalance = rows.map(r => {

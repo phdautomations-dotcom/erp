@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, KeyRound, PenTool, Shield, History } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { PERM_MODULES, type UserPerm, type PermModule } from "@/hooks/usePermissions";
 
 const ROLES = ["admin", "accountant", "engineer", "staff", "viewer"] as const;
@@ -35,6 +36,7 @@ const ACTION_COLORS: Record<string, string> = {
 };
 
 export default function Users() {
+  const confirm = useConfirm();
   const [rows, setRows] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -78,7 +80,7 @@ export default function Users() {
   };
 
   const removeRoles = async (userId: string) => {
-    if (!confirm("Revoke all access for this user?")) return;
+    if (!(await confirm("Revoke all access for this user?"))) return;
     await supabase.from("user_roles").delete().eq("user_id", userId);
     load();
   };

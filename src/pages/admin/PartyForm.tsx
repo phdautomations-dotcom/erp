@@ -15,6 +15,7 @@ import { INDIAN_STATES } from "@/lib/states";
 import { fmtINR, fmtNum, fmtDate } from "@/lib/format";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { addPdfBranding, type Settings } from "@/lib/pdf";
@@ -42,6 +43,7 @@ export default function PartyForm() {
   const { id } = useParams();
   const nav = useNavigate();
   const { hasRole } = useAuth();
+  const confirm = useConfirm();
   const isEdit = id && id !== "new";
   const [settings, setSettings] = useState<Settings | null>(null);
   const [form, setForm] = useState<any>({ type: "customer", opening_balance: 0 });
@@ -126,7 +128,7 @@ export default function PartyForm() {
   };
 
   const delVisit = async (vid: string) => {
-    if (!confirm("Delete this visit?")) return;
+    if (!(await confirm("Delete this visit?"))) return;
     const { error } = await supabase.from("service_visits").delete().eq("id", vid);
     if (error) return toast.error(error.message);
     loadVisits(id as string);
@@ -143,7 +145,7 @@ export default function PartyForm() {
   };
 
   const delMachine = async (mid: string) => {
-    if (!confirm("Delete this machine?")) return;
+    if (!(await confirm("Delete this machine?"))) return;
     await (supabase as any).from("party_machines").delete().eq("id", mid);
     loadMachines(id as string);
   };

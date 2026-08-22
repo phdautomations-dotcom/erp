@@ -71,7 +71,12 @@ export const AIAssistant = ({ onDraftReady }: { onDraftReady?: (draft: MatchedDr
         onDragStart={() => { dragDistance.current = 0; }}
         onDrag={(_, info) => { dragDistance.current += Math.abs(info.delta.x) + Math.abs(info.delta.y); }}
         onDragEnd={persistPosition}
-        onClick={() => { if (dragDistance.current > 6) return; setOpen(v => !v); }}
+        onClick={() => {
+          const wasDragged = dragDistance.current > 6;
+          dragDistance.current = 0; // reset here — onDragStart only fires on an actual drag, so a plain click never clears it otherwise
+          if (wasDragged) return;
+          setOpen(v => !v);
+        }}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
         className="fixed bottom-5 right-5 z-[60] h-24 w-24 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none"

@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
+import { ConfirmDialogProvider } from "@/components/ConfirmDialogProvider";
 
 // Every route is its own chunk, downloaded only when a user actually visits
 // it — otherwise a single visit to the login page would pull in every admin
@@ -44,6 +45,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Sonner />
+      <ConfirmDialogProvider>
       <BrowserRouter>
         <AuthProvider>
           <Suspense fallback={<RouteFallback />}>
@@ -81,6 +83,7 @@ const App = () => (
           </Suspense>
         </AuthProvider>
       </BrowserRouter>
+      </ConfirmDialogProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

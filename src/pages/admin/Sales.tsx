@@ -80,15 +80,25 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
   // looks at the first screenful. Scrolling near the bottom fetches the next
   // page. A search term runs the same paged query server-side across
   // doc_number/party/status, so older documents are still reachable.
-  const fetchPage = (pageNum: number, term: string) => {
+  const fetchPage = async (pageNum: number, term: string) => {
     const from = pageNum * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
     if (term) {
       const needle = `%${term}%`;
+      // This Supabase project's PostgREST rejects a joined table's column
+      // (e.g. parties.name) referenced inside .or() — it only accepts the
+      // embedded-resource dot-path as a plain AND filter, never inside a
+      // logic tree (confirmed against the live API: PGRST100 "failed to
+      // parse logic tree" on every dot-path/wildcard variant tried). So we
+      // resolve matching party ids first, then OR them in via party_id.in().
+      const { data: matchingParties } = await supabase.from("parties").select("id").ilike("name", needle).limit(50);
+      const partyIds = (matchingParties || []).map((p: any) => p.id);
+      const orParts = [`doc_number.ilike.${needle}`, `status.ilike.${needle}`];
+      if (partyIds.length) orParts.push(`party_id.in.(${partyIds.join(",")})`);
       return supabase.from("documents")
-        .select("*, parties!inner(name)")
+        .select("*, parties(name)")
         .eq("doc_type", type as any)
-        .or(`doc_number.ilike.${needle},status.ilike.${needle},parties.name.ilike.${needle}`)
+        .or(orParts.join(","))
         .order("doc_date", { ascending: false })
         .range(from, to);
     }

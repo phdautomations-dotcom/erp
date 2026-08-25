@@ -46,10 +46,18 @@ export default function CashLedger() {
     const term = q.trim();
     if (term) {
       const needle = `%${term}%`;
+      // PostgREST here rejects a joined column (parties.name) inside .or() —
+      // confirmed against the live API (PGRST100 "failed to parse logic
+      // tree" on every variant). Resolve matching party ids first, then OR
+      // them in via party_id.in().
+      const { data: matchingParties } = await supabase.from("parties").select("id").ilike("name", needle).limit(50);
+      const partyIds = (matchingParties || []).map((p: any) => p.id);
+      const orParts = [`description.ilike.${needle}`];
+      if (partyIds.length) orParts.push(`party_id.in.(${partyIds.join(",")})`);
       const { data } = await supabase.from("cash_ledger" as any)
-        .select("*, parties!inner(name)")
+        .select("*, parties(name)")
         .gte("entry_date", monthStart).lt("entry_date", monthEnd)
-        .or(`description.ilike.${needle},parties.name.ilike.${needle}`)
+        .or(orParts.join(","))
         .order("entry_date", { ascending: true }).order("created_at", { ascending: true });
       setRows((data as any[]) || []);
     } else {

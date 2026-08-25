@@ -35,10 +35,18 @@ export default function Payments() {
     const term = q.trim();
     if (term) {
       const needle = `%${term}%`;
+      // PostgREST here rejects a joined column (parties.name) inside .or() —
+      // confirmed against the live API (PGRST100 "failed to parse logic
+      // tree" on every variant). Resolve matching party ids first, then OR
+      // them in via party_id.in().
+      const { data: matchingParties } = await supabase.from("parties").select("id").ilike("name", needle).limit(50);
+      const partyIds = (matchingParties || []).map((p: any) => p.id);
+      const orParts = [`payment_number.ilike.${needle}`, `mode.ilike.${needle}`];
+      if (partyIds.length) orParts.push(`party_id.in.(${partyIds.join(",")})`);
       const { data } = await supabase.from("payments")
-        .select("*, parties!inner(name)")
+        .select("*, parties(name)")
         .eq("direction", direction)
-        .or(`payment_number.ilike.${needle},mode.ilike.${needle},parties.name.ilike.${needle}`)
+        .or(orParts.join(","))
         .order("payment_date", { ascending: false })
         .limit(100);
       setRows(data || []);

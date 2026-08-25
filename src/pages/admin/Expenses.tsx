@@ -42,9 +42,17 @@ export default function Expenses() {
     const term = q.trim();
     if (term) {
       const needle = `%${term}%`;
+      // PostgREST here rejects a joined column (profiles.display_name)
+      // inside .or() — confirmed against the live API (PGRST100 "failed to
+      // parse logic tree" on every variant). Resolve matching profile ids
+      // first, then OR them in via created_by.in().
+      const { data: matchingProfiles } = await supabase.from("profiles").select("user_id").ilike("display_name", needle).limit(50);
+      const profileIds = (matchingProfiles || []).map((p: any) => p.user_id);
+      const orParts = [`description.ilike.${needle}`, `category.ilike.${needle}`, `mode.ilike.${needle}`];
+      if (profileIds.length) orParts.push(`created_by.in.(${profileIds.join(",")})`);
       const { data } = await supabase.from("expenses")
-        .select("*, profiles!inner(display_name)")
-        .or(`description.ilike.${needle},category.ilike.${needle},mode.ilike.${needle},profiles.display_name.ilike.${needle}`)
+        .select("*, profiles(display_name)")
+        .or(orParts.join(","))
         .order("expense_date", { ascending: false })
         .limit(100);
       setRows(data || []);

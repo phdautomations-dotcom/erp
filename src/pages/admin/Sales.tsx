@@ -1,18 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, FileText, Eye, Trash2, Search } from "lucide-react";
+import { Plus, FileText, Eye, Trash2, Search, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { fmtINR } from "@/lib/format";
+import { fmtINR, todayFY } from "@/lib/format";
 import { useAuth } from "@/hooks/useAuth";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { toast } from "sonner";
 
 const SALES_TYPES = ["invoice", "quotation", "proforma", "challan"] as const;
 type DocType = typeof SALES_TYPES[number];
+
+// Only these doc types actually carry a receivable/payable — quotations,
+// proformas, and purchase orders are pre-sale pipeline documents with no
+// real payment to track (Sales.tsx already shows them as "Pipeline").
+const PAYABLE_TYPES = ["invoice", "challan", "purchase_bill"];
 
 const PAGE_SIZE = 30;
 
@@ -66,6 +74,43 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
   const { hasRole } = useAuth();
   const confirm = useConfirm();
   const nav = useNavigate();
+
+  // Record a payment against a document right from this table — no trip to
+  // the Payments page needed. Writes to the same `payments` table (with a
+  // payment_allocations row and the document's paid/status update) that
+  // Payments.tsx uses, so it shows up there too — this is just a faster
+  // entry point into the identical data, not a separate parallel path.
+  const [payDoc, setPayDoc] = useState<any>(null);
+  const [payForm, setPayForm] = useState<any>({ payment_date: new Date().toISOString().slice(0, 10), mode: "bank_transfer", amount: 0 });
+  const [payBusy, setPayBusy] = useState(false);
+
+  const openPay = async (d: any) => {
+    const due = Number(d.total) - Number(d.paid || 0);
+    if (!(await confirm({ title: "Record payment?", description: `Record a payment of up to ${fmtINR(due)} for ${d.doc_number}.`, confirmText: "Continue" }))) return;
+    setPayDoc(d);
+    setPayForm({ payment_date: new Date().toISOString().slice(0, 10), mode: "bank_transfer", amount: due.toFixed(2) });
+  };
+
+  const recordPayment = async () => {
+    if (!payDoc || !payForm.amount || +payForm.amount <= 0) return toast.error("Enter a valid amount");
+    setPayBusy(true);
+    const direction = purchase ? "made" : "received";
+    const payment_number = `${direction === "received" ? "RCT" : "PMT"}/${todayFY()}/${Date.now().toString().slice(-5)}`;
+    const { data: u } = await supabase.auth.getUser();
+    const { data: p, error } = await supabase.from("payments").insert({
+      direction, payment_number, party_id: payDoc.party_id, payment_date: payForm.payment_date,
+      amount: +payForm.amount, mode: payForm.mode, created_by: u.user?.id,
+    }).select().single();
+    if (error) { setPayBusy(false); return toast.error(error.message); }
+    await supabase.from("payment_allocations").insert({ payment_id: p.id, document_id: payDoc.id, amount: +payForm.amount });
+    const newPaid = Number(payDoc.paid || 0) + Number(payForm.amount);
+    const status = newPaid >= (Number(payDoc.total) - 0.01) ? "paid" : "partial";
+    await supabase.from("documents").update({ paid: newPaid, status }).eq("id", payDoc.id);
+    setPayBusy(false);
+    toast.success("Payment recorded");
+    setPayDoc(null);
+    loadFirstPage();
+  };
 
   // Reset type when switching between Sales and Purchases
   useEffect(() => {
@@ -196,6 +241,9 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
                 }`}>{d.status}</span>
               </div>
               <div className="flex items-center">
+                {PAYABLE_TYPES.includes(d.doc_type) && (Number(d.total) - Number(d.paid || 0) > 0.01) && (
+                  <Button variant="ghost" size="icon" title="Record payment" onClick={() => openPay(d)}><Wallet className="h-4 w-4 text-emerald-600" /></Button>
+                )}
                 <Link to={`/admin/${purchase ? "purchases" : "sales"}/${d.id}`}><Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button></Link>
                 {hasRole("admin") && <Button variant="ghost" size="icon" onClick={() => del(d.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
               </div>
@@ -239,6 +287,9 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
                     }`}>{d.status}</span>
                   </td>
                   <td className="px-6 py-4 text-right">
+                  {PAYABLE_TYPES.includes(d.doc_type) && (Number(d.total) - Number(d.paid || 0) > 0.01) && (
+                    <Button variant="ghost" size="icon" title="Record payment" onClick={() => openPay(d)}><Wallet className="h-4 w-4 text-emerald-600" /></Button>
+                  )}
                   <Link to={`/admin/${purchase ? "purchases" : "sales"}/${d.id}`}><Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button></Link>
                   {hasRole("admin") && <Button variant="ghost" size="icon" onClick={() => del(d.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
                 </td>
@@ -260,6 +311,28 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
         </div>
         {hasMore && <div ref={sentinelRef} className="h-1" />}
       </div>
+
+      <Dialog open={!!payDoc} onOpenChange={(v) => { if (!v) setPayDoc(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Record Payment — {payDoc?.doc_number}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {(payDoc?.parties as any)?.name} · Due: <span className="font-semibold text-foreground">{payDoc && fmtINR(Number(payDoc.total) - Number(payDoc.paid || 0))}</span>
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div><Label>Date</Label><Input type="date" value={payForm.payment_date} onChange={e => setPayForm({ ...payForm, payment_date: e.target.value })} /></div>
+              <div><Label>Amount</Label><Input type="number" step="0.01" value={payForm.amount} onChange={e => setPayForm({ ...payForm, amount: e.target.value })} /></div>
+              <div className="sm:col-span-2"><Label>Mode</Label>
+                <Select value={payForm.mode} onValueChange={v => setPayForm({ ...payForm, mode: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{["cash", "upi", "bank_transfer", "cheque", "card"].map(m => <SelectItem key={m} value={m} className="capitalize">{m.replace("_", " ")}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <Button onClick={recordPayment} disabled={payBusy} className="w-full rounded-full btn-gradient">{payBusy ? "Saving…" : "Save Payment"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }

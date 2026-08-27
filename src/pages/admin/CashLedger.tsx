@@ -36,9 +36,12 @@ export default function CashLedger() {
   // narrows further within that same month's range via description/party.
   const load = async () => {
     const monthStart = `${month}-01`;
-    const nextMonthDate = new Date(`${month}-01T00:00:00`);
-    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
-    const monthEnd = nextMonthDate.toISOString().slice(0, 10);
+    // Plain string/integer arithmetic — going through Date + toISOString()
+    // here shifts the boundary by the local timezone offset (e.g. IST is
+    // UTC+5:30), which silently turned "end of month" into the 31st instead
+    // of the 1st of next month, excluding entries dated the 31st itself.
+    const [y, m] = month.split("-").map(Number);
+    const monthEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
 
     const { data: priorRows } = await supabase.from("cash_ledger" as any).select("type, amount").lt("entry_date", monthStart);
     setOpeningBalance((priorRows || []).reduce((s: number, r: any) => s + (r.type === "in" ? Number(r.amount) : -Number(r.amount)), 0));

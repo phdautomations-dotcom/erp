@@ -1,9 +1,9 @@
 import { ReactNode, useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, FileText, ShoppingCart, Wallet, Wrench,
-  Boxes, Receipt, BarChart3, Inbox, Settings, UserCog, LogOut, Home,
+  Boxes, Receipt, BarChart3, Inbox, Settings, UserCog, LogOut, Home, ArrowLeft,
   ClipboardList, Bell, Search, ChevronRight, X, Building2, Camera, Banknote,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -552,6 +552,8 @@ function UserAvatarMenu() {
 
 function TopHeader({ title }: { title?: string }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isHome = location.pathname === "/admin";
   return (
     <header
       className="shrink-0 z-30 flex flex-col"
@@ -564,6 +566,18 @@ function TopHeader({ title }: { title?: string }) {
       }}
     >
       <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
+        {/* Back — return to wherever you came from, not just Home */}
+        {!isHome && (
+          <button
+            onClick={() => navigate(-1)}
+            title="Back"
+            className="flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-accent transition-colors shrink-0"
+            style={{ boxShadow: "var(--neu-sm)", background: "hsl(220 22% 94%)" }}
+          >
+            <ArrowLeft className="h-4.5 w-4.5" />
+          </button>
+        )}
+
         {/* Home — back to the tile launcher */}
         <button
           onClick={() => navigate("/admin")}

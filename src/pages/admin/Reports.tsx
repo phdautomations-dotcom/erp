@@ -24,7 +24,7 @@ export default function Reports() {
   const dateRange = `From: ${fmtDate(from)} To: ${fmtDate(to)}`;
 
   useEffect(() => {
-    document.title = "Reports | PHD ERP";
+    document.title = "Reports | ASTA One";
     Promise.all([
       supabase.from("documents").select("*, parties(name, gstin, state, state_code), document_lines(*)").gte("doc_date", from).lte("doc_date", to),
       supabase.from("payments").select("*").gte("payment_date", from).lte("payment_date", to),

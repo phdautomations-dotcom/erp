@@ -15,16 +15,48 @@ export default function Parties() {
   const { hasRole, canWrite } = useAuth();
   const confirm = useConfirm();
   const [rows, setRows] = useState<any[]>([]);
+  // Kept as two separate figures on purpose — netting "what they owe us"
+  // against "what we owe them" into one number is exactly what confused
+  // things before. Receivable = unpaid invoices; Payable = unpaid purchase
+  // bills. Quotations/proformas/POs never carry real debt, and a challan is
+  // just a delivery record (payment is only ever collected against the invoice).
+  const [receivable, setReceivable] = useState<Record<string, number>>({});
+  const [payable, setPayable] = useState<Record<string, number>>({});
   const [q, setQ] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
 
   const load = async () => {
-    const { data, error } = await supabase.from("parties").select("*").order("name");
+    const [{ data, error }, { data: invoices }, { data: bills }] = await Promise.all([
+      supabase.from("parties").select("*").order("name"),
+      supabase.from("documents").select("party_id,total,paid").eq("doc_type", "invoice").neq("status", "cancelled"),
+      supabase.from("documents").select("party_id,total,paid").eq("doc_type", "purchase_bill").neq("status", "cancelled"),
+    ]);
     if (error) toast.error(error.message);
+    const rec: Record<string, number> = {};
+    const pay: Record<string, number> = {};
+    // opening_balance seeds whichever side it belongs to: positive = they
+    // owe us, negative = we owe them.
+    (data || []).forEach((p: any) => {
+      const ob = Number(p.opening_balance || 0);
+      if (ob > 0.01) rec[p.id] = ob;
+      else if (ob < -0.01) pay[p.id] = -ob;
+    });
+    (invoices || []).forEach((d: any) => {
+      const amt = Number(d.total) - Number(d.paid || 0);
+      if (amt <= 0.01) return;
+      rec[d.party_id] = (rec[d.party_id] || 0) + amt;
+    });
+    (bills || []).forEach((d: any) => {
+      const amt = Number(d.total) - Number(d.paid || 0);
+      if (amt <= 0.01) return;
+      pay[d.party_id] = (pay[d.party_id] || 0) + amt;
+    });
+    setReceivable(rec);
+    setPayable(pay);
     setRows(data || []);
   };
-  useEffect(() => { document.title = "Parties | PHD ERP"; load(); }, []);
+  useEffect(() => { document.title = "Parties | ASTA One"; load(); }, []);
 
   const del = async (id: string) => {
     if (!(await confirm("Delete this party?"))) return;
@@ -81,7 +113,17 @@ export default function Parties() {
               <Link to={`/admin/parties/${p.id}`} className="font-medium transition-colors hover:text-accent truncate block">{p.name}</Link>
               <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize mt-1 ${p.type === 'customer' ? 'bg-blue-500/10 text-blue-600' : p.type === 'vendor' ? 'bg-purple-500/10 text-purple-600' : 'bg-muted text-muted-foreground'}`}>{p.type}</span>
             </div>
-            <p className="font-semibold shrink-0">{fmtINR(p.opening_balance)}</p>
+            <div className="text-right shrink-0 space-y-0.5">
+              {(receivable[p.id] || 0) > 0.01 && (
+                <p className="text-sm font-semibold text-destructive">{fmtINR(receivable[p.id])} <span className="text-[10px] font-normal text-muted-foreground">to receive</span></p>
+              )}
+              {(payable[p.id] || 0) > 0.01 && (
+                <p className="text-sm font-semibold text-amber-600">{fmtINR(payable[p.id])} <span className="text-[10px] font-normal text-muted-foreground">to pay</span></p>
+              )}
+              {(receivable[p.id] || 0) <= 0.01 && (payable[p.id] || 0) <= 0.01 && (
+                <p className="text-xs text-muted-foreground">Settled</p>
+              )}
+            </div>
           </div>
           <div className="flex items-center justify-between mt-2">
             <div className="text-xs text-muted-foreground">
@@ -97,9 +139,9 @@ export default function Parties() {
 
     <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] text-sm">
+        <table className="w-full min-w-[760px] text-sm">
           <thead className="bg-muted/30 text-xs font-medium text-muted-foreground">
-            <tr><th className="px-6 py-4 text-left">Name</th><th className="px-6 py-4 text-left">Type</th><th className="px-6 py-4 text-left">GSTIN</th><th className="px-6 py-4 text-left">Phone</th><th className="px-6 py-4 text-left">State</th><th className="px-6 py-4 text-right">Opening Bal</th><th className="px-6 py-4"></th></tr>
+            <tr><th className="px-6 py-4 text-left">Name</th><th className="px-6 py-4 text-left">Type</th><th className="px-6 py-4 text-left">GSTIN</th><th className="px-6 py-4 text-left">Phone</th><th className="px-6 py-4 text-right">To Receive</th><th className="px-6 py-4 text-right">To Pay</th><th className="px-6 py-4"></th></tr>
           </thead>
           <tbody className="divide-y divide-border/50">
             {filtered.map((p) => (
@@ -110,8 +152,8 @@ export default function Parties() {
                 </td>
                 <td className="px-6 py-4 font-mono text-xs text-muted-foreground">{p.gstin || "—"}</td>
                 <td className="px-6 py-4 text-muted-foreground">{p.phone || "—"}</td>
-                <td className="px-6 py-4 text-muted-foreground">{p.state || "—"}</td>
-                <td className="px-6 py-4 text-right font-semibold">{fmtINR(p.opening_balance)}</td>
+                <td className="px-6 py-4 text-right font-semibold text-destructive">{(receivable[p.id] || 0) > 0.01 ? fmtINR(receivable[p.id]) : "—"}</td>
+                <td className="px-6 py-4 text-right font-semibold text-amber-600">{(payable[p.id] || 0) > 0.01 ? fmtINR(payable[p.id]) : "—"}</td>
                 <td className="px-6 py-4 text-right">
                   {hasRole("admin") && <Button variant="ghost" size="icon" onClick={() => del(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
                 </td>

@@ -50,7 +50,7 @@ export default function ItemForm() {
   };
 
   useEffect(() => {
-    document.title = isEdit ? "Edit Item | PHD ERP" : "New Item | PHD ERP";
+    document.title = isEdit ? "Edit Item | ASTA One" : "New Item | ASTA One";
     if (isEdit) supabase.from("items").select("*").eq("id", id).single().then(({ data }) => data && setForm(data));
   }, [id, isEdit]);
 

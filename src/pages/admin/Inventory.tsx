@@ -30,7 +30,7 @@ export default function Inventory() {
     supabase.from("items").select("*", { count: "exact", head: true }).eq("type", "product").then(({ count }) => setItemCount(count || 0));
     supabase.from("stock_ledger").select("*, items(name, unit)").order("created_at", { ascending: false }).limit(100).then(({ data }) => setMoves(data || []));
   };
-  useEffect(() => { document.title = "Inventory | PHD ERP"; load(); }, []);
+  useEffect(() => { document.title = "Inventory | ASTA One"; load(); }, []);
 
   // Client-side filter, matching Items.tsx's own search pattern for consistency.
   const filteredItems = items.filter(it => !q || it.name.toLowerCase().includes(q.toLowerCase()) || (it.hsn_code || "").includes(q) || (it.barcode || "").includes(q));

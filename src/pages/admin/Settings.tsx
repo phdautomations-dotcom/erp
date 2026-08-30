@@ -14,7 +14,7 @@ export default function Settings() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    document.title = "Settings | PHD ERP";
+    document.title = "Settings | ASTA One";
     supabase.from("company_settings").select("*").limit(1).single().then(({ data }) => data && setS(data));
   }, []);
 

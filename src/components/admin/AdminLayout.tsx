@@ -591,7 +591,7 @@ function TopHeader({ title }: { title?: string }) {
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 min-w-0 mr-2">
           <Building2 className="h-4 w-4 text-muted-foreground/60 hidden sm:block shrink-0" />
-          <span className="text-xs font-semibold text-muted-foreground hidden sm:block">PHD ERP</span>
+          <span className="text-xs font-semibold text-muted-foreground hidden sm:block">ASTA One</span>
           {title && (
             <>
               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 hidden sm:block shrink-0" />

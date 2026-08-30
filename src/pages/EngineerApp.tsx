@@ -546,7 +546,7 @@ export default function EngineerApp() {
       toast.error("Unauthorized! Only Engineers and Admins can access this.");
       nav("/admin", { replace: true }); return;
     }
-    document.title = "Engineer Workspace | PHD ERP";
+    document.title = "Engineer Workspace | ASTA One";
     loadPendingVisits();
     loadServices();
     if (user) { loadAttendance(); loadHistory(); loadCashLedger(); }
@@ -990,6 +990,7 @@ export default function EngineerApp() {
         <div className="absolute -top-20 -right-20 w-48 md:w-96 h-48 md:h-96 bg-accent/20 blur-[100px] rounded-full pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-background/10 to-transparent pointer-events-none" />
         <div className="relative z-10 max-w-6xl mx-auto">
+          <span className="block text-[10px] md:text-xs font-display font-bold tracking-[0.25em] uppercase text-background/60 mb-1.5 md:mb-2">ASTA One</span>
           <img src={logo} alt="PHD Automations" className="h-8 md:h-12 w-auto mb-6 md:mb-10 brightness-0 invert opacity-90 hover:opacity-100 transition-opacity" />
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div className="flex items-center gap-4">

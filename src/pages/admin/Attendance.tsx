@@ -59,7 +59,7 @@ export default function Attendance() {
   };
 
   useEffect(() => {
-    document.title = "Attendance | PHD ERP";
+    document.title = "Attendance | ASTA One";
     load();
   }, [month]);
 

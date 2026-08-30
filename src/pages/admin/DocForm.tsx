@@ -81,7 +81,7 @@ export default function DocForm({ purchase = false }: { purchase?: boolean }) {
   const [suggestedDocNumber, setSuggestedDocNumber] = useState("");
 
   useEffect(() => {
-    document.title = isEdit ? "Edit Document | PHD ERP" : "New Document | PHD ERP";
+    document.title = isEdit ? "Edit Document | ASTA One" : "New Document | ASTA One";
     Promise.all([
       supabase.from("parties").select("*").order("name"),
       supabase.from("items").select("*").order("name"),

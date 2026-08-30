@@ -55,6 +55,8 @@ export default function PartyForm() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [form, setForm] = useState<any>({ type: "customer", opening_balance: 0 });
   const [ledger, setLedger] = useState<any[]>([]);
+  const [invoiceDue, setInvoiceDue] = useState(0);
+  const [billDue, setBillDue] = useState(0);
   const [visits, setVisits] = useState<any[]>([]);
   const [visitOpen, setVisitOpen] = useState(false);
   const [visit, setVisit] = useState<any>({ visit_date: new Date().toISOString().slice(0, 10), visit_type: "repair", status: "completed", charges: 0 });
@@ -73,26 +75,40 @@ export default function PartyForm() {
     (supabase as any).from("party_machines").select("*").eq("party_id", pid).order("created_at", { ascending: false }).then(({ data }: any) => setMachines(data || []));
 
   useEffect(() => {
-    document.title = isEdit ? "Edit Party | PHD ERP" : "New Party | PHD ERP";
+    document.title = isEdit ? "Edit Party | ASTA One" : "New Party | ASTA One";
     if (isEdit) {
       supabase.from("parties").select("*").eq("id", id).single().then(({ data }) => data && setForm(data));
       // ledger: docs + payments
       Promise.all([
-        supabase.from("documents").select("id,doc_type,doc_number,doc_date,total,paid").eq("party_id", id).order("doc_date"),
+        supabase.from("documents").select("id,doc_type,doc_number,doc_date,total,paid,status").eq("party_id", id).neq("status", "cancelled").order("doc_date"),
         supabase.from("payments").select("id,payment_number,payment_date,amount,direction,mode").eq("party_id", id).order("payment_date"),
       ]).then(([{ data: docs }, { data: pays }]) => {
         const entries: any[] = [];
+        // Every document shows up in the ledger as a reference row (so you
+        // can see when a quotation/challan/PO was raised), but only invoice
+        // and purchase_bill actually move the balance — quotations/proformas
+        // are pre-sale pipeline docs and a challan is just a delivery record,
+        // neither is real debt until it becomes an invoice.
+        // `core` marks the rows that make up the invoice+payment-only due
+        // figure (the "To Receive"/"To Pay" badges above) — everything else
+        // is shown for reference but visually dimmed in the table below.
         (docs || []).forEach(d => {
-          const debit = ["invoice", "challan", "quotation", "proforma"].includes(d.doc_type);
-          entries.push({ date: d.doc_date, ref: `${d.doc_type.toUpperCase()} ${d.doc_number}`, debit: debit ? Number(d.total) : 0, credit: !debit ? Number(d.total) : 0 });
+          const debit = d.doc_type === "invoice" ? Number(d.total) : 0;
+          const credit = d.doc_type === "purchase_bill" ? Number(d.total) : 0;
+          entries.push({ date: d.doc_date, ref: `${d.doc_type.toUpperCase()} ${d.doc_number}`, debit, credit, core: d.doc_type === "invoice" });
         });
         (pays || []).forEach(p => {
-          entries.push({ date: p.payment_date, ref: `${p.direction === "received" ? "Receipt" : "Payment"} ${p.payment_number} (${p.mode})`, debit: p.direction === "made" ? Number(p.amount) : 0, credit: p.direction === "received" ? Number(p.amount) : 0 });
+          entries.push({ date: p.payment_date, ref: `${p.direction === "received" ? "Receipt" : "Payment"} ${p.payment_number} (${p.mode})`, debit: p.direction === "made" ? Number(p.amount) : 0, credit: p.direction === "received" ? Number(p.amount) : 0, core: true });
         });
         entries.sort((a, b) => a.date.localeCompare(b.date));
         let bal = 0;
         const enriched = entries.map(e => { bal += e.debit - e.credit; return { ...e, balance: bal }; });
         setLedger(enriched);
+        // Kept as two separate figures, same convention as the Parties list
+        // — netting "what they owe us" against "what we owe them" is exactly
+        // what was confusing before.
+        setInvoiceDue((docs || []).filter(d => d.doc_type === "invoice").reduce((s, d) => s + Number(d.total) - Number(d.paid || 0), 0));
+        setBillDue((docs || []).filter(d => d.doc_type === "purchase_bill").reduce((s, d) => s + Number(d.total) - Number(d.paid || 0), 0));
       });
       loadVisits(id as string);
       loadMachines(id as string);
@@ -179,6 +195,11 @@ export default function PartyForm() {
 
   const u = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
   const closing = form.opening_balance ? Number(form.opening_balance) + (ledger.at(-1)?.balance || 0) : (ledger.at(-1)?.balance || 0);
+  // opening_balance seeds whichever side it belongs to: positive = they owe
+  // us, negative = we owe them — same convention as the Parties list.
+  const ob = Number(form.opening_balance || 0);
+  const toReceive = (ob > 0 ? ob : 0) + invoiceDue;
+  const toPay = (ob < 0 ? -ob : 0) + billDue;
   const filteredLedger = ledger.filter(l => l.date >= ledgerFrom && l.date <= ledgerTo);
 
   const printLedger = async () => {
@@ -256,6 +277,25 @@ export default function PartyForm() {
             <TabsTrigger value="ledger" className="rounded-xl px-4 py-2">Ledger</TabsTrigger>
             <TabsTrigger value="service" className="rounded-xl px-4 py-2"><span className="sm:hidden">Service</span><span className="hidden sm:inline">Service Log</span></TabsTrigger>
           </TabsList>
+        )}
+        {isEdit && (toReceive > 0.01 || toPay > 0.01) && (
+          <div className="mb-4 flex flex-col sm:flex-row gap-3">
+            {toReceive > 0.01 && (
+              <div className="flex-1 flex items-center justify-between rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+                <span className="text-sm font-medium text-muted-foreground">To Receive</span>
+                <span className="text-lg font-bold text-destructive">{fmtINR(toReceive)}</span>
+              </div>
+            )}
+            {toPay > 0.01 && (
+              <div className="flex-1 flex items-center justify-between rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
+                <span className="text-sm font-medium text-muted-foreground">To Pay</span>
+                <span className="text-lg font-bold text-amber-600">{fmtINR(toPay)}</span>
+              </div>
+            )}
+          </div>
+        )}
+        {isEdit && toReceive <= 0.01 && toPay <= 0.01 && (
+          <div className="mb-4 rounded-2xl border border-border bg-card p-4 text-center text-sm text-muted-foreground">Account Settled</div>
         )}
         <TabsContent value="details" className="mt-0">
           <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
@@ -340,13 +380,16 @@ export default function PartyForm() {
                 <Button size="sm" variant="outline" onClick={printLedger} disabled={!settings} className="rounded-full shadow-sm hover:shadow-md"><Printer className="h-4 w-4 mr-1" /> Print</Button>
               </div>
             </div>
-            <div className="text-sm text-muted-foreground mb-2">Closing balance: <span className="font-semibold text-foreground">{fmtINR(closing)}</span></div>
+            <div className="text-sm text-muted-foreground mb-1">Ledger balance (all transactions incl. purchase bills): <span className="font-semibold text-foreground">{fmtINR(closing)}</span></div>
+            <div className="text-xs text-muted-foreground/70 mb-2 flex items-center gap-1.5">
+              <span className="inline-block h-2 w-2 rounded-full bg-muted-foreground/30" /> Faded rows (quotation/proforma/challan/PO/purchase bill) aren't part of the invoice + payment due — skip them if that's the figure you're totalling.
+            </div>
             <div className="max-h-[480px] overflow-y-auto">
               <table className="w-full text-xs">
                 <thead className="text-muted-foreground border-b border-border"><tr><th className="text-left py-1">Date</th><th className="text-left">Particulars</th><th className="text-right">Debit</th><th className="text-right">Credit</th></tr></thead>
                 <tbody>
                   {filteredLedger.map((l, i) => (
-                    <tr key={i} className="border-b border-border/40">
+                    <tr key={i} className={`border-b border-border/40 ${!l.core ? 'text-muted-foreground/50 italic' : ''}`}>
                       <td className="py-1">{l.date}</td><td>{l.ref}</td>
                       <td className="text-right">{l.debit ? fmtINR(l.debit) : ""}</td>
                       <td className="text-right">{l.credit ? fmtINR(l.credit) : ""}</td>

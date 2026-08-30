@@ -32,13 +32,17 @@ export const findParties = async (supabase: any, query: string, limit = 5) => {
 // (src/pages/admin/PartyForm.tsx) so the AI never contradicts it.
 export const getPartyBalance = async (supabase: any, partyId: string, openingBalance: number) => {
   const [{ data: docs }, { data: pays }] = await Promise.all([
-    supabase.from("documents").select("doc_type, total").eq("party_id", partyId),
+    supabase.from("documents").select("doc_type, total, status").eq("party_id", partyId),
     supabase.from("payments").select("amount, direction").eq("party_id", partyId),
   ]);
   let bal = openingBalance || 0;
   (docs || []).forEach((d: any) => {
-    const isDebit = ["invoice", "challan", "quotation", "proforma"].includes(d.doc_type);
-    bal += isDebit ? Number(d.total) : -Number(d.total);
+    if (d.status === "cancelled") return;
+    // Only invoice/purchase_bill are real debt — quotations/proformas are
+    // pipeline docs, and a challan is just a delivery record (payment is
+    // only ever collected against the invoice), so neither counts here.
+    if (d.doc_type === "invoice") bal += Number(d.total);
+    else if (d.doc_type === "purchase_bill") bal -= Number(d.total);
   });
   (pays || []).forEach((p: any) => {
     bal += p.direction === "made" ? Number(p.amount) : -Number(p.amount);

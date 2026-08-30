@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -13,10 +13,12 @@ import autoTable from "jspdf-autotable";
 import { addPdfBranding, type Settings } from "@/lib/pdf";
 
 export default function ServiceVisits() {
+  const [search] = useSearchParams();
   const [visits, setVisits] = useState<any[]>([]);
   const [dueAmc, setDueAmc] = useState<any[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [filter, setFilter] = useState("all");
+  // Drill-down from the Dashboard's "Pending Service Logs" tile.
+  const [filter, setFilter] = useState(search.get("filter") || "all");
   const [loading, setLoading] = useState(true);
   const { hasRole } = useAuth();
 
@@ -56,7 +58,7 @@ export default function ServiceVisits() {
   };
 
   useEffect(() => {
-    document.title = "Service Desk | PHD ERP";
+    document.title = "Service Desk | ASTA One";
     loadVisits();
   }, []);
 

@@ -71,7 +71,7 @@ export default function Expenses() {
     const { data: amounts } = await supabase.from("expenses").select("amount");
     setTotalAmount((amounts || []).reduce((s, r: any) => s + Number(r.amount), 0));
   };
-  useEffect(() => { document.title = "Expenses | PHD ERP"; }, []);
+  useEffect(() => { document.title = "Expenses | ASTA One"; }, []);
   // Debounce the search query so it doesn't fire a request on every keystroke.
   useEffect(() => {
     const t = setTimeout(load, q ? 300 : 0);

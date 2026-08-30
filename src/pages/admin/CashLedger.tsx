@@ -76,7 +76,7 @@ export default function CashLedger() {
     const { data: parts } = await supabase.from("parties").select("id, name, gstin").order("name");
     setParties(parts || []);
   };
-  useEffect(() => { document.title = "Cash Ledger | PHD ERP"; }, []);
+  useEffect(() => { document.title = "Cash Ledger | ASTA One"; }, []);
   // Debounce the search query so it doesn't fire a request on every keystroke.
   useEffect(() => {
     const t = setTimeout(load, q ? 300 : 0);

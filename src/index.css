@@ -6,6 +6,12 @@
 
 @layer base {
   :root {
+    /* Force light-mode native form controls (date/time pickers, scrollbars)
+       regardless of OS/browser dark-mode setting — this app is light-themed
+       only, and without this a dark OS theme renders the date-picker icon
+       near-white and invisible against our white input backgrounds. */
+    color-scheme: light;
+
     /* ── Page surface: soft warm-gray (neumorphic base) ── */
     --background: 220 22% 94%;
     --foreground: 220 40% 12%;
@@ -196,6 +202,15 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
   }
+}
+
+/* Belt-and-suspenders alongside `color-scheme: light` above — keeps the
+   native date-picker icon visible and comfortably clickable even in the
+   narrow toolbar-style date filters used across the app. */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  cursor: pointer;
+  padding: 2px;
 }
 
 /* ── Public site: clean corporate theme (scoped, does not affect the app) ── */

@@ -17,10 +17,11 @@ import { toast } from "sonner";
 const SALES_TYPES = ["invoice", "quotation", "proforma", "challan"] as const;
 type DocType = typeof SALES_TYPES[number];
 
-// Only these doc types actually carry a receivable/payable — quotations,
-// proformas, and purchase orders are pre-sale pipeline documents with no
-// real payment to track (Sales.tsx already shows them as "Pipeline").
-const PAYABLE_TYPES = ["invoice", "challan", "purchase_bill"];
+// Only these doc types actually carry a receivable/payable. Quotations and
+// proformas are pre-sale pipeline documents with nothing owed yet, and a
+// challan is just a delivery record — payment is only ever collected
+// against the invoice, never the challan.
+const PAYABLE_TYPES = ["invoice", "purchase_bill"];
 
 const PAGE_SIZE = 30;
 
@@ -44,7 +45,7 @@ const SkeletonCard = () => (
 
 const SkeletonRow = () => (
   <tr>
-    <td colSpan={7} className="p-0">
+    <td colSpan={8} className="p-0">
       <div className="relative overflow-hidden px-6 py-4">
         <div className="flex items-center gap-6">
           <div className="h-4 w-20 rounded bg-muted shrink-0" />
@@ -65,6 +66,9 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
   const [search] = useSearchParams();
   const initialType = (search.get("type") as DocType) || types[0];
   const [type, setType] = useState<string>(initialType);
+  // Drill-down from the Dashboard's Receivable/Payable tiles — only unpaid
+  // docs of this type, so it's a straight list of "who owes how much".
+  const dueOnly = search.get("due") === "1";
   const [rows, setRows] = useState<any[]>([]);
   const [q, setQ] = useState("");
   const [page, setPage] = useState(0);
@@ -140,18 +144,18 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
       const partyIds = (matchingParties || []).map((p: any) => p.id);
       const orParts = [`doc_number.ilike.${needle}`, `status.ilike.${needle}`];
       if (partyIds.length) orParts.push(`party_id.in.(${partyIds.join(",")})`);
-      return supabase.from("documents")
+      let query = supabase.from("documents")
         .select("*, parties(name)")
         .eq("doc_type", type as any)
-        .or(orParts.join(","))
-        .order("doc_date", { ascending: false })
-        .range(from, to);
+        .or(orParts.join(","));
+      if (dueOnly) query = query.neq("status", "paid").neq("status", "cancelled");
+      return query.order("doc_date", { ascending: false }).range(from, to);
     }
-    return supabase.from("documents")
+    let query = supabase.from("documents")
       .select("*, parties(name)")
-      .eq("doc_type", type as any)
-      .order("doc_date", { ascending: false })
-      .range(from, to);
+      .eq("doc_type", type as any);
+    if (dueOnly) query = query.neq("status", "paid").neq("status", "cancelled");
+    return query.order("doc_date", { ascending: false }).range(from, to);
   };
 
   const loadFirstPage = async () => {
@@ -175,12 +179,12 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
     setLoadingMore(false);
   };
 
-  useEffect(() => { document.title = `${purchase ? "Purchases" : "Sales"} | PHD ERP`; }, [purchase]);
+  useEffect(() => { document.title = `${purchase ? "Purchases" : "Sales"} | ASTA One`; }, [purchase]);
   // Debounce the search query so it doesn't fire a request on every keystroke.
   useEffect(() => {
     const t = setTimeout(loadFirstPage, q ? 300 : 0);
     return () => clearTimeout(t);
-  }, [type, purchase, q]);
+  }, [type, purchase, q, dueOnly]);
 
   // Fetch the next page once the sentinel at the bottom of the list scrolls
   // into view. rootMargin gives it a head start before the user hits the
@@ -205,6 +209,12 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
 
   return (
     <AdminLayout title={purchase ? "Purchases" : "Sales"}>
+      {dueOnly && (
+        <div className="flex items-center justify-between gap-3 mb-4 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-2.5">
+          <span className="text-sm font-medium text-destructive">Showing only unpaid {type.replace("_", " ")}s — from the Dashboard {purchase ? "Payable" : "Receivable"} tile.</span>
+          <Link to={`/admin/${purchase ? "purchases" : "sales"}?type=${type}`} className="text-xs font-semibold text-destructive underline underline-offset-2 shrink-0">Clear filter</Link>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-3 mb-5">
         <Tabs value={type} onValueChange={setType}>
           <TabsList>{types.map(t => <TabsTrigger key={t} value={t} className="capitalize">{t.replace("_", " ")}</TabsTrigger>)}</TabsList>
@@ -229,6 +239,9 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
               <div className="text-right shrink-0">
                 <p className="font-semibold">{fmtINR(d.total)}</p>
                 <p className="text-xs text-muted-foreground">Paid: {fmtINR(d.paid)}</p>
+                {PAYABLE_TYPES.includes(d.doc_type) && (Number(d.total) - Number(d.paid || 0) > 0.01) && (
+                  <p className="text-xs font-semibold text-destructive">Due: {fmtINR(Number(d.total) - Number(d.paid || 0))}</p>
+                )}
               </div>
             </div>
             <div className="flex items-center justify-between mt-2">
@@ -268,7 +281,7 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
             <thead className="bg-muted/30 text-xs font-medium text-muted-foreground">
             <tr>
                 <th className="px-6 py-4 text-left">Date</th><th className="px-6 py-4 text-left">Number</th><th className="px-6 py-4 text-left">Party</th>
-                <th className="px-6 py-4 text-right">Total</th><th className="px-6 py-4 text-right">Paid</th><th className="px-6 py-4 text-left">Status</th><th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-4 text-right">Total</th><th className="px-6 py-4 text-right">Paid</th><th className="px-6 py-4 text-right">Due</th><th className="px-6 py-4 text-left">Status</th><th className="px-6 py-4 text-right">Actions</th>
             </tr>
           </thead>
             <tbody className="divide-y divide-border/50">
@@ -279,6 +292,9 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
                   <td className="px-6 py-4 font-medium">{(d.parties as any)?.name}</td>
                   <td className="px-6 py-4 text-right font-semibold">{fmtINR(d.total)}</td>
                   <td className="px-6 py-4 text-right text-muted-foreground">{fmtINR(d.paid)}</td>
+                  <td className="px-6 py-4 text-right font-semibold text-destructive">
+                    {PAYABLE_TYPES.includes(d.doc_type) && (Number(d.total) - Number(d.paid || 0) > 0.01) ? fmtINR(Number(d.total) - Number(d.paid || 0)) : "—"}
+                  </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
                       d.status === 'paid' ? 'bg-green-500/10 text-green-600' :
@@ -298,7 +314,7 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
               {loadingMore && <><SkeletonRow /><SkeletonRow /><SkeletonRow /></>}
               {filtered.length === 0 && !loadingMore && (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center">
+                  <td colSpan={8} className="p-12 text-center">
                     <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted/50 mx-auto">
                       <FileText className="h-8 w-8 text-muted-foreground/50" />
                     </div>

@@ -7,8 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Settings, Sparkles, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Sparkles, Mail, Lock, Eye, EyeOff, ArrowRight, CheckCircle2 } from "lucide-react";
 import logo from "@/assets/logo.png";
+
+const FEATURES = [
+  "Full operational control",
+  "Role-based access for every team",
+  "Manage parties, staff & inventory",
+];
 
 const loginSchema = z.object({
   email: z.string().email("Valid email required"),
@@ -52,46 +58,68 @@ export default function Auth() {
   };
 
   return (
-    <main className="min-h-screen bg-background relative flex items-center justify-center p-6 overflow-hidden">
-      {/* Animated Glowing Background */}
-      <div className="fixed inset-0 z-0 pointer-events-none flex justify-center items-center overflow-hidden">
-        <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15], rotate: [0, 90, 0] }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }} className="absolute -top-[20%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-accent/20 blur-[120px] mix-blend-multiply dark:mix-blend-screen" />
-        <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.1, 0.2, 0.1], rotate: [0, -90, 0] }} transition={{ duration: 20, repeat: Infinity, ease: "linear", delay: 2 }} className="absolute top-[40%] -right-[10%] w-[40vw] h-[40vw] rounded-full bg-[hsl(243_75%_59%)]/20 blur-[120px] mix-blend-multiply dark:mix-blend-screen" />
-        {/* Subtle dot-grid for depth */}
+    <main className="min-h-screen w-full flex bg-background overflow-hidden">
+      {/* Left: brand / product panel — hidden below lg, where the form takes the full screen */}
+      <div
+        className="hidden lg:flex lg:w-[68%] xl:w-[70%] relative flex-col justify-between p-12 xl:p-16 text-white overflow-hidden"
+        style={{ backgroundImage: "var(--gradient-brand)" }}
+      >
         <div
-          className="absolute inset-0 opacity-[0.4] dark:opacity-[0.25]"
-          style={{
-            backgroundImage: "radial-gradient(hsl(var(--foreground) / 0.08) 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-            WebkitMaskImage: "radial-gradient(ellipse 60% 50% at 50% 40%, black 40%, transparent 100%)",
-            maskImage: "radial-gradient(ellipse 60% 50% at 50% 40%, black 40%, transparent 100%)",
-          }}
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: "radial-gradient(ellipse 55% 45% at 25% 15%, hsl(212 90% 60% / 0.55), transparent 60%)" }}
         />
+
+        <Link to="/" className="relative z-10 flex items-center gap-3 w-fit">
+          <div className="flex items-center gap-2 bg-white rounded-full pl-2 pr-4 py-1.5 shadow-lg">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full text-white" style={{ backgroundImage: "var(--gradient-brand)" }}>
+              <Sparkles className="h-3.5 w-3.5" />
+            </div>
+            <span className="text-sm font-black tracking-tight text-foreground">ASTA One</span>
+          </div>
+          <span className="text-xs font-bold uppercase tracking-[0.25em] text-white/70">Admin</span>
+        </Link>
+
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="relative z-10 max-w-lg">
+          <h1 className="font-display text-4xl xl:text-5xl font-black leading-[1.1] tracking-tight mb-5">
+            Run your entire business from one dashboard.
+          </h1>
+          <p className="text-white/80 text-base leading-relaxed mb-8">
+            Sales, purchases, inventory, payments, HR — everything your business needs, in one place.
+          </p>
+          <ul className="space-y-3">
+            {FEATURES.map(f => (
+              <li key={f} className="flex items-center gap-2.5 text-sm font-medium text-white/90">
+                <CheckCircle2 className="h-4 w-4 text-white/70 shrink-0" />
+                {f}
+              </li>
+            ))}
+          </ul>
+        </motion.div>
+
+        <div className="relative z-10 flex items-center gap-3 text-white/50 text-xs">
+          <img src={logo} alt="PHD Automations" className="h-6 w-auto object-contain brightness-0 invert opacity-70" />
+          <span>© {new Date().getFullYear()} Saffyre Intelligence Labs. All rights reserved.</span>
+        </div>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-        className="w-full max-w-md relative z-10"
-      >
-        {/* Animated CNC Gears Background behind the card */}
-        <div className="absolute -right-12 -top-12 text-accent/10 pointer-events-none flex items-center justify-center mix-blend-multiply dark:mix-blend-lighten z-0">
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }}>
-            <Settings className="h-48 w-48" strokeWidth={1} />
-          </motion.div>
-          <motion.div initial={{ rotate: 22.5 }} animate={{ rotate: -337.5 }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }} className="-ml-16 mt-20">
-            <Settings className="h-48 w-48" strokeWidth={1} />
-          </motion.div>
-        </div>
+      {/* Right: sign-in form */}
+      <div className="flex-1 lg:w-[32%] xl:w-[30%] flex flex-col items-center justify-center p-6 sm:p-10">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-sm">
+          {/* Compact brand header — only shown where the left panel is hidden */}
+          <div className="lg:hidden flex flex-col items-center gap-2 mb-8">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl text-white shadow-lg shadow-accent/30" style={{ backgroundImage: "var(--gradient-brand)" }}>
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <span className="font-display text-2xl font-black tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                ASTA One
+              </span>
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-muted-foreground">One Platform. Every Business.</p>
+          </div>
 
-        <Link to="/" className="flex justify-center mb-8 relative z-10">
-          <img src={logo} alt="PHD Automations" className="h-14 w-auto object-contain" />
-        </Link>
-        <div className="relative z-10 rounded-3xl bg-card/60 backdrop-blur-xl border border-border/50 shadow-2xl ring-gradient p-9 transition-all hover:shadow-accent/10">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent text-center mb-2">Enterprise ERP</p>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-center bg-gradient-to-r from-foreground via-accent to-[hsl(243_75%_59%)] bg-clip-text text-transparent">
-            Welcome back
-          </h1>
-          <p className="text-sm text-muted-foreground text-center mt-1.5">Sign in to manage billing & operations</p>
+          <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Admin Login</h2>
+          <p className="text-sm text-muted-foreground mt-1">Sign in to access the admin panel</p>
 
           <form onSubmit={handleLogin} className="space-y-4 mt-8">
             <div>
@@ -136,18 +164,16 @@ export default function Auth() {
               </span>
             </Button>
           </form>
-        </div>
-      </motion.div>
 
-      {/* Powered by Footer */}
-      <div className="absolute bottom-6 left-0 right-0 z-10 flex flex-col items-center justify-center gap-0.5 opacity-60 hover:opacity-100 transition-opacity">
-        <div className="text-[9px] text-muted-foreground uppercase tracking-widest font-medium">
-          Powered by
-        </div>
-        <div className="flex items-center gap-1.5 text-[11px] font-display font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
-          <Sparkles className="h-2.5 w-2.5 text-blue-500" />
-          Saffyre Intelligence Labs
-        </div>
+          {/* Powered by footer — only shown where the left panel's copyright line is hidden */}
+          <div className="lg:hidden flex flex-col items-center gap-0.5 mt-10 opacity-60">
+            <div className="text-[9px] text-muted-foreground uppercase tracking-widest font-medium">Powered by</div>
+            <div className="flex items-center gap-1.5 text-[11px] font-display font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
+              <Sparkles className="h-2.5 w-2.5 text-blue-500" />
+              Saffyre Intelligence Labs
+            </div>
+          </div>
+        </motion.div>
       </div>
     </main>
   );

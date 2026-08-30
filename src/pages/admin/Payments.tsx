@@ -60,7 +60,7 @@ export default function Payments() {
     }
   };
   useEffect(() => {
-    document.title = "Payments | PHD ERP";
+    document.title = "Payments | ASTA One";
     supabase.from("parties").select("*").order("name").then(({ data }) => setParties(data || []));
     supabase.from("company_settings").select("*").limit(1).single().then(({ data }) => setSettings(data || {}));
   }, []);

@@ -7,7 +7,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { hasRole } = useAuth();
 
-  useEffect(() => { document.title = "Home | PHD ERP"; }, []);
+  useEffect(() => { document.title = "Home | ASTA One"; }, []);
 
   const tiles = NAV.filter(n => !n.adminOnly || hasRole("admin"));
 

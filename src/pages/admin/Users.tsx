@@ -72,7 +72,7 @@ export default function Users() {
     }));
     setRows(merged);
   };
-  useEffect(() => { document.title = "Users | PHD ERP"; load(); }, []);
+  useEffect(() => { document.title = "Users | ASTA One"; load(); }, []);
 
   const setRole = async (userId: string, role: any) => {
     await supabase.from("user_roles").delete().eq("user_id", userId);

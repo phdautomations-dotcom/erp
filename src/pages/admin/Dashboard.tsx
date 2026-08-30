@@ -62,7 +62,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = "Dashboard | PHD ERP";
+    document.title = "Dashboard | ASTA One";
     (async () => {
       const startMonth = new Date(); startMonth.setDate(1); startMonth.setHours(0, 0, 0, 0);
       
@@ -91,7 +91,11 @@ export default function Dashboard() {
       // --- Data Processing ---
 
       // 1. Calculate overall stats for cards
-      const receivable = (docs || []).filter(d => d.doc_type === "invoice" && d.status !== "cancelled").reduce((s, d) => s + Number(d.total) - Number(d.paid), 0);
+      // Only the invoice itself carries a receivable — quotations/proformas
+      // are pipeline docs, and a challan is just a delivery record; payment
+      // is only ever collected against the invoice.
+      const RECEIVABLE_TYPES = ["invoice"];
+      const receivable = (docs || []).filter(d => RECEIVABLE_TYPES.includes(d.doc_type) && d.status !== "cancelled").reduce((s, d) => s + Number(d.total) - Number(d.paid), 0);
       const payable = (docs || []).filter(d => d.doc_type === "purchase_bill" && d.status !== "cancelled").reduce((s, d) => s + Number(d.total) - Number(d.paid), 0);
       const monthSales = (docs || []).filter(d => d.doc_type === "invoice" && d.status !== "cancelled" && new Date(d.doc_date) >= startMonth).reduce((s, d) => s + Number(d.total), 0);
       const monthPurchase = (docs || []).filter(d => d.doc_type === "purchase_bill" && d.status !== "cancelled" && new Date(d.doc_date) >= startMonth).reduce((s, d) => s + Number(d.total), 0);
@@ -103,7 +107,7 @@ export default function Dashboard() {
       // 2. Top Outstanding Customers
       const outstanding: Record<string, any> = {};
       (docs || []).forEach(d => {
-        if (d.doc_type === "invoice" && d.status !== "cancelled") {
+        if (RECEIVABLE_TYPES.includes(d.doc_type) && d.status !== "cancelled") {
           const due = Number(d.total) - Number(d.paid);
           if (due > 0 && d.party_id) {
             if (!outstanding[d.party_id]) outstanding[d.party_id] = { id: d.party_id, name: (d.parties as any)?.name || 'Unknown', phone: (d.parties as any)?.phone || '', amount: 0 };
@@ -291,15 +295,17 @@ export default function Dashboard() {
     return { id: p.user_id, name: p.display_name || 'Unknown', status, color };
   });
 
+  // Every tile drills down into the actual records behind the number — the
+  // same filtered table (by doc, item, lead or service log) that produced it.
   const cards = [
-    { label: "Receivable", value: fmtINR(stats.receivable), icon: Wallet, accent: true },
-    { label: "Payable", value: fmtINR(stats.payable), icon: Wallet },
+    { label: "Receivable", value: fmtINR(stats.receivable), icon: Wallet, accent: true, to: "/admin/sales?type=invoice&due=1" },
+    { label: "Payable", value: fmtINR(stats.payable), icon: Wallet, to: "/admin/purchases?type=purchase_bill&due=1" },
     { label: "Cash Wallet Balance", value: fmtINR(stats.cashBalance), icon: Banknote, to: "/admin/cash-ledger" },
-    { label: "This month sales", value: fmtINR(stats.monthSales), icon: FileText },
-    { label: "This month purchase", value: fmtINR(stats.monthPurchase), icon: FileText },
-    { label: "Low stock items", value: stats.lowStock.toString(), icon: AlertTriangle },
-    { label: "New leads", value: stats.newLeads.toString(), icon: Inbox },
-    { label: "Pending Service Logs", value: stats.pendingLogs.toString(), icon: ClipboardCheck },
+    { label: "This month sales", value: fmtINR(stats.monthSales), icon: FileText, to: "/admin/sales?type=invoice" },
+    { label: "This month purchase", value: fmtINR(stats.monthPurchase), icon: FileText, to: "/admin/purchases?type=purchase_bill" },
+    { label: "Low stock items", value: stats.lowStock.toString(), icon: AlertTriangle, to: "/admin/items?low=1" },
+    { label: "New leads", value: stats.newLeads.toString(), icon: Inbox, to: "/admin/leads?status=new" },
+    { label: "Pending Service Logs", value: stats.pendingLogs.toString(), icon: ClipboardCheck, to: "/admin/services?filter=unverified" },
   ];
 
   return (

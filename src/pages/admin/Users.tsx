@@ -194,7 +194,7 @@ export default function Users() {
         <p className="text-sm text-muted-foreground shrink-0">Create staff accounts and manage their roles and permissions.</p>
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or phone" className="pl-9 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or phone" className="pl-9 rounded-full border-border/50 bg-muted/40 shadow-sm" />
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -230,7 +230,7 @@ export default function Users() {
       {/* Mobile: stacked cards — no horizontal scrolling */}
       <div className="md:hidden space-y-3">
         {filtered.map(u => (
-          <div key={u.id} className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm">
+          <div key={u.id} className="rounded-2xl border border-border/50 bg-card p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-medium truncate">{u.display_name}</p>
@@ -267,7 +267,7 @@ export default function Users() {
         {filtered.length === 0 && <p className="p-12 text-center text-muted-foreground font-medium">{q ? "No users match your search" : "No users found."}</p>}
       </div>
 
-      <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
+      <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] text-sm">
             <thead className="bg-muted/30 text-xs font-medium text-muted-foreground">

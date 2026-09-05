@@ -108,7 +108,7 @@ export const AIAssistant = ({ onDraftReady }: { onDraftReady?: (draft: MatchedDr
           >
             <div
               className="px-4 py-3 border-b border-border/50 flex items-center gap-2.5 text-white"
-              style={{ background: "linear-gradient(135deg, hsl(212 90% 45%), hsl(243 75% 59%))" }}
+              style={{ background: "linear-gradient(135deg, hsl(243 75% 59%), hsl(243 75% 59%))" }}
             >
               <img src={saffyreLogo} alt="Saffyre AI" className="h-12 w-12 object-contain shrink-0" />
               <div className="flex-1 min-w-0">
@@ -163,7 +163,7 @@ export const AIAssistant = ({ onDraftReady }: { onDraftReady?: (draft: MatchedDr
                 onClick={send}
                 disabled={thinking || !input.trim()}
                 className="rounded-full h-10 w-10 shrink-0 text-white hover:opacity-90"
-                style={{ background: "linear-gradient(135deg, hsl(212 90% 45%), hsl(243 75% 59%))" }}
+                style={{ background: "linear-gradient(135deg, hsl(243 75% 59%), hsl(243 75% 59%))" }}
               >
                 <Send className="h-4 w-4" />
               </Button>

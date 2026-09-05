@@ -189,10 +189,10 @@ export default function ServiceVisits() {
         <p className="text-sm text-muted-foreground">Manage all your machine breakdowns, installations and AMCs.</p>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
+      <div className="overflow-hidden rounded-3xl border border-border/50 bg-card shadow-sm">
         <div className="p-4 border-b border-border/50">
           <Tabs value={filter} onValueChange={setFilter} className="w-full">
-            <TabsList className="flex flex-wrap h-auto bg-background/50 backdrop-blur">
+            <TabsList className="flex flex-wrap h-auto bg-muted/40">
               <TabsTrigger value="all"><span className="sm:hidden">All</span><span className="hidden sm:inline">All Visits</span></TabsTrigger>
               <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
               <TabsTrigger value="in_progress"><span className="sm:hidden">In Prog.</span><span className="hidden sm:inline">In Progress</span></TabsTrigger>

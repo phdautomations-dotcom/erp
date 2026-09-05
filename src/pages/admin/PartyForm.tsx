@@ -271,7 +271,7 @@ export default function PartyForm() {
     <AdminLayout title={isEdit ? `Party · ${form.name || ""}` : "New Party"}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {isEdit && (
-          <TabsList className="mb-6 bg-card/50 backdrop-blur border border-border/50 p-1.5 h-auto rounded-2xl flex flex-wrap gap-1">
+          <TabsList className="mb-6 bg-card border border-border/50 p-1.5 h-auto rounded-2xl flex flex-wrap gap-1">
             <TabsTrigger value="details" className="rounded-xl px-4 py-2"><span className="sm:hidden">Details</span><span className="hidden sm:inline">Party Details</span></TabsTrigger>
             <TabsTrigger value="machines" className="rounded-xl px-4 py-2"><span className="sm:hidden">Machines</span><span className="hidden sm:inline">Machines & AMC</span></TabsTrigger>
             <TabsTrigger value="ledger" className="rounded-xl px-4 py-2">Ledger</TabsTrigger>

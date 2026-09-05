@@ -66,7 +66,7 @@ export default function Auth() {
       >
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(ellipse 55% 45% at 25% 15%, hsl(212 90% 60% / 0.55), transparent 60%)" }}
+          style={{ background: "radial-gradient(ellipse 55% 45% at 25% 15%, hsl(258 90% 66% / 0.5), transparent 60%)" }}
         />
 
         <Link to="/" className="relative z-10 flex items-center gap-3 w-fit">
@@ -116,10 +116,11 @@ export default function Auth() {
               </span>
             </div>
             <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-muted-foreground">One Platform. Every Business.</p>
+            <img src={logo} alt="PHD Automations" className="h-10 w-auto object-contain mt-2" />
           </div>
 
-          <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Admin Login</h2>
-          <p className="text-sm text-muted-foreground mt-1">Sign in to access the admin panel</p>
+          <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground text-center lg:text-left">Admin Login</h2>
+          <p className="text-sm text-muted-foreground mt-1 text-center lg:text-left">Sign in to access the admin panel</p>
 
           <form onSubmit={handleLogin} className="space-y-4 mt-8">
             <div>

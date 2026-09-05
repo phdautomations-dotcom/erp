@@ -28,7 +28,7 @@ const PAGE_SIZE = 30;
 // A shimmering placeholder row — shown while a page is loading (first load
 // or an infinite-scroll fetch), so the list never sits on a bare spinner.
 const SkeletonCard = () => (
-  <div className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm relative overflow-hidden">
+  <div className="rounded-2xl border border-border/50 bg-card p-4 shadow-sm relative overflow-hidden">
     <div className="flex items-start justify-between gap-2">
       <div className="space-y-2 flex-1 max-w-[60%]">
         <div className="h-4 w-2/3 rounded bg-muted" />
@@ -221,7 +221,7 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
         </Tabs>
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by number, party, status" className="pl-9 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by number, party, status" className="pl-9 rounded-full border-border/50 bg-muted/40 shadow-sm" />
         </div>
         <Button className="rounded-full btn-gradient ml-auto" onClick={() => nav(`/admin/${purchase ? "purchases" : "sales"}/new?type=${type}`)}>
           <Plus className="h-4 w-4 mr-1" /> New {type.replace("_", " ")}
@@ -230,7 +230,7 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
       {/* Mobile: stacked cards — no horizontal scrolling */}
       <div className="md:hidden space-y-3">
         {filtered.map(d => (
-          <div key={d.id} className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm">
+          <div key={d.id} className="rounded-2xl border border-border/50 bg-card p-4 shadow-sm">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-medium truncate">{(d.parties as any)?.name}</p>
@@ -275,7 +275,7 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
         {hasMore && <div ref={sentinelRef} className="h-1" />}
       </div>
 
-      <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
+      <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-muted/30 text-xs font-medium text-muted-foreground">

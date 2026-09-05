@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* PHD AUTOMATIONS — Neo-Minimal Glass + Neumorphic Design System */
+/* ASTA ONE — Minimal Flat Design System (indigo/violet) */
 
 @layer base {
   :root {
@@ -12,93 +12,90 @@
        near-white and invisible against our white input backgrounds. */
     color-scheme: light;
 
-    /* ── Page surface: soft warm-gray (neumorphic base) ── */
-    --background: 220 22% 94%;
-    --foreground: 220 40% 12%;
+    /* ── Page surface: pale lavender-white ── */
+    --background: 240 30% 98%;
+    --foreground: 240 30% 14%;
 
-    /* ── Cards: pure white (glass base) ── */
+    /* ── Cards: solid white, flat (no glass/blur) ── */
     --card: 0 0% 100%;
-    --card-foreground: 220 40% 12%;
+    --card-foreground: 240 30% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 40% 12%;
+    --popover-foreground: 240 30% 14%;
 
     /* ── Primary: deep navy ── */
-    --primary: 215 60% 14%;
+    --primary: 240 35% 14%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 18% 90%;
-    --secondary-foreground: 220 30% 20%;
+    --secondary: 240 20% 95%;
+    --secondary-foreground: 240 25% 22%;
 
-    --muted: 220 18% 90%;
-    --muted-foreground: 220 12% 50%;
+    --muted: 240 20% 95%;
+    --muted-foreground: 240 9% 52%;
 
-    /* ── Accent: blue ── */
-    --accent: 212 90% 45%;
+    /* ── Accent: indigo/violet ── */
+    --accent: 243 75% 59%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 18% 86%;
-    --input: 220 18% 86%;
-    --ring: 212 90% 45%;
+    --border: 240 16% 90%;
+    --input: 240 16% 90%;
+    --ring: 243 75% 59%;
     --radius: 0.875rem;
 
-    /* ── Neumorphic shadows ── */
-    --neu-out:  8px 8px 20px hsl(220 25% 82%),
-               -8px -8px 20px hsl(0 0% 100% / 0.95);
-    --neu-in:   inset 4px 4px 12px hsl(220 25% 83%),
-                inset -4px -4px 12px hsl(0 0% 100% / 0.9);
-    --neu-sm:   4px 4px 10px hsl(220 25% 83%),
-               -4px -4px 10px hsl(0 0% 100% / 0.9);
+    /* ── Flat, subtle shadows (no neumorphic dual-highlight) ── */
+    --neu-out: 0 6px 16px hsl(240 25% 25% / 0.08);
+    --neu-in:  inset 0 1px 4px hsl(240 25% 25% / 0.14);
+    --neu-sm:  0 1px 3px hsl(240 25% 25% / 0.08), 0 1px 2px hsl(240 25% 25% / 0.05);
 
-    /* ── Glass shadows ── */
-    --glass-shadow: 0 8px 32px hsl(220 30% 15% / 0.10),
-                    0 2px 8px  hsl(220 30% 15% / 0.06);
-    --shadow-glow:  0 8px 30px hsl(212 90% 45% / 0.30);
+    /* ── Glass shadows (legacy; no longer used on cards, kept for reference) ── */
+    --glass-shadow: 0 8px 32px hsl(240 30% 15% / 0.08),
+                    0 2px 8px  hsl(240 30% 15% / 0.05);
+    --shadow-glow:  0 8px 30px hsl(243 75% 59% / 0.25);
 
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
-    /* ── Brand gradient: blue → indigo, used for primary CTAs and accents ── */
-    --gradient-brand: linear-gradient(135deg, hsl(212 90% 45%), hsl(243 75% 59%));
-    --gradient-brand-start: 212 90% 45%;
+    /* ── Brand gradient: violet → indigo, used for primary CTAs and accents ── */
+    --gradient-brand: linear-gradient(135deg, hsl(258 90% 66%), hsl(243 75% 59%));
+    --gradient-brand-start: 258 90% 66%;
     --gradient-brand-end: 243 75% 59%;
 
     /* ── Sidebar (kept for the unused shadcn sidebar primitive; not used by AdminLayout) ── */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 30% 20%;
-    --sidebar-primary: 212 90% 45%;
+    --sidebar-foreground: 240 25% 22%;
+    --sidebar-primary: 243 75% 59%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 30% 96%;
-    --sidebar-accent-foreground: 220 30% 20%;
-    --sidebar-border: 214 20% 90%;
-    --sidebar-ring: 212 90% 45%;
+    --sidebar-accent: 240 25% 96%;
+    --sidebar-accent-foreground: 240 25% 22%;
+    --sidebar-border: 240 16% 90%;
+    --sidebar-ring: 243 75% 59%;
   }
 
   .dark {
-    --background: 220 25% 8%;
-    --foreground: 210 30% 92%;
-    --card: 220 25% 11%;
-    --card-foreground: 210 30% 92%;
-    --popover: 220 25% 11%;
-    --popover-foreground: 210 30% 92%;
-    --primary: 212 90% 45%;
+    --background: 240 25% 8%;
+    --foreground: 240 20% 92%;
+    --card: 240 25% 11%;
+    --card-foreground: 240 20% 92%;
+    --popover: 240 25% 11%;
+    --popover-foreground: 240 20% 92%;
+    --primary: 243 75% 59%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 22% 16%;
-    --secondary-foreground: 210 30% 90%;
-    --muted: 220 22% 16%;
-    --muted-foreground: 220 12% 55%;
-    --accent: 212 90% 45%;
+    --secondary: 240 22% 16%;
+    --secondary-foreground: 240 20% 90%;
+    --muted: 240 22% 16%;
+    --muted-foreground: 240 9% 55%;
+    --accent: 243 75% 59%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 22% 20%;
-    --input: 220 22% 20%;
-    --ring: 212 90% 45%;
-    --neu-out: 6px 6px 16px hsl(220 30% 5%), -6px -6px 16px hsl(220 20% 14%);
-    --neu-in:  inset 4px 4px 10px hsl(220 30% 5%), inset -4px -4px 10px hsl(220 20% 14%);
-    --neu-sm:  3px 3px 8px hsl(220 30% 5%), -3px -3px 8px hsl(220 20% 14%);
+    --border: 240 22% 20%;
+    --input: 240 22% 20%;
+    --ring: 243 75% 59%;
+    --neu-out: 0 6px 16px hsl(0 0% 0% / 0.3);
+    --neu-in:  inset 0 1px 4px hsl(0 0% 0% / 0.35);
+    --neu-sm:  0 1px 3px hsl(0 0% 0% / 0.25);
     --glass-shadow: 0 8px 32px hsl(0 0% 0% / 0.25), 0 2px 8px hsl(0 0% 0% / 0.15);
   }
 }

@@ -874,7 +874,7 @@ export default function EngineerApp() {
             {isOffline ? <><WifiOff className="h-3 w-3" /> You are offline. Changes will be saved locally.</> : <><RefreshCw className="h-3 w-3 animate-spin" /> Syncing offline data...</>}
           </div>
         )}
-        <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/50 p-4 md:px-8 flex items-center gap-3 shadow-sm">
+        <div className="sticky top-0 z-30 bg-background/80 border-b border-border/50 p-4 md:px-8 flex items-center gap-3 shadow-sm">
           <Button variant="ghost" size="icon" onClick={() => setSelectedVisit(null)} className="rounded-full h-10 w-10 shrink-0 bg-muted/50 hover:bg-muted transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -999,7 +999,7 @@ export default function EngineerApp() {
                   <img src={avatarUrl} alt="avatar" className="h-16 w-16 md:h-20 md:w-20 rounded-full object-cover ring-2 ring-background/20" />
                 ) : (
                   <div className="h-16 w-16 md:h-20 md:w-20 rounded-full flex items-center justify-center text-2xl font-bold text-white ring-2 ring-background/20"
-                    style={{ background: "linear-gradient(135deg, hsl(212 90% 45%), hsl(200 90% 55%))" }}>
+                    style={{ background: "linear-gradient(135deg, hsl(258 90% 66%), hsl(243 75% 59%))" }}>
                     {(user?.email?.[0] ?? "E").toUpperCase()}
                   </div>
                 )}
@@ -1083,7 +1083,7 @@ export default function EngineerApp() {
                 <span className="bg-accent/10 text-accent px-4 py-1.5 rounded-full text-xs md:text-sm font-bold">{visits.length} Assigned</span>
               </div>
               {loading ? (
-                <div className="grid sm:grid-cols-2 gap-4">{[1, 2, 3, 4].map(i => <div key={i} className="h-40 bg-card/50 rounded-3xl border border-border/50 animate-pulse" />)}</div>
+                <div className="grid sm:grid-cols-2 gap-4">{[1, 2, 3, 4].map(i => <div key={i} className="h-40 bg-card rounded-3xl border border-border/50 animate-pulse" />)}</div>
               ) : visits.length === 0 ? (
                 <div className="bg-card border border-border/50 rounded-3xl p-12 md:p-20 text-center shadow-sm">
                   <div className="h-20 w-20 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-5"><CheckCircle className="h-10 w-10" /></div>

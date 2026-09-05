@@ -174,7 +174,7 @@ export default function Payments() {
             <div class="subtitle">Receipt No: <strong>${p.payment_number}</strong><br/>Date: <strong>${fmtDate(p.payment_date)}</strong></div>
           </div>
           <div style="text-align: right;">
-            <h2 style="margin:0; font-size:20px; color:#2563eb;">${settings.name || 'PHD Automations'}</h2>
+            <h2 style="margin:0; font-size:20px; color:#4f46e5;">${settings.name || 'PHD Automations'}</h2>
             <div class="subtitle">${settings.phone || '+91 99995 02399'}<br/>${settings.email || 'contact@phdautomations.in'}</div>
           </div>
         </div>
@@ -244,7 +244,7 @@ export default function Payments() {
         </Tabs>
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by number, party, mode" className="pl-9 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by number, party, mode" className="pl-9 rounded-full border-border/50 bg-muted/40 shadow-sm" />
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button className="rounded-full btn-gradient ml-auto"><Plus className="h-4 w-4 mr-1" /> New Payment</Button></DialogTrigger>
@@ -319,7 +319,7 @@ export default function Payments() {
       {/* Mobile: stacked cards — no horizontal scrolling */}
       <div className="md:hidden space-y-3">
         {rows.map(p => (
-          <div key={p.id} className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm">
+          <div key={p.id} className="rounded-2xl border border-border/50 bg-card p-4 shadow-sm">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-medium truncate">{(p.parties as any)?.name}</p>
@@ -343,7 +343,7 @@ export default function Payments() {
       </div>
 
       {/* Desktop: full table */}
-      <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
+      <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-muted/30 text-xs font-medium text-muted-foreground"><tr>

@@ -79,10 +79,10 @@ export default function Parties() {
         <div className="flex flex-wrap items-center gap-3 flex-1">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or GSTIN" className="pl-9 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or GSTIN" className="pl-9 rounded-full border-border/50 bg-muted/40 shadow-sm" />
           </div>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-36 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-36 rounded-full border-border/50 bg-muted/40 shadow-sm"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="customer">Customer</SelectItem>
@@ -92,7 +92,7 @@ export default function Parties() {
           </Select>
           {states.length > 0 && (
             <Select value={stateFilter} onValueChange={setStateFilter}>
-              <SelectTrigger className="w-40 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-40 rounded-full border-border/50 bg-muted/40 shadow-sm"><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-64">
                 <SelectItem value="all">All States</SelectItem>
                 {states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -107,7 +107,7 @@ export default function Parties() {
     {/* Mobile: stacked cards — no horizontal scrolling */}
     <div className="md:hidden space-y-3">
       {filtered.map((p) => (
-        <div key={p.id} className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm">
+        <div key={p.id} className="rounded-2xl border border-border/50 bg-card p-4 shadow-sm">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <Link to={`/admin/parties/${p.id}`} className="font-medium transition-colors hover:text-accent truncate block">{p.name}</Link>
@@ -137,7 +137,7 @@ export default function Parties() {
       {filtered.length === 0 && <p className="p-12 text-center text-muted-foreground font-medium">No parties found.</p>}
     </div>
 
-    <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
+    <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[760px] text-sm">
           <thead className="bg-muted/30 text-xs font-medium text-muted-foreground">

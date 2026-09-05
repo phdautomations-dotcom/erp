@@ -97,7 +97,7 @@ export default function Expenses() {
         <p className="text-sm text-muted-foreground shrink-0">Total: <span className="font-semibold text-foreground">{fmtINR(totalAmount)}</span></p>
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by description, category, mode" className="pl-9 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by description, category, mode" className="pl-9 rounded-full border-border/50 bg-muted/40 shadow-sm" />
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button className="rounded-full btn-gradient ml-auto"><Plus className="h-4 w-4 mr-1" /> New Expense</Button></DialogTrigger>
@@ -144,7 +144,7 @@ export default function Expenses() {
       {/* Mobile: stacked cards — no horizontal scrolling */}
       <div className="md:hidden space-y-3">
         {rows.map(r => (
-          <div key={r.id} className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm">
+          <div key={r.id} className="rounded-2xl border border-border/50 bg-card p-4 shadow-sm">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-medium">{r.category}</p>
@@ -167,7 +167,7 @@ export default function Expenses() {
         {rows.length === 0 && <p className="p-12 text-center text-muted-foreground font-medium">{q ? "No expenses match your search" : "No expenses yet."}</p>}
       </div>
 
-      <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
+      <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-muted/30 text-xs font-medium text-muted-foreground"><tr><th className="px-6 py-4 text-left">Date</th><th className="px-6 py-4 text-left">Category</th><th className="px-6 py-4 text-left">Description</th><th className="px-6 py-4 text-left">Mode</th><th className="px-6 py-4 text-right">Amount</th><th className="px-6 py-4"></th></tr></thead>

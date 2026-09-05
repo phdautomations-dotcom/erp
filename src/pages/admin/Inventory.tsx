@@ -54,7 +54,7 @@ export default function Inventory() {
         <p className="text-sm text-muted-foreground shrink-0">{itemCount} products tracked</p>
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, HSN, barcode" className="pl-9 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, HSN, barcode" className="pl-9 rounded-full border-border/50 bg-muted/40 shadow-sm" />
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button className="rounded-full btn-gradient ml-auto"><Plus className="h-4 w-4 mr-1" /> Stock Adjustment</Button></DialogTrigger>
@@ -84,7 +84,7 @@ export default function Inventory() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-5">
-        <div className="overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
+        <div className="overflow-hidden rounded-3xl border border-border/50 bg-card shadow-sm">
           <div className="p-5 border-b border-border/50 font-display text-sm font-semibold">Stock Levels</div>
           {/* Mobile: stacked cards */}
           <div className="md:hidden divide-y divide-border/50">
@@ -117,7 +117,7 @@ export default function Inventory() {
           </table>
           </div>
         </div>
-        <div className="overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
+        <div className="overflow-hidden rounded-3xl border border-border/50 bg-card shadow-sm">
           <div className="p-5 border-b border-border/50 font-display text-sm font-semibold">Recent Movements</div>
           {/* Mobile: stacked cards */}
           <div className="md:hidden divide-y divide-border/50">

@@ -70,12 +70,12 @@ export default function Leads() {
       )}
       <div className="relative max-w-sm mb-5">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, company, phone, email" className="pl-9 rounded-full border-border/50 bg-background/50 backdrop-blur-sm shadow-sm" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, company, phone, email" className="pl-9 rounded-full border-border/50 bg-muted/40 shadow-sm" />
       </div>
       {/* Mobile: stacked cards — no horizontal scrolling */}
       <div className="md:hidden space-y-3">
         {filtered.map(l => (
-          <div key={l.id} className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm">
+          <div key={l.id} className="rounded-2xl border border-border/50 bg-card p-4 shadow-sm">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-medium truncate">{l.name}</p>
@@ -100,7 +100,7 @@ export default function Leads() {
         {filtered.length === 0 && <p className="p-8 text-center text-muted-foreground">{q ? "No leads match your search" : "No leads yet. Submissions from the website appear here."}</p>}
       </div>
 
-      <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card/50 shadow-sm backdrop-blur-xl">
+      <div className="hidden md:block overflow-hidden rounded-3xl border border-border/50 bg-card shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-muted/30 text-xs font-medium text-muted-foreground"><tr><th className="px-6 py-4 text-left">Date</th><th className="px-6 py-4 text-left">Name</th><th className="px-6 py-4 text-left">Company</th><th className="px-6 py-4 text-left">Contact</th><th className="px-6 py-4 text-left">Machine</th><th className="px-6 py-4 text-left">Status</th><th className="px-6 py-4"></th></tr></thead>

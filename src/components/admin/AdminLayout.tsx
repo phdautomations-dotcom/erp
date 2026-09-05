@@ -5,6 +5,7 @@ import {
   LayoutDashboard, Users, Package, FileText, ShoppingCart, Wallet, Wrench,
   Boxes, Receipt, BarChart3, Inbox, Settings, UserCog, LogOut, Home, ArrowLeft,
   ClipboardList, Bell, Search, ChevronRight, X, Building2, Camera, Banknote,
+  Sparkles, PartyPopper,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
@@ -12,6 +13,46 @@ import { AvatarCropDialog } from "@/components/AvatarCropDialog";
 import { AIAssistant } from "@/components/AIAssistant";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtINR } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+// ─── What's New — shown once per browser after a version ships ────────────────
+
+const APP_VERSION = "3.0";
+const WHATS_NEW_KEY = `asta_whats_new_seen_v${APP_VERSION}`;
+
+function WhatsNewDialog() {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem(WHATS_NEW_KEY)) {
+      setOpen(true);
+      localStorage.setItem(WHATS_NEW_KEY, "1");
+    }
+  }, []);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="text-center sm:max-w-sm">
+        <DialogHeader className="items-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg shadow-accent/30 mb-2" style={{ backgroundImage: "var(--gradient-brand)" }}>
+            <PartyPopper className="h-7 w-7" />
+          </div>
+          <DialogTitle className="font-display text-xl font-bold">Welcome to ASTA One {APP_VERSION}</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground -mt-2">
+          A redesigned, faster experience — new dashboard, clearer receivables &amp; payables, and a cleaner look across the app. Go explore!
+        </p>
+        <Button onClick={() => setOpen(false)} className="w-full rounded-full btn-gradient mt-2">
+          Let's go
+        </Button>
+        <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground/70 pt-1">
+          <Sparkles className="h-3 w-3 text-accent" /> Crafted by <span className="font-semibold text-foreground/70">Saffyre Intelligence Labs</span>
+        </p>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // ─── Nav config ───────────────────────────────────────────────────────────────
 
@@ -134,8 +175,7 @@ function GlobalSearch() {
       {/* Mobile: icon-only trigger — the full pill doesn't fit the header at phone widths */}
       <button
         onClick={() => setOpen(v => !v)}
-        className="md:hidden flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground transition-colors shrink-0"
-        style={{ boxShadow: "var(--neu-sm)", background: "hsl(220 22% 94%)" }}
+        className="md:hidden flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground bg-muted/60 hover:bg-muted hover:text-foreground transition-colors shrink-0"
         title="Search"
       >
         <Search className="h-4 w-4" />
@@ -143,12 +183,7 @@ function GlobalSearch() {
 
       {/* Desktop: inline pill, always visible */}
       <div
-        className="hidden md:flex items-center gap-2 px-3.5 h-9 w-60 rounded-full border transition-all"
-        style={{
-          background: "hsl(220 22% 94%)",
-          borderColor: open ? "hsl(212 90% 45%)" : "hsl(220 18% 86%)",
-          boxShadow: open ? "var(--neu-in)" : "var(--neu-sm)",
-        }}
+        className={`hidden md:flex items-center gap-2 px-3.5 h-9 w-60 rounded-full border bg-muted/60 transition-colors ${open ? "border-accent" : "border-border"}`}
       >
         <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         <input
@@ -169,8 +204,7 @@ function GlobalSearch() {
       {/* Mobile: full-width input, only rendered while open (so autoFocus fires on each open) */}
       {open && (
         <div
-          className="md:hidden fixed left-3 right-3 top-16 z-[70] flex items-center gap-2 px-3.5 h-11 rounded-full border shadow-lg"
-          style={{ background: "hsl(220 22% 97%)", borderColor: "hsl(212 90% 45%)" }}
+          className="md:hidden fixed left-3 right-3 top-16 z-[70] flex items-center gap-2 px-3.5 h-11 rounded-full border border-accent bg-card shadow-lg"
         >
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <input
@@ -196,13 +230,7 @@ function GlobalSearch() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="fixed left-3 right-3 top-28 md:absolute md:left-0 md:right-auto md:top-11 md:w-80 rounded-2xl overflow-hidden z-[70]"
-            style={{
-              background: "rgba(255,255,255,0.92)",
-              backdropFilter: "blur(20px)",
-              border: "1px solid rgba(255,255,255,0.8)",
-              boxShadow: "0 16px 48px hsl(220 30% 15% / 0.14), 0 4px 12px hsl(220 30% 15% / 0.08)",
-            }}
+            className="fixed left-3 right-3 top-28 md:absolute md:left-0 md:right-auto md:top-11 md:w-80 rounded-2xl overflow-hidden z-[70] bg-card border border-border shadow-lg"
           >
             {loading ? (
               <div className="px-4 py-3 text-xs text-muted-foreground animate-pulse">Searching…</div>
@@ -214,16 +242,13 @@ function GlobalSearch() {
                   <li key={r.id}>
                     <button
                       onClick={() => pick(r.href)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 transition-colors text-left group"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent/5 transition-colors text-left group"
                     >
-                      <div
-                        className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ background: "hsl(212 90% 45% / 0.12)" }}
-                      >
-                        <r.icon className="h-3.5 w-3.5" style={{ color: "hsl(212 90% 45%)" }} />
+                      <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 bg-accent/10 text-accent">
+                        <r.icon className="h-3.5 w-3.5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-blue-600 transition-colors">{r.label}</p>
+                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-accent transition-colors">{r.label}</p>
                         <p className="text-[11px] text-muted-foreground truncate">{r.sub}</p>
                       </div>
                       <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
@@ -328,15 +353,11 @@ function NotificationsPanel() {
     <div ref={wrapRef} className="relative">
       <button
         onClick={() => setOpen(v => !v)}
-        className="relative flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground transition-colors shrink-0"
-        style={{ boxShadow: "var(--neu-sm)", background: "hsl(220 22% 94%)" }}
+        className="relative flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground bg-muted/60 hover:bg-muted hover:text-foreground transition-colors shrink-0"
       >
         <Bell className="h-4 w-4" />
         {unread > 0 && (
-          <span
-            className="absolute -top-1 -right-1 h-4 w-4 rounded-full ring-2 ring-white flex items-center justify-center text-[9px] font-bold text-white"
-            style={{ background: "hsl(212 90% 45%)" }}
-          >
+          <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full ring-2 ring-white bg-accent flex items-center justify-center text-[9px] font-bold text-white">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -349,27 +370,14 @@ function NotificationsPanel() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-11 w-80 rounded-2xl overflow-hidden z-50"
-            style={{
-              background: "rgba(255,255,255,0.96)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
-              border: "1px solid rgba(255,255,255,0.85)",
-              boxShadow: "0 16px 48px hsl(220 30% 15% / 0.14), 0 4px 12px hsl(220 30% 15% / 0.08)",
-            }}
+            className="absolute right-0 top-11 w-80 rounded-2xl overflow-hidden z-50 bg-card border border-border shadow-lg"
           >
             {/* Header */}
-            <div
-              className="flex items-center justify-between px-4 py-3"
-              style={{ borderBottom: "1px solid hsl(220 18% 90%)" }}
-            >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-bold text-foreground">Notifications</h3>
                 {unread > 0 && (
-                  <span
-                    className="text-[11px] font-semibold px-2 py-0.5 rounded-full text-white"
-                    style={{ background: "hsl(212 90% 45%)" }}
-                  >
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full text-white bg-accent">
                     {unread}
                   </span>
                 )}
@@ -377,7 +385,7 @@ function NotificationsPanel() {
               {unread > 0 && (
                 <button
                   onClick={() => setNotifs([])}
-                  className="text-[11px] text-muted-foreground hover:text-blue-600 transition-colors"
+                  className="text-[11px] text-muted-foreground hover:text-accent transition-colors"
                 >
                   Mark all read
                 </button>
@@ -397,16 +405,13 @@ function NotificationsPanel() {
                   <li key={n.id}>
                     <button
                       onClick={() => { setNotifs(prev => prev.filter(x => x.id !== n.id)); navigate(n.href); setOpen(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left group"
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/5 transition-colors text-left group"
                     >
-                      <div
-                        className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0"
-                        style={{ background: "hsl(212 90% 45% / 0.12)" }}
-                      >
-                        <n.icon className="h-4 w-4" style={{ color: "hsl(212 90% 45%)" }} />
+                      <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0 bg-accent/10 text-accent">
+                        <n.icon className="h-4 w-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-blue-600 transition-colors">{n.title}</p>
+                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-accent transition-colors">{n.title}</p>
                         <p className="text-[11px] text-muted-foreground truncate">{n.sub}</p>
                       </div>
                       {n.time && (
@@ -462,14 +467,14 @@ function UserAvatarMenu() {
             src={avatarUrl}
             alt="avatar"
             className="h-11 w-11 rounded-xl object-cover"
-            style={{ boxShadow: "0 4px 12px hsl(212 90% 45% / 0.4)" }}
+            style={{ boxShadow: "0 4px 12px hsl(243 75% 59% / 0.4)" }}
           />
         ) : (
           <div
             className="h-11 w-11 rounded-xl flex items-center justify-center text-base font-bold text-white"
             style={{
-              background: "linear-gradient(135deg, hsl(212 90% 45%), hsl(200 90% 55%))",
-              boxShadow: "0 4px 12px hsl(212 90% 45% / 0.4)",
+              background: "linear-gradient(135deg, hsl(258 90% 66%), hsl(243 75% 59%))",
+              boxShadow: "0 4px 12px hsl(243 75% 59% / 0.4)",
             }}
           >
             {initial}
@@ -484,24 +489,17 @@ function UserAvatarMenu() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-11 w-52 rounded-2xl overflow-hidden z-50"
-            style={{
-              background: "rgba(255,255,255,0.96)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
-              border: "1px solid rgba(255,255,255,0.85)",
-              boxShadow: "0 16px 48px hsl(220 30% 15% / 0.14), 0 4px 12px hsl(220 30% 15% / 0.08)",
-            }}
+            className="absolute right-0 top-11 w-52 rounded-2xl overflow-hidden z-50 bg-card border border-border shadow-lg"
           >
             {/* User info */}
-            <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid hsl(220 18% 90%)" }}>
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
               <div className="shrink-0">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="avatar" className="h-14 w-14 rounded-xl object-cover" />
                 ) : (
                   <div
                     className="h-14 w-14 rounded-xl flex items-center justify-center text-lg font-bold text-white"
-                    style={{ background: "linear-gradient(135deg, hsl(212 90% 45%), hsl(200 90% 55%))" }}
+                    style={{ background: "linear-gradient(135deg, hsl(258 90% 66%), hsl(243 75% 59%))" }}
                   >
                     {initial}
                   </div>
@@ -525,7 +523,7 @@ function UserAvatarMenu() {
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-blue-50 transition-colors text-left text-[13px] text-foreground hover:text-blue-600 disabled:opacity-60"
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-accent/5 transition-colors text-left text-[13px] text-foreground hover:text-accent disabled:opacity-60"
               >
                 <Camera className="h-3.5 w-3.5 shrink-0" />
                 {uploading ? "Uploading…" : "Upload photo"}
@@ -555,24 +553,14 @@ function TopHeader({ title }: { title?: string }) {
   const location = useLocation();
   const isHome = location.pathname === "/admin";
   return (
-    <header
-      className="shrink-0 z-30 flex flex-col"
-      style={{
-        background: "rgba(255,255,255,0.80)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(255,255,255,0.9)",
-        boxShadow: "0 1px 0 hsl(220 18% 86%), 0 4px 16px hsl(220 25% 15% / 0.06)",
-      }}
-    >
+    <header className="shrink-0 z-30 flex flex-col bg-card border-b border-border shadow-sm">
       <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
         {/* Back — return to wherever you came from, not just Home */}
         {!isHome && (
           <button
             onClick={() => navigate(-1)}
             title="Back"
-            className="flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-accent transition-colors shrink-0"
-            style={{ boxShadow: "var(--neu-sm)", background: "hsl(220 22% 94%)" }}
+            className="flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground bg-muted/60 hover:bg-muted hover:text-accent transition-colors shrink-0"
           >
             <ArrowLeft className="h-4.5 w-4.5" />
           </button>
@@ -582,8 +570,7 @@ function TopHeader({ title }: { title?: string }) {
         <button
           onClick={() => navigate("/admin")}
           title="Home"
-          className="flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-accent transition-colors shrink-0"
-          style={{ boxShadow: "var(--neu-sm)", background: "hsl(220 22% 94%)" }}
+          className="flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground bg-muted/60 hover:bg-muted hover:text-accent transition-colors shrink-0"
         >
           <Home className="h-4.5 w-4.5" />
         </button>
@@ -611,12 +598,6 @@ function TopHeader({ title }: { title?: string }) {
         {/* User avatar + menu */}
         <UserAvatarMenu />
       </div>
-
-      {/* Brand accent underline strip */}
-      <div
-        className="h-0.5 w-full shrink-0"
-        style={{ background: "linear-gradient(90deg, hsl(212 90% 45%), hsl(243 75% 59%) 40%, transparent)" }}
-      />
     </header>
   );
 }
@@ -629,7 +610,7 @@ export const AdminLayout = ({ children, title }: { children: ReactNode; title?: 
     <div
       className="w-full flex flex-col overflow-hidden"
       style={{
-        background: "hsl(220 22% 94%)",
+        background: "hsl(var(--muted))",
         zoom: 0.9,
         height: "calc(100vh / 0.9)",      /* compensate zoom so it fills full viewport */
         maxHeight: "calc(100vh / 0.9)",
@@ -648,6 +629,7 @@ export const AdminLayout = ({ children, title }: { children: ReactNode; title?: 
       </motion.main>
     </div>
     <AIAssistant />
+    <WhatsNewDialog />
     </>
   );
 };

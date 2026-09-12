@@ -34,3 +34,6 @@ supabase/.temp/
 # Vercel CLI local project link
 .vercel
 .env*
+
+# graphify code-graph cache (local dev tool, regenerate with `graphify update .`)
+graphify-out/

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { fmtINR, fmtDate } from "@/lib/format";
-import { Plus, Trash2, Edit2, Search } from "lucide-react";
+import { Plus, Trash2, Edit2, Search, ArrowDownCircle, ArrowUpCircle, Scale, Banknote } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ export default function CashLedger() {
   const [rows, setRows] = useState<any[]>([]);
   const [q, setQ] = useState("");
   const [openingBalance, setOpeningBalance] = useState(0);
+  const [allTimeBalance, setAllTimeBalance] = useState(0);
   const [parties, setParties] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [open, setOpen] = useState(false);
@@ -45,6 +46,12 @@ export default function CashLedger() {
 
     const { data: priorRows } = await supabase.from("cash_ledger" as any).select("type, amount").lt("entry_date", monthStart);
     setOpeningBalance((priorRows || []).reduce((s: number, r: any) => s + (r.type === "in" ? Number(r.amount) : -Number(r.amount)), 0));
+
+    // True today's balance, independent of whichever month is being viewed —
+    // a slim two-column aggregate over the whole ledger, same pattern as
+    // openingBalance above.
+    const { data: allRows } = await supabase.from("cash_ledger" as any).select("type, amount");
+    setAllTimeBalance((allRows || []).reduce((s: number, r: any) => s + (r.type === "in" ? Number(r.amount) : -Number(r.amount)), 0));
 
     const term = q.trim();
     if (term) {
@@ -119,26 +126,57 @@ export default function CashLedger() {
     running += r.type === "in" ? Number(r.amount) : -Number(r.amount);
     return { ...r, balance: running };
   });
-  const closingBalance = running;
 
   const monthCredit = rows.reduce((s, r) => s + (r.type === "in" ? Number(r.amount) : 0), 0);
   const monthDebit = rows.reduce((s, r) => s + (r.type === "out" ? Number(r.amount) : 0), 0);
+  // Net movement for just the selected month — reads exactly 0 when nothing
+  // was added that month, unlike the running balances below which carry
+  // forward whatever was already in the ledger.
+  const monthNet = monthCredit - monthDebit;
 
   return (
     <AdminLayout title="Cash Ledger">
-      <div className="flex flex-wrap items-center gap-3 mb-5">
-        <div className="flex flex-wrap items-center gap-4">
-          <Input type="month" value={month} onChange={e => setMonth(e.target.value)} className="w-40" />
-          <p className="text-sm text-muted-foreground">
-            Credit: <span className="font-semibold text-emerald-600">{fmtINR(monthCredit)}</span>
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Debit: <span className="font-semibold text-destructive">{fmtINR(monthDebit)}</span>
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Balance (as of month end): <span className={`font-semibold ${closingBalance < 0 ? "text-destructive" : "text-foreground"}`}>{fmtINR(closingBalance)}</span>
-          </p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div className="rounded-2xl border border-border/50 bg-card p-4 shadow-sm flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+            <ArrowDownCircle className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Credit this month</p>
+            <p className="font-display text-lg font-bold text-emerald-600 truncate">{fmtINR(monthCredit)}</p>
+          </div>
         </div>
+        <div className="rounded-2xl border border-border/50 bg-card p-4 shadow-sm flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-600">
+            <ArrowUpCircle className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Debit this month</p>
+            <p className="font-display text-lg font-bold text-destructive truncate">{fmtINR(monthDebit)}</p>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border/50 bg-card p-4 shadow-sm flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600">
+            <Scale className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Net this month</p>
+            <p className={`font-display text-lg font-bold truncate ${monthNet < 0 ? "text-destructive" : "text-foreground"}`}>{fmtINR(monthNet)}</p>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border/50 bg-card p-4 shadow-sm flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600">
+            <Banknote className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Total balance (till date)</p>
+            <p className={`font-display text-lg font-bold truncate ${allTimeBalance < 0 ? "text-destructive" : "text-foreground"}`}>{fmtINR(allTimeBalance)}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 mb-5">
+        <Input type="month" value={month} onChange={e => setMonth(e.target.value)} className="w-40" />
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by description or party" className="pl-9 rounded-full border-border/50 bg-muted/40 shadow-sm" />

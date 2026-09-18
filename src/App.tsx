@@ -12,6 +12,7 @@ import { ConfirmDialogProvider } from "@/components/ConfirmDialogProvider";
 // page (and heavy libs like jspdf/recharts) up front.
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Auth = lazy(() => import("./pages/Auth"));
+const AdminShell = lazy(() => import("./components/admin/AdminLayout").then(m => ({ default: m.AdminShell })));
 const Home = lazy(() => import("./pages/admin/Home"));
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
 const Parties = lazy(() => import("./pages/admin/Parties"));
@@ -54,29 +55,35 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/verify/:id" element={<Verify />} />
               <Route element={<ProtectedRoute />}>
-                <Route path="/admin" element={<Home />} />
-                <Route path="/admin/dashboard" element={<Dashboard />} />
-                <Route path="/admin/parties" element={<Parties />} />
-                <Route path="/admin/parties/:id" element={<PartyForm />} />
-                <Route path="/admin/items" element={<Items />} />
-                <Route path="/admin/items/:id" element={<ItemForm />} />
-                <Route path="/admin/sales" element={<Sales />} />
-                <Route path="/admin/sales/:id" element={<DocForm />} />
-                <Route path="/admin/purchases" element={<Sales purchase />} />
-                <Route path="/admin/purchases/:id" element={<DocForm purchase />} />
-                <Route path="/admin/payments" element={<Payments />} />
-                <Route path="/admin/inventory" element={<Inventory />} />
-                <Route path="/admin/expenses" element={<Expenses />} />
-                <Route path="/admin/cash-ledger" element={<CashLedger />} />
-                <Route path="/admin/reports" element={<Reports />} />
-                <Route path="/admin/attendance" element={<Attendance />} />
-                <Route path="/admin/leads" element={<Leads />} />
-                <Route path="/admin/services" element={<ServiceVisits />} />
+                {/* AdminShell (sidebar/header/AIAssistant) mounts once here and
+                    stays mounted across every /admin/* navigation — pages only
+                    swap inside its <Outlet/>, so switching modules is an
+                    instant in-place update instead of a full chrome remount. */}
+                <Route path="/admin" element={<AdminShell />}>
+                  <Route index element={<Home />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="parties" element={<Parties />} />
+                  <Route path="parties/:id" element={<PartyForm />} />
+                  <Route path="items" element={<Items />} />
+                  <Route path="items/:id" element={<ItemForm />} />
+                  <Route path="sales" element={<Sales />} />
+                  <Route path="sales/:id" element={<DocForm />} />
+                  <Route path="purchases" element={<Sales purchase />} />
+                  <Route path="purchases/:id" element={<DocForm purchase />} />
+                  <Route path="payments" element={<Payments />} />
+                  <Route path="inventory" element={<Inventory />} />
+                  <Route path="expenses" element={<Expenses />} />
+                  <Route path="cash-ledger" element={<CashLedger />} />
+                  <Route path="reports" element={<Reports />} />
+                  <Route path="attendance" element={<Attendance />} />
+                  <Route path="leads" element={<Leads />} />
+                  <Route path="services" element={<ServiceVisits />} />
+                  <Route path="settings" element={<Settings />} />
+                  <Route element={<ProtectedRoute adminOnly />}>
+                    <Route path="users" element={<Users />} />
+                  </Route>
+                </Route>
                 <Route path="/engineer" element={<EngineerApp />} />
-                <Route path="/admin/settings" element={<Settings />} />
-              </Route>
-              <Route element={<ProtectedRoute adminOnly />}>
-                <Route path="/admin/users" element={<Users />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

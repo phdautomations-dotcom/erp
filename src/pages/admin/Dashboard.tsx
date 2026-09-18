@@ -4,11 +4,11 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { fmtINR, fmtDate } from "@/lib/format";
-import { Wallet, FileText, AlertTriangle, Inbox, Download, Upload, Wrench, PhoneCall, ClipboardCheck, TrendingUp, Users, Banknote, Sparkles, Copy, MessageCircle, Package, Clock } from "lucide-react";
+import { Wallet, FileText, AlertTriangle, Inbox, Download, Upload, Wrench, PhoneCall, ClipboardCheck, TrendingUp, TrendingDown, Users, Banknote, Sparkles, Copy, MessageCircle, Package, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from "recharts";
+import { ComposedChart, Line, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { draftPaymentReminder } from "@/lib/ai/remote";
@@ -66,6 +66,29 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   );
 }
 
+// First half vs second half of a card's own sparkline window — a real (not
+// fabricated) trend, just derived from data we already fetched rather than
+// a separate query.
+function trendPct(data?: number[]): number | null {
+  if (!data || data.length < 4) return null;
+  const mid = Math.floor(data.length / 2);
+  const first = data.slice(0, mid).reduce((s, v) => s + v, 0);
+  const last = data.slice(mid).reduce((s, v) => s + v, 0);
+  if (first === 0) return last > 0 ? 100 : null;
+  return ((last - first) / first) * 100;
+}
+
+function TrendBadge({ pct, label = "vs last week" }: { pct: number | null; label?: string }) {
+  if (pct === null) return null;
+  const up = pct >= 0;
+  return (
+    <div className={`mt-1 inline-flex items-center gap-1 text-[11px] font-semibold ${up ? "text-emerald-600" : "text-red-500"}`}>
+      {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+      {Math.abs(pct).toFixed(1)}%<span className="font-normal text-muted-foreground">&nbsp;{label}</span>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState({
     receivable: 0, payable: 0, monthSales: 0, monthPurchase: 0,
@@ -101,6 +124,7 @@ export default function Dashboard() {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [attendanceToday, setAttendanceToday] = useState<any[]>([]);
   const [sparklines, setSparklines] = useState<Record<string, number[]>>({});
+  const [salesOverview, setSalesOverview] = useState<{ data: { label: string; value: number }[]; pct: number | null }>({ data: [], pct: null });
   const [pnlFilter, setPnlFilter] = useState("6months");
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -144,13 +168,25 @@ export default function Dashboard() {
       // not a proxy); New Leads uses actual daily lead creation. Count-based
       // snapshot cards (low stock, pending logs) have no real history to
       // chart, so they're left without a sparkline rather than faking one.
-      const last14 = Array.from({ length: 14 }, (_, i) => {
-        const d = new Date(); d.setDate(d.getDate() - (13 - i));
+      const dateRange = (days: number) => Array.from({ length: days }, (_, i) => {
+        const d = new Date(); d.setDate(d.getDate() - (days - 1 - i));
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       });
-      const dailyDocTotal = (type: string) => last14.map(day =>
+      const last14 = dateRange(14);
+      const dailyDocTotal = (type: string, days: string[] = last14) => days.map(day =>
         (docs || []).filter(d => d.doc_type === type && d.status !== "cancelled" && d.doc_date === day).reduce((s, d) => s + Number(d.total), 0)
       );
+
+      // Sales Overview panel — a real 30-day daily sales series (not a
+      // fabricated shape) plus month-over-month % change for the trend chip.
+      const last30 = dateRange(30);
+      const dailySales30 = dailyDocTotal("invoice", last30);
+      const salesOverviewData = last30.map((day, i) => ({
+        label: new Date(day).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }),
+        value: dailySales30[i],
+      }));
+      const startPrevMonth = new Date(); startPrevMonth.setMonth(startPrevMonth.getMonth() - 1); startPrevMonth.setDate(1); startPrevMonth.setHours(0, 0, 0, 0);
+      const prevMonthSales = (docs || []).filter(d => d.doc_type === "invoice" && d.status !== "cancelled" && new Date(d.doc_date) >= startPrevMonth && new Date(d.doc_date) < startMonth).reduce((s, d) => s + Number(d.total), 0);
       const sortedCash = [...((cashEntries as any[]) || [])].sort((a, b) => (a.entry_date || "").localeCompare(b.entry_date || ""));
       let runningBalance = 0;
       let cashIdx = 0;
@@ -190,6 +226,10 @@ export default function Dashboard() {
       setStats({
         receivable, payable, monthSales, monthPurchase, lowStock, newLeads: leads?.length || 0, pendingLogs, cashBalance,
         partyCount: partyCount || 0, itemCount: (items || []).length, pendingInvoices, overdueInvoices,
+      });
+      setSalesOverview({
+        data: salesOverviewData,
+        pct: prevMonthSales === 0 ? (monthSales > 0 ? 100 : null) : ((monthSales - prevMonthSales) / prevMonthSales) * 100,
       });
 
       // 2. Top Outstanding Customers
@@ -447,6 +487,7 @@ export default function Dashboard() {
             </div>
             <span className="text-xs font-medium text-muted-foreground">{c.label}</span>
             <div className="font-display text-2xl font-bold tracking-tight text-foreground mt-0.5">{c.value}</div>
+            {c.spark && <TrendBadge pct={trendPct(c.spark)} />}
             {c.spark && (
               <div className="absolute right-4 bottom-4 w-20 h-9 pointer-events-none opacity-90">
                 <Sparkline data={c.spark} color={SPARK_STROKE[c.color]} />
@@ -635,6 +676,44 @@ export default function Dashboard() {
             </>
           )}
         </motion.div>
+        </div>
+
+        <div className="w-full min-w-0 flex flex-col gap-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.32, duration: 0.5 }}
+          className="overflow-hidden rounded-3xl border border-border/50 bg-card shadow-sm flex flex-col"
+        >
+          <div className="flex items-center justify-between p-6 pb-2">
+            <h2 className="font-display text-lg font-semibold tracking-tight">Sales Overview</h2>
+            <span className="text-xs font-medium text-muted-foreground bg-muted/60 rounded-full px-3 py-1">This Month</span>
+          </div>
+          <div className="px-6">
+            <div className="font-display text-2xl font-bold tracking-tight text-foreground">{fmtINR(stats.monthSales)}</div>
+            <TrendBadge pct={salesOverview.pct} label="vs last month" />
+          </div>
+          <div className="h-32 w-full mt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={salesOverview.data} margin={{ top: 5, right: 12, left: 4, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="salesAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(258 90% 66%)" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="hsl(258 90% 66%)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} interval={6} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} tickFormatter={formatYAxis} width={38} />
+                <Tooltip
+                  contentStyle={{ background: "hsl(var(--background))", borderColor: "hsl(var(--border))", borderRadius: "0.75rem", fontSize: "12px" }}
+                  formatter={(value: number) => fmtINR(value)}
+                  labelFormatter={(label) => label}
+                />
+                <Area type="monotone" dataKey="value" name="Sales" stroke="hsl(258 90% 66%)" strokeWidth={2} fill="url(#salesAreaGradient)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -682,9 +761,7 @@ export default function Dashboard() {
             )}
           </div>
         </motion.div>
-        </div>
 
-        <div className="w-full min-w-0 flex flex-col gap-6">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}

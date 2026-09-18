@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PanelLeft, LayoutGrid } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,40 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { INDIAN_STATES } from "@/lib/states";
 import { toast } from "sonner";
+import { useNavStyle, setNavStyle, NavStyle } from "@/hooks/useNavStyle";
+
+function AppearanceCard() {
+  const navStyle = useNavStyle();
+  const options: { value: NavStyle; label: string; desc: string; icon: typeof PanelLeft }[] = [
+    { value: "sidebar", label: "Sidebar", desc: "Persistent left navigation bar", icon: PanelLeft },
+    { value: "tiles", label: "Tiles", desc: "Module tiles as the home page", icon: LayoutGrid },
+  ];
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+      <h3 className="font-display font-semibold">Appearance</h3>
+      <p className="text-sm text-muted-foreground -mt-2">Choose how you navigate between modules. This is a per-browser preference.</p>
+      <div className="grid grid-cols-2 gap-3">
+        {options.map(o => (
+          <button
+            key={o.value}
+            onClick={() => setNavStyle(o.value)}
+            className={`flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-colors ${
+              navStyle === o.value ? "border-accent bg-accent/5" : "border-border hover:bg-muted/50"
+            }`}
+          >
+            <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${navStyle === o.value ? "bg-accent text-white" : "bg-muted text-muted-foreground"}`}>
+              <o.icon className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">{o.label}</p>
+              <p className="text-xs text-muted-foreground">{o.desc}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Settings() {
   const [s, setS] = useState<any>({});
@@ -60,6 +95,7 @@ export default function Settings() {
         </div>
 
         <div className="space-y-6">
+          <AppearanceCard />
           <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
             <h3 className="font-display font-semibold">Bank Details</h3>
             <div><Label>Bank Name</Label><Input value={s.bank_name || ""} onChange={e => u("bank_name", e.target.value)} /></div>

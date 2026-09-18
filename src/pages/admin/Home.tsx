@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AdminLayout, NAV } from "@/components/admin/AdminLayout";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavStyle } from "@/hooks/useNavStyle";
 
 // Full literal class names (not built from a template string) so Tailwind's
 // content scanner can actually find and generate them at build time.
@@ -45,10 +46,20 @@ const TILE_COLORS: Record<string, keyof typeof COLOR_MAP> = {
 export default function Home() {
   const navigate = useNavigate();
   const { hasRole, user } = useAuth();
+  const navStyle = useNavStyle();
 
   useEffect(() => { document.title = "Home | ASTA One"; }, []);
 
+  // Sidebar mode has its own persistent nav — the tile launcher only makes
+  // sense as a landing page when that sidebar isn't there, so skip straight
+  // to the Dashboard instead.
+  useEffect(() => {
+    if (navStyle === "sidebar") navigate("/admin/dashboard", { replace: true });
+  }, [navStyle, navigate]);
+
   const tiles = NAV.filter(n => !n.adminOnly || hasRole("admin"));
+
+  if (navStyle === "sidebar") return null;
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";

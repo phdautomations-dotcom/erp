@@ -1,14 +1,15 @@
-import { ReactNode, useEffect, useRef, useState, useCallback } from "react";
+import { ReactNode, Suspense, createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link, Outlet } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, FileText, ShoppingCart, Wallet, Wrench,
   Boxes, Receipt, BarChart3, Inbox, Settings, UserCog, LogOut, Home, ArrowLeft,
   ClipboardList, Bell, Search, ChevronRight, X, Building2, Camera, Banknote,
-  Sparkles, PartyPopper,
+  Sparkles, PartyPopper, Menu, ChevronsLeft, ChevronsRight,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
+import { useNavStyle, NavStyle } from "@/hooks/useNavStyle";
 import { AvatarCropDialog } from "@/components/AvatarCropDialog";
 import { AIAssistant } from "@/components/AIAssistant";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,6 +74,115 @@ export const NAV = [
   { to: "/admin/users",      label: "Users",           icon: UserCog, adminOnly: true },
   { to: "/admin/settings",   label: "Settings",        icon: Settings },
 ];
+
+// ─── Sidebar navigation ─────────────────────────────────────────────────────
+// Shared nav-item list used by both the persistent desktop sidebar and the
+// mobile slide-in drawer, so active-state logic only lives in one place.
+// Kept deliberately slim (not a wide admin-panel rail) with a glowing
+// gradient pill for the active item — a lighter, more "app-like" feel.
+
+const SIDEBAR_COLLAPSED_KEY = "asta_sidebar_collapsed";
+
+function SidebarLogo({ onClose, collapsed }: { onClose?: () => void; collapsed?: boolean }) {
+  return (
+    <div className={`flex items-center gap-2.5 h-14 shrink-0 ${collapsed ? "justify-center px-2" : "px-4"}`}>
+      <div
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-white shrink-0"
+        style={{ backgroundImage: "var(--gradient-brand)", boxShadow: "0 2px 10px hsl(243 75% 59% / 0.4)" }}
+      >
+        <Building2 className="h-4 w-4" />
+      </div>
+      {!collapsed && <span className="font-display text-[15px] font-bold text-foreground truncate">ASTA One</span>}
+      {onClose && (
+        <button onClick={onClose} className="ml-auto flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted shrink-0">
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function SidebarNavList({ onNavigate, collapsed }: { onNavigate?: () => void; collapsed?: boolean }) {
+  const location = useLocation();
+  const { hasRole } = useAuth();
+  const items = NAV.filter(n => !n.adminOnly || hasRole("admin"));
+
+  return (
+    <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-0.5">
+      {items.map(item => {
+        const active = item.end ? location.pathname === item.to : location.pathname.startsWith(item.to);
+        return (
+          <Link
+            key={item.to}
+            to={item.to}
+            onClick={onNavigate}
+            title={collapsed ? item.label : undefined}
+            className={`group relative flex items-center gap-2.5 h-9 rounded-lg text-[13px] font-medium transition-all duration-150 ${
+              collapsed ? "justify-center px-0" : "px-2.5"
+            } ${active ? "text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+            style={active ? { backgroundImage: "var(--gradient-brand)", boxShadow: "0 3px 12px hsl(243 75% 59% / 0.35)" } : undefined}
+          >
+            <item.icon className={`h-4 w-4 shrink-0 transition-transform duration-150 ${!active ? "group-hover:scale-110 group-hover:text-accent" : ""}`} />
+            {!collapsed && <span className="truncate">{item.label}</span>}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+function Sidebar() {
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1");
+  useEffect(() => { localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0"); }, [collapsed]);
+
+  return (
+    <aside
+      className={`hidden lg:flex flex-col shrink-0 h-full bg-card border-r border-border/70 transition-[width] duration-200 ease-out ${
+        collapsed ? "w-[60px]" : "w-52"
+      }`}
+    >
+      <SidebarLogo collapsed={collapsed} />
+      <SidebarNavList collapsed={collapsed} />
+      <div className="p-2.5 shrink-0">
+        <button
+          onClick={() => setCollapsed(v => !v)}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={`flex items-center h-8 w-full rounded-lg text-muted-foreground bg-muted/50 hover:bg-muted hover:text-accent transition-colors ${
+            collapsed ? "justify-center" : "justify-center gap-1.5"
+          }`}
+        >
+          {collapsed ? <ChevronsRight className="h-3.5 w-3.5" /> : <><ChevronsLeft className="h-3.5 w-3.5" /><span className="text-[11px] font-medium">Collapse</span></>}
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+function MobileNavDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 z-[80] lg:hidden"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="fixed left-0 top-0 bottom-0 w-60 z-[90] lg:hidden flex flex-col bg-card shadow-2xl border-r border-border/70"
+          >
+            <div className="border-b border-border/70">
+              <SidebarLogo onClose={onClose} />
+            </div>
+            <SidebarNavList onNavigate={onClose} />
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
 
 // ─── Global Search ────────────────────────────────────────────────────────────
 
@@ -548,13 +658,24 @@ function UserAvatarMenu() {
 
 // ─── Top header ───────────────────────────────────────────────────────────────
 
-function TopHeader({ title }: { title?: string }) {
+function TopHeader({ title, navStyle, onMenuClick }: { title?: string; navStyle: NavStyle; onMenuClick: () => void }) {
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname === "/admin";
   return (
     <header className="shrink-0 z-30 flex flex-col bg-card border-b border-border shadow-sm">
       <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
+        {/* Hamburger — opens the mobile nav drawer; only relevant in sidebar mode */}
+        {navStyle === "sidebar" && (
+          <button
+            onClick={onMenuClick}
+            title="Menu"
+            className="lg:hidden flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground bg-muted/60 hover:bg-muted hover:text-accent transition-colors shrink-0"
+          >
+            <Menu className="h-4.5 w-4.5" />
+          </button>
+        )}
+
         {/* Back — return to wherever you came from, not just Home */}
         {!isHome && (
           <button
@@ -566,9 +687,9 @@ function TopHeader({ title }: { title?: string }) {
           </button>
         )}
 
-        {/* Home — back to the tile launcher */}
+        {/* Home — sidebar mode: jump to Dashboard; tile mode: back to the tile launcher */}
         <button
-          onClick={() => navigate("/admin")}
+          onClick={() => navigate(navStyle === "sidebar" ? "/admin/dashboard" : "/admin")}
           title="Home"
           className="flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground bg-muted/60 hover:bg-muted hover:text-accent transition-colors shrink-0"
         >
@@ -603,12 +724,31 @@ function TopHeader({ title }: { title?: string }) {
 }
 
 // ─── Layout root ──────────────────────────────────────────────────────────────
+// AdminShell is mounted ONCE by the router (as the parent element of a
+// nested "/admin/*" route tree) — the sidebar, header, AIAssistant and
+// What's-New popup all live here and stay mounted across navigation.
+// Individual pages render only their own content into <Outlet/>, so
+// switching modules no longer remounts the whole chrome (which used to
+// replay every fade-in animation and feel like a hard page reload).
+// AdminLayout is now just a thin per-page wrapper that pushes its title up
+// to AdminShell via context — existing pages don't need to change at all.
 
-export const AdminLayout = ({ children, title }: { children: ReactNode; title?: string }) => {
+const PageTitleContext = createContext<(title?: string) => void>(() => {});
+
+export const AdminShell = () => {
+  const navStyle = useNavStyle();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [title, setTitle] = useState<string | undefined>(undefined);
+  const location = useLocation();
+
+  // Close the mobile drawer whenever the nav style setting changes away from
+  // "sidebar" (e.g. switched in Settings while the drawer happened to be open).
+  useEffect(() => { if (navStyle !== "sidebar") setDrawerOpen(false); }, [navStyle]);
+
   return (
     <>
     <div
-      className="w-full flex flex-col overflow-hidden"
+      className="w-full flex overflow-hidden"
       style={{
         background: "hsl(var(--muted))",
         zoom: 0.9,
@@ -616,20 +756,39 @@ export const AdminLayout = ({ children, title }: { children: ReactNode; title?: 
         maxHeight: "calc(100vh / 0.9)",
       } as any}
     >
-      <TopHeader title={title} />
+      {navStyle === "sidebar" && <Sidebar />}
+      {navStyle === "sidebar" && <MobileNavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />}
 
-      <motion.main
-        key={title}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6"
-      >
-        {children}
-      </motion.main>
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+        <TopHeader title={title} navStyle={navStyle} onMenuClick={() => setDrawerOpen(true)} />
+
+        <motion.main
+          key={location.pathname}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.18, ease: "easeOut" }}
+          className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6"
+        >
+          <PageTitleContext.Provider value={setTitle}>
+            {/* A nested Suspense boundary here (instead of relying on the
+                top-level one in App.tsx) means a not-yet-downloaded page
+                chunk only blanks the content area while it loads — the
+                sidebar and header never unmount for it. */}
+            <Suspense fallback={<div className="flex h-40 items-center justify-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" /></div>}>
+              <Outlet />
+            </Suspense>
+          </PageTitleContext.Provider>
+        </motion.main>
+      </div>
     </div>
     <AIAssistant />
     <WhatsNewDialog />
     </>
   );
+};
+
+export const AdminLayout = ({ children, title }: { children: ReactNode; title?: string }) => {
+  const setShellTitle = useContext(PageTitleContext);
+  useEffect(() => { setShellTitle(title); }, [title, setShellTitle]);
+  return <>{children}</>;
 };

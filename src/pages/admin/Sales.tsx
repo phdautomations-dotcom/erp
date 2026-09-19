@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, FileText, Eye, Trash2, Search, Wallet } from "lucide-react";
+import { Plus, FileText, Eye, Trash2, Search, Wallet } from "@/lib/icons";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";

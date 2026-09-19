@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, KeyRound, PenTool, Shield, History, Search } from "lucide-react";
+import { Plus, Trash2, KeyRound, PenTool, Shield, History, Search } from "@/lib/icons";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { PERM_MODULES, type UserPerm, type PermModule } from "@/hooks/usePermissions";

@@ -2,20 +2,32 @@ import { ReactNode, Suspense, createContext, useContext, useEffect, useRef, useS
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation, Link, Outlet } from "react-router-dom";
 import {
-  LayoutDashboard, Users, Package, FileText, ShoppingCart, Wallet, Wrench,
-  Boxes, Receipt, BarChart3, Inbox, Settings, UserCog, LogOut, Home, ArrowLeft,
-  ClipboardList, Bell, Search, ChevronRight, X, Building2, Camera, Banknote,
-  Sparkles, PartyPopper, Menu, ChevronsLeft, ChevronsRight,
-} from "lucide-react";
+  Users, Package, FileText, Wallet, Receipt, Inbox, UserCog, LogOut, Home, ArrowLeft,
+  Bell, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X,
+  Building2, Camera, Banknote, Sparkles, PartyPopper, Menu, PanelLeft,
+} from "@/lib/icons";
 import { useAuth } from "@/hooks/useAuth";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import { useNavStyle, NavStyle } from "@/hooks/useNavStyle";
 import { AvatarCropDialog } from "@/components/AvatarCropDialog";
 import { AIAssistant } from "@/components/AIAssistant";
+import { BrandMark } from "@/components/BrandMark";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtINR } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { useUITheme, type UITheme } from "@/lib/uiTheme";
 import { Button } from "@/components/ui/button";
+import { Loader, PageLoader } from "@/components/ui/loader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { NAV } from "./nav";
+import { IosSidebar, IosTabBar } from "./IosNav";
+
+// The module list lives in ./nav (shared with the iOS tab bar); re-exported for existing imports.
+export { NAV };
+
+// The app ships three selectable designs (see lib/uiTheme.ts): "material" (Google
+// Material 3, default), "minimal" (the earlier flat design) and "ios" (Liquid Glass).
+// Everything in this file that looks different between them reads `useUITheme()`.
 
 // ─── What's New — shown once per browser after a version ships ────────────────
 
@@ -24,6 +36,7 @@ const WHATS_NEW_KEY = `asta_whats_new_seen_v${APP_VERSION}`;
 
 function WhatsNewDialog() {
   const [open, setOpen] = useState(false);
+  const theme = useUITheme();
 
   useEffect(() => {
     if (!localStorage.getItem(WHATS_NEW_KEY)) {
@@ -35,16 +48,33 @@ function WhatsNewDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="text-center sm:max-w-sm">
-        <DialogHeader className="items-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg shadow-accent/30 mb-2" style={{ backgroundImage: "var(--gradient-brand)" }}>
-            <PartyPopper className="h-7 w-7" />
-          </div>
-          <DialogTitle className="font-display text-xl font-bold">Welcome to ASTA One {APP_VERSION}</DialogTitle>
+        <DialogHeader className="items-center pr-0 text-center">
+          {theme === "material" ? (
+            <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-[20px] bg-primary-container text-on-primary-container">
+              <PartyPopper className="h-8 w-8" />
+            </div>
+          ) : theme === "ios" ? (
+            <div
+              className="mb-2 flex h-16 w-16 items-center justify-center rounded-[22px] text-white"
+              style={{ backgroundImage: "linear-gradient(160deg, #5AC8FA, #007AFF)", boxShadow: "inset 0 1px 0 rgb(255 255 255 / 0.5), 0 8px 20px rgb(0 122 255 / 0.35)" }}
+            >
+              <PartyPopper className="h-8 w-8" />
+            </div>
+          ) : (
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg shadow-accent/30 mb-2" style={{ backgroundImage: "var(--gradient-brand)" }}>
+              <PartyPopper className="h-7 w-7" />
+            </div>
+          )}
+          <DialogTitle className={cn("text-center", theme === "minimal" && "font-display text-xl font-bold")}>Welcome to ASTA One {APP_VERSION}</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground -mt-2">
-          A redesigned, faster experience — new dashboard, clearer receivables &amp; payables, and a cleaner look across the app. Go explore!
+          {theme === "material"
+            ? "A redesigned, faster experience — a Material look across the app, a new dashboard and clearer receivables & payables. Go explore!"
+            : theme === "ios"
+              ? "A redesigned, faster experience — Liquid Glass surfaces, a new dashboard and clearer receivables & payables. Go explore!"
+              : "A redesigned, faster experience — new dashboard, clearer receivables & payables, and a cleaner look across the app. Go explore!"}
         </p>
-        <Button onClick={() => setOpen(false)} className="w-full rounded-full btn-gradient mt-2">
+        <Button onClick={() => setOpen(false)} className={cn("w-full mt-2", theme === "minimal" && "rounded-full btn-gradient")}>
           Let's go
         </Button>
         <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground/70 pt-1">
@@ -55,43 +85,87 @@ function WhatsNewDialog() {
   );
 }
 
-// ─── Nav config ───────────────────────────────────────────────────────────────
+// ─── Shared building blocks ───────────────────────────────────────────────────
 
-export const NAV = [
-  { to: "/admin/dashboard", label: "Dashboard",       icon: LayoutDashboard, end: true },
-  { to: "/admin/parties",    label: "Parties",         icon: Users },
-  { to: "/admin/items",      label: "Items",           icon: Package },
-  { to: "/admin/sales",      label: "Sales",           icon: FileText },
-  { to: "/admin/purchases",  label: "Purchases",       icon: ShoppingCart },
-  { to: "/admin/payments",   label: "Payments",        icon: Wallet },
-  { to: "/admin/inventory",  label: "Inventory",       icon: Boxes },
-  { to: "/admin/expenses",   label: "Expenses",        icon: Receipt },
-  { to: "/admin/cash-ledger", label: "Cash Ledger",     icon: Banknote },
-  { to: "/admin/attendance", label: "Attendance & HR", icon: ClipboardList },
-  { to: "/admin/reports",    label: "Reports",         icon: BarChart3 },
-  { to: "/admin/services",   label: "Service Desk",    icon: Wrench },
-  { to: "/admin/leads",      label: "Leads",           icon: Inbox },
-  { to: "/admin/users",      label: "Users",           icon: UserCog, adminOnly: true },
-  { to: "/admin/settings",   label: "Settings",        icon: Settings },
-];
+const NAV_COLLAPSED_KEY = "asta_sidebar_collapsed";
 
-// ─── Sidebar navigation ─────────────────────────────────────────────────────
-// Shared nav-item list used by both the persistent desktop sidebar and the
-// mobile slide-in drawer, so active-state logic only lives in one place.
-// Kept deliberately slim (not a wide admin-panel rail) with a glowing
-// gradient pill for the active item — a lighter, more "app-like" feel.
+const ICON_BTN: Record<UITheme, string> = {
+  // soft 36px rounded square
+  minimal:
+    "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted/60 text-muted-foreground transition-colors hover:bg-muted hover:text-accent [&_svg]:h-[18px] [&_svg]:w-[18px]",
+  // 40px circle with state layer + ripple
+  material:
+    "md-ripple md-state relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&_svg]:h-[22px] [&_svg]:w-[22px]",
+  // frosted-glass circle that shrinks when pressed
+  ios: "ios-glass-btn ios-press relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-foreground/75 transition-colors [&_svg]:h-5 [&_svg]:w-5",
+};
 
-const SIDEBAR_COLLAPSED_KEY = "asta_sidebar_collapsed";
+function IconButton({ className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const theme = useUITheme();
+  return <button {...props} className={cn(ICON_BTN[theme], className)} />;
+}
 
-function SidebarLogo({ onClose, collapsed }: { onClose?: () => void; collapsed?: boolean }) {
+// ─── Navigation drawer / sidebar ──────────────────────────────────────────────
+// One nav-item list shared by the docked desktop drawer (collapses to an
+// icon-only rail) and the modal drawer used on phones/tablets. Material: the
+// active destination is a "secondary container" pill. Minimal: a glowing
+// gradient pill. Both use an ultra-slim scrollbar. (iOS has its own — IosNav.tsx.)
+
+function NavItems({ onNavigate, collapsed }: { onNavigate?: () => void; collapsed?: boolean }) {
+  const location = useLocation();
+  const { hasRole } = useAuth();
+  const material = useUITheme() === "material";
+  const items = NAV.filter(n => !n.adminOnly || hasRole("admin"));
+
+  return (
+    <nav
+      className={cn(
+        "scrollbar-slim flex-1 overflow-y-auto overflow-x-hidden",
+        material ? "space-y-1 px-3 pb-4 pt-1" : "space-y-0.5 px-2.5 py-3",
+      )}
+    >
+      {items.map(item => {
+        const active = item.end ? location.pathname === item.to : location.pathname.startsWith(item.to);
+        return (
+          <Link
+            key={item.to}
+            to={item.to}
+            onClick={onNavigate}
+            title={collapsed ? item.label : undefined}
+            aria-current={active ? "page" : undefined}
+            className={
+              material
+                ? cn(
+                    "md-ripple md-state flex h-11 items-center rounded-full text-sm font-medium transition-colors",
+                    collapsed ? "mx-auto w-11 justify-center" : "gap-3.5 px-4",
+                    active ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:text-foreground",
+                  )
+                : cn(
+                    "group relative flex h-9 items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150",
+                    collapsed ? "justify-center px-0" : "px-2.5",
+                    active ? "text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )
+            }
+            style={!material && active ? { backgroundImage: "var(--gradient-brand)", boxShadow: "0 3px 12px hsl(243 75% 59% / 0.35)" } : undefined}
+          >
+            {material ? (
+              <item.icon className="h-[22px] w-[22px] shrink-0" strokeWidth={active ? 2.2 : 1.8} />
+            ) : (
+              <item.icon className={cn("h-4 w-4 shrink-0 transition-transform duration-150", !active && "group-hover:scale-110 group-hover:text-accent")} />
+            )}
+            {!collapsed && <span className="truncate">{item.label}</span>}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+// Minimal theme: logo row at the top of the sidebar
+function MinimalSidebarLogo({ onClose, collapsed }: { onClose?: () => void; collapsed?: boolean }) {
   return (
     <div className={`flex items-center gap-2.5 h-14 shrink-0 ${collapsed ? "justify-center px-2" : "px-4"}`}>
-      <div
-        className="flex h-8 w-8 items-center justify-center rounded-lg text-white shrink-0"
-        style={{ backgroundImage: "var(--gradient-brand)", boxShadow: "0 2px 10px hsl(243 75% 59% / 0.4)" }}
-      >
-        <Building2 className="h-4 w-4" />
-      </div>
+      <BrandMark />
       {!collapsed && <span className="font-display text-[15px] font-bold text-foreground truncate">ASTA One</span>}
       {onClose && (
         <button onClick={onClose} className="ml-auto flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted shrink-0">
@@ -102,54 +176,46 @@ function SidebarLogo({ onClose, collapsed }: { onClose?: () => void; collapsed?:
   );
 }
 
-function SidebarNavList({ onNavigate, collapsed }: { onNavigate?: () => void; collapsed?: boolean }) {
-  const location = useLocation();
-  const { hasRole } = useAuth();
-  const items = NAV.filter(n => !n.adminOnly || hasRole("admin"));
+// Docked drawer (desktop). Material: sits on the page canvas, toggled from the
+// top bar. Minimal: a white sidebar with its own logo row and collapse button.
+// iOS: a floating glass sidebar.
+function NavDrawer({ collapsed, onToggle, className }: { collapsed: boolean; onToggle: () => void; className?: string }) {
+  const theme = useUITheme();
 
-  return (
-    <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-0.5">
-      {items.map(item => {
-        const active = item.end ? location.pathname === item.to : location.pathname.startsWith(item.to);
-        return (
-          <Link
-            key={item.to}
-            to={item.to}
-            onClick={onNavigate}
-            title={collapsed ? item.label : undefined}
-            className={`group relative flex items-center gap-2.5 h-9 rounded-lg text-[13px] font-medium transition-all duration-150 ${
-              collapsed ? "justify-center px-0" : "px-2.5"
-            } ${active ? "text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-            style={active ? { backgroundImage: "var(--gradient-brand)", boxShadow: "0 3px 12px hsl(243 75% 59% / 0.35)" } : undefined}
-          >
-            <item.icon className={`h-4 w-4 shrink-0 transition-transform duration-150 ${!active ? "group-hover:scale-110 group-hover:text-accent" : ""}`} />
-            {!collapsed && <span className="truncate">{item.label}</span>}
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
+  if (theme === "ios") return <IosSidebar collapsed={collapsed} className={className} />;
 
-function Sidebar() {
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1");
-  useEffect(() => { localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0"); }, [collapsed]);
+  if (theme === "material") {
+    return (
+      <aside
+        className={cn(
+          "hidden min-h-0 shrink-0 flex-col overflow-hidden transition-[width] duration-300 ease-emphasized lg:flex",
+          collapsed ? "w-[72px]" : "w-[232px]",
+          className,
+        )}
+      >
+        <NavItems collapsed={collapsed} />
+      </aside>
+    );
+  }
 
   return (
     <aside
-      className={`hidden lg:flex flex-col shrink-0 h-full bg-card border-r border-border/70 transition-[width] duration-200 ease-out ${
-        collapsed ? "w-[60px]" : "w-52"
-      }`}
+      className={cn(
+        "hidden lg:flex min-h-0 flex-col shrink-0 bg-card border-r border-border/70 transition-[width] duration-200 ease-out",
+        collapsed ? "w-[60px]" : "w-52",
+        className,
+      )}
     >
-      <SidebarLogo collapsed={collapsed} />
-      <SidebarNavList collapsed={collapsed} />
+      <MinimalSidebarLogo collapsed={collapsed} />
+      <NavItems collapsed={collapsed} />
       <div className="p-2.5 shrink-0">
         <button
-          onClick={() => setCollapsed(v => !v)}
+          onClick={onToggle}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={`flex items-center h-8 w-full rounded-lg text-muted-foreground bg-muted/50 hover:bg-muted hover:text-accent transition-colors ${
-            collapsed ? "justify-center" : "justify-center gap-1.5"
-          }`}
+          className={cn(
+            "flex items-center h-8 w-full rounded-lg text-muted-foreground bg-muted/50 hover:bg-muted hover:text-accent transition-colors",
+            collapsed ? "justify-center" : "justify-center gap-1.5",
+          )}
         >
           {collapsed ? <ChevronsRight className="h-3.5 w-3.5" /> : <><ChevronsLeft className="h-3.5 w-3.5" /><span className="text-[11px] font-medium">Collapse</span></>}
         </button>
@@ -158,25 +224,38 @@ function Sidebar() {
   );
 }
 
+// Modal drawer (phones / tablets) — Material & Minimal only; iOS uses its tab bar instead
 function MobileNavDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const material = useUITheme() === "material";
   return (
     <AnimatePresence>
       {open && (
         <>
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-[80] lg:hidden"
+            className={cn("fixed inset-0 z-[80] lg:hidden", material ? "bg-black/[0.32]" : "bg-black/40")}
             onClick={onClose}
           />
           <motion.div
             initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed left-0 top-0 bottom-0 w-60 z-[90] lg:hidden flex flex-col bg-card shadow-2xl border-r border-border/70"
+            transition={material ? { duration: 0.25, ease: [0.2, 0, 0, 1] } : { duration: 0.2, ease: "easeOut" }}
+            className={cn(
+              "fixed bottom-0 left-0 top-0 z-[90] flex flex-col lg:hidden",
+              material ? "w-72 rounded-r-[28px] bg-surface-container-low shadow-xl" : "w-60 bg-card shadow-2xl border-r border-border/70",
+            )}
           >
-            <div className="border-b border-border/70">
-              <SidebarLogo onClose={onClose} />
-            </div>
-            <SidebarNavList onNavigate={onClose} />
+            {material ? (
+              <div className="flex h-16 shrink-0 items-center gap-3 pl-5 pr-3">
+                <BrandMark />
+                <span className="font-display text-xl leading-none text-foreground">ASTA One</span>
+                <IconButton onClick={onClose} className="ml-auto" title="Close menu"><X /></IconButton>
+              </div>
+            ) : (
+              <div className="border-b border-border/70">
+                <MinimalSidebarLogo onClose={onClose} />
+              </div>
+            )}
+            <NavItems onNavigate={onClose} />
           </motion.div>
         </>
       )}
@@ -188,8 +267,77 @@ function MobileNavDrawer({ open, onClose }: { open: boolean; onClose: () => void
 
 type SearchResult = { id: string; label: string; sub: string; href: string; icon: React.ElementType };
 
+const SEARCH: Record<UITheme, {
+  pill: (open: boolean) => string; icon: string; clearBtn: string; clearIcon: string;
+  overlay: string; overlayIcon: string; dropdown: string; list: string; loading: string; empty: string;
+  item: string; itemIcon: string; itemIconSize: string; label: string; sub: string; chevron: string;
+}> = {
+  minimal: {
+    pill: (open) => cn("hidden md:flex items-center gap-2 px-3.5 h-9 w-60 rounded-full border bg-muted/60 transition-colors", open ? "border-accent" : "border-border"),
+    icon: "h-3.5 w-3.5 shrink-0 text-muted-foreground",
+    clearBtn: "",
+    clearIcon: "h-3.5 w-3.5 text-muted-foreground hover:text-foreground",
+    overlay: "md:hidden fixed left-3 right-3 top-16 z-[70] flex items-center gap-2 px-3.5 h-11 rounded-full bg-card shadow-lg border border-accent",
+    overlayIcon: "h-4 w-4",
+    dropdown: "z-[70] overflow-hidden fixed left-3 right-3 top-28 md:absolute md:left-0 md:right-auto md:top-11 md:w-80 rounded-2xl bg-card border border-border shadow-lg",
+    list: "py-1.5 max-h-72",
+    loading: "px-4 py-3",
+    empty: "px-4 py-4",
+    item: "group flex w-full items-center gap-3 text-left px-4 py-2.5 hover:bg-accent/5 transition-colors",
+    itemIcon: "h-7 w-7 rounded-lg bg-accent/10 text-accent",
+    itemIconSize: "h-3.5 w-3.5",
+    label: "text-[13px] group-hover:text-accent transition-colors",
+    sub: "text-[11px]",
+    chevron: "h-3.5 w-3.5 text-muted-foreground/40",
+  },
+  material: {
+    pill: (open) => cn(
+      "hidden items-center md:flex h-11 gap-3 rounded-full px-4 transition-all duration-200 md:w-[300px] lg:w-[380px] xl:w-[440px]",
+      open ? "bg-card shadow-md ring-1 ring-outline-variant" : "bg-surface-container-high hover:bg-surface-container-highest",
+    ),
+    icon: "h-5 w-5 shrink-0 text-muted-foreground",
+    clearBtn: "-mr-1 flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/[0.08] hover:text-foreground",
+    clearIcon: "h-4 w-4 text-muted-foreground",
+    overlay: "md:hidden fixed left-3 right-3 top-16 z-[70] flex items-center rounded-full bg-card shadow-lg h-12 gap-3 px-4 ring-1 ring-outline-variant",
+    overlayIcon: "h-5 w-5",
+    dropdown: "z-[70] overflow-hidden fixed left-3 right-3 top-[7.5rem] rounded-[20px] bg-popover shadow-lg md:absolute md:left-auto md:right-0 md:top-[3.25rem] md:w-[420px]",
+    list: "max-h-80 py-2",
+    loading: "px-5 py-4",
+    empty: "px-5 py-6",
+    item: "group flex w-full items-center gap-3 text-left md-ripple md-state px-4 py-2.5",
+    itemIcon: "h-9 w-9 rounded-full bg-primary-container text-on-primary-container",
+    itemIconSize: "h-[18px] w-[18px]",
+    label: "text-sm",
+    sub: "text-xs",
+    chevron: "h-4 w-4 text-muted-foreground/50",
+  },
+  ios: {
+    pill: (open) => cn(
+      "hidden items-center md:flex h-10 gap-2.5 rounded-full px-3.5 transition-all duration-200 md:w-[260px] lg:w-[340px]",
+      open ? "bg-white/90 shadow-md ring-2 ring-primary/40" : "bg-black/[0.06] hover:bg-black/[0.08]",
+    ),
+    icon: "h-[18px] w-[18px] shrink-0 text-muted-foreground",
+    clearBtn: "flex h-5 w-5 items-center justify-center rounded-full bg-black/25 text-white",
+    clearIcon: "h-3 w-3 text-white",
+    overlay: "ios-glass-strong md:hidden fixed left-3 right-3 top-[4.75rem] z-[70] flex h-12 items-center gap-2.5 rounded-full px-4",
+    overlayIcon: "h-[18px] w-[18px]",
+    dropdown: "ios-glass-sheet z-[70] overflow-hidden fixed left-3 right-3 top-[8.25rem] rounded-[24px] md:absolute md:left-auto md:right-0 md:top-12 md:w-[420px]",
+    list: "max-h-80 py-2",
+    loading: "px-5 py-4",
+    empty: "px-5 py-6",
+    item: "group ios-press flex w-full items-center gap-3 text-left px-4 py-2.5 hover:bg-black/[0.04]",
+    itemIcon: "h-9 w-9 rounded-[11px] bg-primary/[0.12] text-primary",
+    itemIconSize: "h-[18px] w-[18px]",
+    label: "text-[15px]",
+    sub: "text-xs",
+    chevron: "h-4 w-4 text-muted-foreground/50",
+  },
+};
+
 function GlobalSearch() {
   const navigate = useNavigate();
+  const theme = useUITheme();
+  const s = SEARCH[theme];
   const [q, setQ] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -282,20 +430,14 @@ function GlobalSearch() {
 
   return (
     <div ref={wrapRef} className="relative">
-      {/* Mobile: icon-only trigger — the full pill doesn't fit the header at phone widths */}
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="md:hidden flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground bg-muted/60 hover:bg-muted hover:text-foreground transition-colors shrink-0"
-        title="Search"
-      >
-        <Search className="h-4 w-4" />
-      </button>
+      {/* Mobile: icon-only trigger — the full search bar doesn't fit at phone widths */}
+      <IconButton onClick={() => setOpen(v => !v)} className="md:hidden" title="Search">
+        <Search />
+      </IconButton>
 
-      {/* Desktop: inline pill, always visible */}
-      <div
-        className={`hidden md:flex items-center gap-2 px-3.5 h-9 w-60 rounded-full border bg-muted/60 transition-colors ${open ? "border-accent" : "border-border"}`}
-      >
-        <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+      {/* Desktop: inline search field (style depends on the theme) */}
+      <div className={s.pill(open)}>
+        <Search className={s.icon} />
         <input
           ref={inputRef}
           value={q}
@@ -305,18 +447,16 @@ function GlobalSearch() {
           className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
         />
         {q && (
-          <button onClick={() => { setQ(""); setResults([]); inputRef.current?.focus(); }}>
-            <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+          <button onClick={() => { setQ(""); setResults([]); inputRef.current?.focus(); }} className={s.clearBtn || undefined}>
+            <X className={s.clearIcon} />
           </button>
         )}
       </div>
 
       {/* Mobile: full-width input, only rendered while open (so autoFocus fires on each open) */}
       {open && (
-        <div
-          className="md:hidden fixed left-3 right-3 top-16 z-[70] flex items-center gap-2 px-3.5 h-11 rounded-full border border-accent bg-card shadow-lg"
-        >
-          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+        <div className={s.overlay}>
+          <Search className={cn("shrink-0 text-muted-foreground", s.overlayIcon)} />
           <input
             autoFocus
             value={q}
@@ -325,8 +465,8 @@ function GlobalSearch() {
             className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
           />
           {q && (
-            <button onClick={() => setQ("")}>
-              <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+            <button onClick={() => setQ("")} className={s.clearBtn || undefined}>
+              <X className={cn(s.clearIcon, theme === "minimal" && "h-4 w-4")} />
             </button>
           )}
         </div>
@@ -336,32 +476,29 @@ function GlobalSearch() {
       <AnimatePresence>
         {open && (q.length >= 2) && (
           <motion.div
-            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            initial={{ opacity: 0, y: 6, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 4, scale: 0.97 }}
+            exit={{ opacity: 0, y: 4, scale: 0.98 }}
             transition={{ duration: 0.15 }}
-            className="fixed left-3 right-3 top-28 md:absolute md:left-0 md:right-auto md:top-11 md:w-80 rounded-2xl overflow-hidden z-[70] bg-card border border-border shadow-lg"
+            className={s.dropdown}
           >
             {loading ? (
-              <div className="px-4 py-3 text-xs text-muted-foreground animate-pulse">Searching…</div>
+              <div className={cn("text-xs text-muted-foreground animate-pulse", s.loading)}>Searching…</div>
             ) : results.length === 0 ? (
-              <div className="px-4 py-4 text-sm text-muted-foreground text-center">No results for "{q}"</div>
+              <div className={cn("text-sm text-muted-foreground text-center", s.empty)}>No results for "{q}"</div>
             ) : (
-              <ul className="py-1.5 max-h-72 overflow-y-auto">
+              <ul className={cn("scrollbar-slim overflow-y-auto", s.list)}>
                 {results.map(r => (
                   <li key={r.id}>
-                    <button
-                      onClick={() => pick(r.href)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent/5 transition-colors text-left group"
-                    >
-                      <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 bg-accent/10 text-accent">
-                        <r.icon className="h-3.5 w-3.5" />
+                    <button onClick={() => pick(r.href)} className={s.item}>
+                      <div className={cn("flex shrink-0 items-center justify-center", s.itemIcon)}>
+                        <r.icon className={s.itemIconSize} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-accent transition-colors">{r.label}</p>
-                        <p className="text-[11px] text-muted-foreground truncate">{r.sub}</p>
+                        <p className={cn("truncate font-medium text-foreground", s.label)}>{r.label}</p>
+                        <p className={cn("truncate text-muted-foreground", s.sub)}>{r.sub}</p>
                       </div>
-                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                      <ChevronRight className={cn("shrink-0", s.chevron)} />
                     </button>
                   </li>
                 ))}
@@ -378,8 +515,68 @@ function GlobalSearch() {
 
 type Notif = { id: string; title: string; sub: string; icon: React.ElementType; href: string; time: string; };
 
+const NOTIF: Record<UITheme, {
+  badge: string; panel: string; header: string; title: string; chip: string; markAll: string;
+  empty: string; emptyIcon: string; list: string; item: string; itemIcon: string; itemIconSize: string;
+  itemTitle: string; itemSub: string; itemTime: string;
+}> = {
+  minimal: {
+    badge: "-top-1 -right-1 h-4 w-4 ring-2 ring-white bg-accent text-[9px] font-bold text-white",
+    panel: "z-50 overflow-hidden absolute right-0 top-11 w-80 rounded-2xl bg-card border border-border shadow-lg",
+    header: "px-4 py-3 border-b border-border",
+    title: "text-sm font-bold",
+    chip: "text-[11px] font-semibold text-white bg-accent",
+    markAll: "text-[11px] text-muted-foreground hover:text-accent transition-colors",
+    empty: "px-4 py-8",
+    emptyIcon: "text-muted-foreground/30",
+    list: "py-1 divide-y divide-border/40",
+    item: "px-4 py-3 hover:bg-accent/5 transition-colors",
+    itemIcon: "h-8 w-8 rounded-xl bg-accent/10 text-accent",
+    itemIconSize: "h-4 w-4",
+    itemTitle: "text-[13px] group-hover:text-accent transition-colors",
+    itemSub: "text-[11px]",
+    itemTime: "text-[10px] text-muted-foreground/50",
+  },
+  material: {
+    badge: "right-1 top-1 h-4 min-w-4 bg-destructive px-1 text-[10px] text-destructive-foreground",
+    panel: "z-50 overflow-hidden fixed right-3 top-16 w-[calc(100vw-1.5rem)] max-w-[360px] rounded-[20px] bg-popover shadow-lg sm:absolute sm:right-0 sm:top-[3.25rem] sm:w-[360px]",
+    header: "px-5 py-3.5",
+    title: "font-display text-base font-medium",
+    chip: "bg-primary-container text-[11px] font-medium text-on-primary-container",
+    markAll: "md-ripple md-state rounded-full px-3 py-1.5 text-xs font-medium text-primary",
+    empty: "px-5 pb-8 pt-4",
+    emptyIcon: "text-muted-foreground/40",
+    list: "pb-2",
+    item: "md-ripple md-state px-5 py-3",
+    itemIcon: "h-10 w-10 rounded-full bg-primary-container text-on-primary-container",
+    itemIconSize: "h-5 w-5",
+    itemTitle: "text-sm",
+    itemSub: "text-xs",
+    itemTime: "text-[11px]",
+  },
+  ios: {
+    badge: "right-0.5 top-0.5 h-[18px] min-w-[18px] bg-destructive px-1 text-[11px] font-semibold text-destructive-foreground",
+    panel: "ios-glass-sheet z-50 overflow-hidden fixed right-3 top-[4.75rem] w-[calc(100vw-1.5rem)] max-w-[380px] rounded-[26px] sm:absolute sm:right-0 sm:top-12 sm:w-[380px]",
+    header: "px-5 py-4",
+    title: "font-display text-[17px] font-semibold tracking-tight",
+    chip: "bg-primary/[0.14] text-[11px] font-semibold text-primary",
+    markAll: "ios-press rounded-full px-3 py-1.5 text-[13px] font-medium text-primary",
+    empty: "px-5 pb-8 pt-4",
+    emptyIcon: "text-muted-foreground/40",
+    list: "pb-2",
+    item: "ios-press px-5 py-3 hover:bg-black/[0.04]",
+    itemIcon: "h-10 w-10 rounded-[12px] bg-primary/[0.12] text-primary",
+    itemIconSize: "h-5 w-5",
+    itemTitle: "text-[15px]",
+    itemSub: "text-xs",
+    itemTime: "text-[11px]",
+  },
+};
+
 function NotificationsPanel() {
   const navigate = useNavigate();
+  const theme = useUITheme();
+  const n = NOTIF[theme];
   const [open, setOpen] = useState(false);
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [loading, setLoading] = useState(false);
@@ -461,71 +658,63 @@ function NotificationsPanel() {
 
   return (
     <div ref={wrapRef} className="relative">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="relative flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground bg-muted/60 hover:bg-muted hover:text-foreground transition-colors shrink-0"
-      >
-        <Bell className="h-4 w-4" />
+      <IconButton onClick={() => setOpen(v => !v)} title="Notifications">
+        <Bell />
         {unread > 0 && (
-          <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full ring-2 ring-white bg-accent flex items-center justify-center text-[9px] font-bold text-white">
+          <span className={cn("absolute flex items-center justify-center rounded-full font-medium leading-none", n.badge)}>
             {unread > 9 ? "9+" : unread}
           </span>
         )}
-      </button>
+      </IconButton>
 
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            initial={{ opacity: 0, y: 6, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 4, scale: 0.97 }}
+            exit={{ opacity: 0, y: 4, scale: 0.98 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-11 w-80 rounded-2xl overflow-hidden z-50 bg-card border border-border shadow-lg"
+            className={n.panel}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className={cn("flex items-center justify-between", n.header)}>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-foreground">Notifications</h3>
+                <h3 className={cn("text-foreground", n.title)}>Notifications</h3>
                 {unread > 0 && (
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full text-white bg-accent">
-                    {unread}
-                  </span>
+                  <span className={cn("rounded-full px-2 py-0.5", n.chip)}>{unread}</span>
                 )}
               </div>
               {unread > 0 && (
-                <button
-                  onClick={() => setNotifs([])}
-                  className="text-[11px] text-muted-foreground hover:text-accent transition-colors"
-                >
+                <button onClick={() => setNotifs([])} className={n.markAll}>
                   Mark all read
                 </button>
               )}
             </div>
 
             {loading ? (
-              <div className="px-4 py-6 text-center text-sm text-muted-foreground animate-pulse">Loading…</div>
+              <div className="flex justify-center px-5 py-8"><Loader size={32} /></div>
             ) : notifs.length === 0 ? (
-              <div className="px-4 py-8 text-center">
-                <Bell className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+              <div className={cn("text-center", n.empty)}>
+                <Bell className={cn("mx-auto mb-2 h-8 w-8", n.emptyIcon)} />
                 <p className="text-sm text-muted-foreground">All caught up!</p>
               </div>
             ) : (
-              <ul className="py-1 max-h-80 overflow-y-auto divide-y divide-border/40">
-                {notifs.map(n => (
-                  <li key={n.id}>
+              <ul className={cn("scrollbar-slim max-h-80 overflow-y-auto", n.list)}>
+                {notifs.map(x => (
+                  <li key={x.id}>
                     <button
-                      onClick={() => { setNotifs(prev => prev.filter(x => x.id !== n.id)); navigate(n.href); setOpen(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/5 transition-colors text-left group"
+                      onClick={() => { setNotifs(prev => prev.filter(y => y.id !== x.id)); navigate(x.href); setOpen(false); }}
+                      className={cn("group flex w-full items-center gap-3 text-left", n.item)}
                     >
-                      <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0 bg-accent/10 text-accent">
-                        <n.icon className="h-4 w-4" />
+                      <div className={cn("flex shrink-0 items-center justify-center", n.itemIcon)}>
+                        <x.icon className={n.itemIconSize} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-accent transition-colors">{n.title}</p>
-                        <p className="text-[11px] text-muted-foreground truncate">{n.sub}</p>
+                        <p className={cn("truncate font-medium text-foreground", n.itemTitle)}>{x.title}</p>
+                        <p className={cn("truncate text-muted-foreground", n.itemSub)}>{x.sub}</p>
                       </div>
-                      {n.time && (
-                        <span className="text-[10px] text-muted-foreground/50 shrink-0 ml-1">{n.time}</span>
+                      {x.time && (
+                        <span className={cn("ml-1 shrink-0 text-muted-foreground", n.itemTime)}>{x.time}</span>
                       )}
                     </button>
                   </li>
@@ -541,9 +730,34 @@ function NotificationsPanel() {
 
 // ─── User Avatar Menu ─────────────────────────────────────────────────────────
 
+const AVATAR_MENU: Record<UITheme, string> = {
+  minimal: "top-11 w-52 rounded-2xl bg-card border border-border shadow-lg",
+  material: "top-[3.25rem] w-[280px] rounded-[28px] bg-popover shadow-lg",
+  ios: "ios-glass-sheet top-12 w-[290px] rounded-[28px]",
+};
+const AVATAR_ACTION: Record<UITheme, { base: string; danger: string; icon: string }> = {
+  minimal: {
+    base: "w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-accent/5 transition-colors text-left text-[13px] text-foreground hover:text-accent disabled:opacity-60",
+    danger: "w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-red-50 transition-colors text-left text-[13px] text-red-500",
+    icon: "h-3.5 w-3.5",
+  },
+  material: {
+    base: "md-ripple md-state flex h-11 w-full items-center gap-3 rounded-full px-4 text-left text-sm font-medium text-foreground disabled:opacity-60",
+    danger: "md-ripple md-state flex h-11 w-full items-center gap-3 rounded-full px-4 text-left text-sm font-medium text-destructive",
+    icon: "h-[18px] w-[18px] text-muted-foreground",
+  },
+  ios: {
+    base: "ios-press flex h-12 w-full items-center gap-3 rounded-2xl px-4 text-left text-[15px] font-medium text-foreground hover:bg-black/[0.04] disabled:opacity-60",
+    danger: "ios-press flex h-12 w-full items-center gap-3 rounded-2xl px-4 text-left text-[15px] font-medium text-destructive hover:bg-destructive/[0.06]",
+    icon: "h-[18px] w-[18px] text-primary",
+  },
+};
+
 function UserAvatarMenu() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const theme = useUITheme();
+  const act = AVATAR_ACTION[theme];
   const [open, setOpen] = useState(false);
   const { avatarUrl, pendingImage, cropOpen, uploading, uploadError, selectFile, cancelCrop, confirmCrop } = useAvatarUpload();
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -569,80 +783,124 @@ function UserAvatarMenu() {
     setOpen(false);
   };
 
+  const gradientAvatar = { background: "linear-gradient(135deg, hsl(258 90% 66%), hsl(243 75% 59%))" };
+  const centred = theme !== "minimal"; // Material + iOS: Google/Apple-style account card
+
   return (
     <div ref={wrapRef} className="relative">
-      <button onClick={() => setOpen(v => !v)} className="shrink-0 focus:outline-none">
-        {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt="avatar"
-            className="h-11 w-11 rounded-xl object-cover"
-            style={{ boxShadow: "0 4px 12px hsl(243 75% 59% / 0.4)" }}
-          />
-        ) : (
-          <div
-            className="h-11 w-11 rounded-xl flex items-center justify-center text-base font-bold text-white"
-            style={{
-              background: "linear-gradient(135deg, hsl(258 90% 66%), hsl(243 75% 59%))",
-              boxShadow: "0 4px 12px hsl(243 75% 59% / 0.4)",
-            }}
-          >
-            {initial}
-          </div>
-        )}
-      </button>
+      {theme === "material" ? (
+        <button
+          onClick={() => setOpen(v => !v)}
+          title={user?.email ?? "Account"}
+          className="md-ripple flex h-10 w-10 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="avatar" className="h-9 w-9 rounded-full object-cover" />
+          ) : (
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-base font-medium text-on-primary-container">
+              {initial}
+            </div>
+          )}
+        </button>
+      ) : theme === "ios" ? (
+        <button
+          onClick={() => setOpen(v => !v)}
+          title={user?.email ?? "Account"}
+          className="ios-press flex h-10 w-10 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="avatar" className="h-10 w-10 rounded-full object-cover ring-2 ring-white/80" />
+          ) : (
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[15px] font-semibold text-white ring-2 ring-white/80"
+              style={{ backgroundImage: "linear-gradient(160deg, #5AC8FA, #007AFF)" }}
+            >
+              {initial}
+            </div>
+          )}
+        </button>
+      ) : (
+        <button onClick={() => setOpen(v => !v)} className="shrink-0 focus:outline-none">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="avatar" className="h-11 w-11 rounded-xl object-cover" style={{ boxShadow: "0 4px 12px hsl(243 75% 59% / 0.4)" }} />
+          ) : (
+            <div
+              className="h-11 w-11 rounded-xl flex items-center justify-center text-base font-bold text-white"
+              style={{ ...gradientAvatar, boxShadow: "0 4px 12px hsl(243 75% 59% / 0.4)" }}
+            >
+              {initial}
+            </div>
+          )}
+        </button>
+      )}
 
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            initial={{ opacity: 0, y: 6, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 4, scale: 0.97 }}
+            exit={{ opacity: 0, y: 4, scale: 0.98 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-11 w-52 rounded-2xl overflow-hidden z-50 bg-card border border-border shadow-lg"
+            className={cn("absolute right-0 z-50 overflow-hidden", AVATAR_MENU[theme])}
           >
             {/* User info */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
-              <div className="shrink-0">
+            {centred ? (
+              <div className="flex flex-col items-center px-5 pb-3 pt-6 text-center">
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt="avatar" className="h-14 w-14 rounded-xl object-cover" />
-                ) : (
+                  <img src={avatarUrl} alt="avatar" className="h-16 w-16 rounded-full object-cover" />
+                ) : theme === "ios" ? (
                   <div
-                    className="h-14 w-14 rounded-xl flex items-center justify-center text-lg font-bold text-white"
-                    style={{ background: "linear-gradient(135deg, hsl(258 90% 66%), hsl(243 75% 59%))" }}
+                    className="flex h-16 w-16 items-center justify-center rounded-full font-display text-2xl font-semibold text-white"
+                    style={{ backgroundImage: "linear-gradient(160deg, #5AC8FA, #007AFF)" }}
                   >
                     {initial}
                   </div>
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-container font-display text-2xl text-on-primary-container">
+                    {initial}
+                  </div>
                 )}
+                <p className="mt-3 max-w-full truncate font-display text-base font-medium text-foreground">{user?.email?.split("@")[0]}</p>
+                <p className="max-w-full truncate text-xs text-muted-foreground">{user?.email}</p>
               </div>
-              <div className="min-w-0">
-                <p className="text-[12px] font-semibold text-foreground truncate">{user?.email?.split("@")[0]}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
+            ) : (
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+                <div className="shrink-0">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="avatar" className="h-14 w-14 rounded-xl object-cover" />
+                  ) : (
+                    <div className="h-14 w-14 rounded-xl flex items-center justify-center text-lg font-bold text-white" style={gradientAvatar}>
+                      {initial}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[12px] font-semibold text-foreground truncate">{user?.email?.split("@")[0]}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Actions */}
-            <div className="py-1.5">
+            <div className={centred ? "space-y-1 px-3 pb-3" : "py-1.5"}>
               {uploadError && (
-                <p className="mx-4 mb-2 text-[11px] text-red-500 bg-red-50 rounded-lg px-3 py-2 leading-tight">
+                <p
+                  className={cn(
+                    "mb-2 rounded-lg px-3 py-2 text-[11px] leading-tight",
+                    theme === "minimal" ? "mx-4 text-red-500 bg-red-50" : "bg-error-container text-on-error-container",
+                  )}
+                >
                   {uploadError.includes("Bucket not found")
                     ? "Storage bucket 'avatars' not found. Create it in Supabase → Storage."
                     : uploadError}
                 </p>
               )}
-              <button
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-accent/5 transition-colors text-left text-[13px] text-foreground hover:text-accent disabled:opacity-60"
-              >
-                <Camera className="h-3.5 w-3.5 shrink-0" />
+              <button onClick={() => fileRef.current?.click()} disabled={uploading} className={act.base}>
+                <Camera className={cn("shrink-0", act.icon)} />
                 {uploading ? "Uploading…" : "Upload photo"}
               </button>
-              <button
-                onClick={async () => { await signOut(); navigate("/auth"); }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-red-50 transition-colors text-left text-[13px] text-red-500"
-              >
-                <LogOut className="h-3.5 w-3.5 shrink-0" />
+              <button onClick={async () => { await signOut(); navigate("/auth"); }} className={act.danger}>
+                <LogOut className={cn("shrink-0", theme === "ios" ? "h-[18px] w-[18px]" : act.icon.replace("text-muted-foreground", ""))} />
                 Sign out
               </button>
             </div>
@@ -656,45 +914,75 @@ function UserAvatarMenu() {
   );
 }
 
-// ─── Top header ───────────────────────────────────────────────────────────────
+// ─── Top bars ─────────────────────────────────────────────────────────────────
 
-function TopHeader({ title, navStyle, onMenuClick }: { title?: string; navStyle: NavStyle; onMenuClick: () => void }) {
+type BarProps = { title?: string; navStyle: NavStyle; onMenuClick: () => void; className?: string };
+
+// MATERIAL — Google-Workspace-style bar: menu · brand · (back + page title) … search · bell · account.
+// Sits flush on the page canvas (no border/shadow) like an M3 small top app bar.
+function TopAppBar({ title, navStyle, onMenuClick, className }: BarProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isHome = location.pathname === "/admin";
+  const homeTo = navStyle === "sidebar" ? "/admin/dashboard" : "/admin";
+  return (
+    <header className={cn("z-30 flex h-16 shrink-0 items-center gap-1 bg-background px-2 sm:px-4", className)}>
+      {/* Menu — collapses the drawer on desktop, opens the modal drawer on phones */}
+      {navStyle === "sidebar" && (
+        <IconButton onClick={onMenuClick} title="Menu"><Menu /></IconButton>
+      )}
+
+      {/* Brand — jumps to the home destination for the current navigation style */}
+      <Link
+        to={homeTo}
+        title="Home"
+        className="md-ripple md-state mr-1 flex items-center gap-2.5 rounded-full py-1 pl-1 pr-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <BrandMark className="h-8 w-8 rounded-[10px]" />
+        <span className="hidden font-display text-[20px] leading-none text-foreground sm:block">ASTA One</span>
+      </Link>
+
+      {/* Back — return to wherever you came from, not just Home */}
+      {!isHome && (
+        <IconButton onClick={() => navigate(-1)} title="Back"><ArrowLeft /></IconButton>
+      )}
+
+      {title && (
+        <div className="flex min-w-0 items-center gap-1">
+          <ChevronRight className="hidden h-4 w-4 shrink-0 text-muted-foreground/50 md:block" />
+          <h1 className="min-w-0 truncate font-display text-base font-medium text-foreground">{title}</h1>
+        </div>
+      )}
+
+      <div className="flex-1" />
+
+      <GlobalSearch />
+      <NotificationsPanel />
+      <UserAvatarMenu />
+    </header>
+  );
+}
+
+// MINIMAL — the earlier flat white header with back / home buttons and a breadcrumb
+function TopHeader({ title, navStyle, onMenuClick, className }: BarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname === "/admin";
   return (
-    <header className="shrink-0 z-30 flex flex-col bg-card border-b border-border shadow-sm">
+    <header className={cn("shrink-0 z-30 flex flex-col bg-card border-b border-border shadow-sm", className)}>
       <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
         {/* Hamburger — opens the mobile nav drawer; only relevant in sidebar mode */}
         {navStyle === "sidebar" && (
-          <button
-            onClick={onMenuClick}
-            title="Menu"
-            className="lg:hidden flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground bg-muted/60 hover:bg-muted hover:text-accent transition-colors shrink-0"
-          >
-            <Menu className="h-4.5 w-4.5" />
-          </button>
+          <IconButton onClick={onMenuClick} title="Menu" className="lg:hidden"><Menu /></IconButton>
         )}
 
         {/* Back — return to wherever you came from, not just Home */}
         {!isHome && (
-          <button
-            onClick={() => navigate(-1)}
-            title="Back"
-            className="flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground bg-muted/60 hover:bg-muted hover:text-accent transition-colors shrink-0"
-          >
-            <ArrowLeft className="h-4.5 w-4.5" />
-          </button>
+          <IconButton onClick={() => navigate(-1)} title="Back"><ArrowLeft /></IconButton>
         )}
 
         {/* Home — sidebar mode: jump to Dashboard; tile mode: back to the tile launcher */}
-        <button
-          onClick={() => navigate(navStyle === "sidebar" ? "/admin/dashboard" : "/admin")}
-          title="Home"
-          className="flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground bg-muted/60 hover:bg-muted hover:text-accent transition-colors shrink-0"
-        >
-          <Home className="h-4.5 w-4.5" />
-        </button>
+        <IconButton onClick={() => navigate(navStyle === "sidebar" ? "/admin/dashboard" : "/admin")} title="Home"><Home /></IconButton>
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 min-w-0 mr-2">
@@ -710,22 +998,57 @@ function TopHeader({ title, navStyle, onMenuClick }: { title?: string; navStyle:
 
         <div className="flex-1" />
 
-        {/* Global search */}
         <GlobalSearch />
-
-        {/* Notifications bell */}
         <NotificationsPanel />
-
-        {/* User avatar + menu */}
         <UserAvatarMenu />
       </div>
     </header>
   );
 }
 
+// iOS — a floating glass toolbar: (sidebar toggle | brand) · back · inline title … search · bell · account.
+// Page content scrolls *underneath* it, which is what makes the glass read as glass.
+function IosTopBar({ title, navStyle, onMenuClick, className }: BarProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isHome = location.pathname === "/admin";
+  const homeTo = navStyle === "sidebar" ? "/admin/dashboard" : "/admin";
+  return (
+    <header className={cn("relative z-30 mx-3 mt-3 flex h-14 items-center gap-2 rounded-[28px] px-2.5", className)}>
+      {/* Glass lives on its own layer: a backdrop-filter on the header itself would trap the
+          fixed-position search / notification popups inside it. */}
+      <div aria-hidden className="ios-glass-strong pointer-events-none absolute inset-0 -z-10 rounded-[inherit]" />
+
+      {navStyle === "sidebar" && (
+        <IconButton onClick={onMenuClick} title="Sidebar" className="hidden lg:flex"><PanelLeft /></IconButton>
+      )}
+
+      {/* Brand: always in tile mode; on phones in sidebar mode (the sidebar carries it on desktop) */}
+      <Link to={homeTo} title="Home" className={cn("ios-press flex items-center gap-2.5 pl-0.5 pr-1", navStyle === "sidebar" && "lg:hidden")}>
+        <BrandMark className="h-9 w-9" />
+        <span className={cn("hidden font-display text-[17px] font-semibold tracking-tight text-foreground", navStyle !== "sidebar" && "sm:block")}>ASTA One</span>
+      </Link>
+
+      {!isHome && (
+        <IconButton onClick={() => navigate(-1)} title="Back"><ChevronLeft /></IconButton>
+      )}
+
+      {title && (
+        <h1 className="min-w-0 truncate font-display text-[17px] font-semibold tracking-[-0.022em] text-foreground">{title}</h1>
+      )}
+
+      <div className="flex-1" />
+
+      <GlobalSearch />
+      <NotificationsPanel />
+      <UserAvatarMenu />
+    </header>
+  );
+}
+
 // ─── Layout root ──────────────────────────────────────────────────────────────
 // AdminShell is mounted ONCE by the router (as the parent element of a
-// nested "/admin/*" route tree) — the sidebar, header, AIAssistant and
+// nested "/admin/*" route tree) — the nav, app bar, AIAssistant and
 // What's-New popup all live here and stay mounted across navigation.
 // Individual pages render only their own content into <Outlet/>, so
 // switching modules no longer remounts the whole chrome (which used to
@@ -737,50 +1060,97 @@ const PageTitleContext = createContext<(title?: string) => void>(() => {});
 
 export const AdminShell = () => {
   const navStyle = useNavStyle();
+  const theme = useUITheme();
+  const material = theme === "material";
+  const ios = theme === "ios";
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(NAV_COLLAPSED_KEY) === "1");
   const [title, setTitle] = useState<string | undefined>(undefined);
   const location = useLocation();
+
+  useEffect(() => { localStorage.setItem(NAV_COLLAPSED_KEY, collapsed ? "1" : "0"); }, [collapsed]);
 
   // Close the mobile drawer whenever the nav style setting changes away from
   // "sidebar" (e.g. switched in Settings while the drawer happened to be open).
   useEffect(() => { if (navStyle !== "sidebar") setDrawerOpen(false); }, [navStyle]);
 
+  // Material/iOS: the menu button collapses/expands the docked sidebar on desktop.
+  // Material also opens its modal drawer on phones (iOS uses the tab bar there).
+  const onMenuClick = () => {
+    if ((material || ios) && window.matchMedia("(min-width: 1024px)").matches) setCollapsed(v => !v);
+    else setDrawerOpen(true);
+  };
+
+  const page = (
+    <PageTitleContext.Provider value={setTitle}>
+      {/* A nested Suspense boundary here (instead of relying on the top-level
+          one in App.tsx) means a not-yet-downloaded page chunk only blanks the
+          content area while it loads — the nav and app bar never unmount for it. */}
+      <Suspense fallback={<PageLoader />}>
+        <Outlet />
+      </Suspense>
+    </PageTitleContext.Provider>
+  );
+
+  const shellStyle = {
+    ...(theme === "minimal" ? { background: "hsl(var(--muted))" } : {}),
+    zoom: 0.9,
+    height: "calc(100vh / 0.9)",      /* compensate zoom so it fills full viewport */
+    maxHeight: "calc(100vh / 0.9)",
+  } as any;
+
+  // One grid for every theme so <main> (and therefore the current page and any
+  // unsaved form state) keeps its place in the tree when the theme is switched.
+  //   Material:  ┌ app bar (full width) ┐      Minimal:  ┌ nav │ header ┐
+  //              └ nav │ main ───────────┘                 └ nav │ main ──┘
+  //   iOS:       ┌ glass nav │ glass toolbar (floating over main) ┐
   return (
     <>
     <div
-      className="w-full flex overflow-hidden"
-      style={{
-        background: "hsl(var(--muted))",
-        zoom: 0.9,
-        height: "calc(100vh / 0.9)",      /* compensate zoom so it fills full viewport */
-        maxHeight: "calc(100vh / 0.9)",
-      } as any}
+      className={cn(
+        "grid w-full grid-cols-[auto_minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden",
+        material && "bg-background",
+      )}
+      style={shellStyle}
     >
-      {navStyle === "sidebar" && <Sidebar />}
-      {navStyle === "sidebar" && <MobileNavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />}
+      {ios ? (
+        <IosTopBar className="col-start-2 row-start-1 self-start" title={title} navStyle={navStyle} onMenuClick={onMenuClick} />
+      ) : material ? (
+        <TopAppBar className="col-span-2 row-start-1" title={title} navStyle={navStyle} onMenuClick={onMenuClick} />
+      ) : (
+        <TopHeader className="col-start-2 row-start-1" title={title} navStyle={navStyle} onMenuClick={onMenuClick} />
+      )}
 
-      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        <TopHeader title={title} navStyle={navStyle} onMenuClick={() => setDrawerOpen(true)} />
+      {navStyle === "sidebar" && (
+        <NavDrawer
+          className={material ? "col-start-1 row-start-2" : "col-start-1 row-span-2 row-start-1"}
+          collapsed={collapsed}
+          onToggle={() => setCollapsed(v => !v)}
+        />
+      )}
+      {navStyle === "sidebar" && !ios && <MobileNavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />}
 
-        <motion.main
-          key={location.pathname}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.18, ease: "easeOut" }}
-          className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6"
-        >
-          <PageTitleContext.Provider value={setTitle}>
-            {/* A nested Suspense boundary here (instead of relying on the
-                top-level one in App.tsx) means a not-yet-downloaded page
-                chunk only blanks the content area while it loads — the
-                sidebar and header never unmount for it. */}
-            <Suspense fallback={<div className="flex h-40 items-center justify-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" /></div>}>
-              <Outlet />
-            </Suspense>
-          </PageTitleContext.Provider>
-        </motion.main>
-      </div>
+      <motion.main
+        key={location.pathname}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={material ? { duration: 0.2, ease: [0.2, 0, 0, 1] } : ios ? { duration: 0.3, ease: [0.32, 0.72, 0, 1] } : { duration: 0.18, ease: "easeOut" }}
+        className={cn(
+          "col-start-2 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden",
+          ios
+            // content runs under the floating toolbar (top) and tab bar (bottom, phones)
+            ? cn("row-span-2 row-start-1 px-4 pt-[84px] lg:px-6 lg:pb-8", navStyle === "sidebar" ? "pb-28" : "pb-8")
+            : "row-start-2",
+          // With the drawer the nav items already inset content by 12px; without it (tiles mode) match the app bar's 24px
+          material && cn("px-4 pb-6 pt-2", navStyle === "sidebar" ? "lg:pl-3 lg:pr-6" : "lg:px-6"),
+          theme === "minimal" && "p-4 lg:p-6",
+        )}
+      >
+        {page}
+      </motion.main>
     </div>
+    {/* iOS phones: floating glass tab bar (kept outside the zoomed shell so it anchors to the real viewport) */}
+    {ios && navStyle === "sidebar" && <IosTabBar />}
     <AIAssistant />
     <WhatsNewDialog />
     </>

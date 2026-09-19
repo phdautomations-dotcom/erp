@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Download, Trash2, Printer, Search } from "lucide-react";
+import { Plus, Download, Trash2, Printer, Search } from "@/lib/icons";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";

@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialogProvider";
+import { Loader } from "@/components/ui/loader";
 
 // Every route is its own chunk, downloaded only when a user actually visits
 // it — otherwise a single visit to the login page would pull in every admin
@@ -38,7 +39,7 @@ const queryClient = new QueryClient();
 
 const RouteFallback = () => (
   <div className="flex h-screen items-center justify-center">
-    <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" />
+    <Loader size={48} />
   </div>
 );
 

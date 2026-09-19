@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { fmtINR, fmtDate } from "@/lib/format";
-import { Wallet, FileText, AlertTriangle, Inbox, Download, Upload, Wrench, PhoneCall, ClipboardCheck, TrendingUp, TrendingDown, Users, Banknote, Sparkles, Copy, MessageCircle, Package, Clock } from "lucide-react";
+import { Wallet, FileText, AlertTriangle, Inbox, Download, Upload, Wrench, PhoneCall, ClipboardCheck, TrendingUp, TrendingDown, Users, Banknote, Sparkles, Copy, MessageCircle, Package, Clock } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -60,7 +60,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(" ");
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-8" preserveAspectRatio="none">
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-full min-h-7 w-full" preserveAspectRatio="none">
       <polyline points={points} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -470,26 +470,28 @@ export default function Dashboard() {
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Two tiles per row even on phones (less scrolling); on small screens the
+          tiles get tighter padding/type and the sparkline moves beside the icon. */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {cards.map((c, i) => (
           <motion.div
             key={c.label}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 + 0.1, duration: 0.4, ease: "easeOut" }}
-            className={`relative overflow-hidden rounded-2xl border border-border/50 bg-card p-6 shadow-sm transition-shadow hover:shadow-md ${c.to ? "cursor-pointer" : ""}`}
+            className={`relative min-w-0 overflow-hidden rounded-2xl border border-border/50 bg-card p-3.5 shadow-sm transition-shadow hover:shadow-md sm:p-6 ${c.to ? "cursor-pointer" : ""}`}
             onClick={() => c.to && navigate(c.to)}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${COLOR_MAP[c.color].bg} ${COLOR_MAP[c.color].text}`}>
-                <c.icon className="h-5 w-5" />
+            <div className="mb-2.5 flex items-center justify-between sm:mb-4">
+              <div className={`flex h-9 w-9 items-center justify-center rounded-xl sm:h-11 sm:w-11 ${COLOR_MAP[c.color].bg} ${COLOR_MAP[c.color].text}`}>
+                <c.icon className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
               </div>
             </div>
-            <span className="text-xs font-medium text-muted-foreground">{c.label}</span>
-            <div className="font-display text-2xl font-bold tracking-tight text-foreground mt-0.5">{c.value}</div>
+            <span className="block truncate text-xs font-medium text-muted-foreground">{c.label}</span>
+            <div className="mt-0.5 truncate font-display text-lg font-bold tracking-tight text-foreground sm:text-2xl">{c.value}</div>
             {c.spark && <TrendBadge pct={trendPct(c.spark)} />}
             {c.spark && (
-              <div className="absolute right-4 bottom-4 w-20 h-9 pointer-events-none opacity-90">
+              <div className="pointer-events-none absolute right-3 top-3 h-7 w-14 opacity-90 sm:bottom-4 sm:right-4 sm:top-auto sm:h-9 sm:w-20">
                 <Sparkline data={c.spark} color={SPARK_STROKE[c.color]} />
               </div>
             )}
@@ -497,15 +499,15 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
         {miniStats.map((m) => (
           <div
             key={m.label}
-            className="flex items-center gap-3 rounded-2xl border border-border/50 bg-card p-4 shadow-sm cursor-pointer transition-shadow hover:shadow-md"
+            className="flex min-w-0 cursor-pointer items-center gap-2.5 rounded-2xl border border-border/50 bg-card p-3 shadow-sm transition-shadow hover:shadow-md sm:gap-3 sm:p-4"
             onClick={() => navigate(m.to)}
           >
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${COLOR_MAP[m.color].bg} ${COLOR_MAP[m.color].text}`}>
-              <m.icon className="h-5 w-5" />
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10 ${COLOR_MAP[m.color].bg} ${COLOR_MAP[m.color].text}`}>
+              <m.icon className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground truncate">{m.label}</p>
@@ -543,8 +545,8 @@ export default function Dashboard() {
             <ComposedChart data={pnlChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
               <defs>
                 <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(258 90% 66%)" />
-                  <stop offset="100%" stopColor="hsl(243 75% 59%)" />
+                  <stop offset="0%" stopColor="hsl(var(--gradient-brand-start))" />
+                  <stop offset="100%" stopColor="hsl(var(--gradient-brand-end))" />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
@@ -698,8 +700,8 @@ export default function Dashboard() {
               <AreaChart data={salesOverview.data} margin={{ top: 5, right: 12, left: 4, bottom: 0 }}>
                 <defs>
                   <linearGradient id="salesAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(258 90% 66%)" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="hsl(258 90% 66%)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="hsl(var(--gradient-brand-start))" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="hsl(var(--gradient-brand-start))" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} interval={6} />
@@ -709,7 +711,7 @@ export default function Dashboard() {
                   formatter={(value: number) => fmtINR(value)}
                   labelFormatter={(label) => label}
                 />
-                <Area type="monotone" dataKey="value" name="Sales" stroke="hsl(258 90% 66%)" strokeWidth={2} fill="url(#salesAreaGradient)" />
+                <Area type="monotone" dataKey="value" name="Sales" stroke="hsl(var(--gradient-brand-start))" strokeWidth={2} fill="url(#salesAreaGradient)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>

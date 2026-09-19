@@ -1,11 +1,12 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { Loader } from "@/components/ui/loader";
 
 export const ProtectedRoute = ({ adminOnly = false }: { adminOnly?: boolean }) => {
   const { user, loading, hasRole, roles } = useAuth();
   const location = useLocation();
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground text-sm">Loading…</div>;
+    return <div className="min-h-screen flex items-center justify-center"><Loader size={48} /></div>;
   }
   if (!user) return <Navigate to="/auth" state={{ from: location }} replace />;
   if (roles.length === 0) {

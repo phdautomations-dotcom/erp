@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
-import { Plus, Trash2, Download, ArrowRight, ScanLine, Sparkles, Pencil } from "lucide-react";
+import { Plus, Trash2, Download, ArrowRight, ScanLine, Sparkles, Pencil } from "@/lib/icons";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";

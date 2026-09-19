@@ -2,7 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ASTA ONE — Minimal Flat Design System (indigo/violet) */
+/* ASTA ONE — three selectable UI themes (chosen in Settings → Appearance)
+
+   1. MATERIAL (default) — Google Material Design 3 / Material You.
+      Seed #4F46E5 → tonal palettes generated with @material/material-color-utilities.
+      --md-* are the M3 colour roles (HSL channels).
+   2. MINIMAL — the earlier flat indigo/violet design, active when
+      <html data-ui-theme="minimal">.
+   3. iOS — Apple "Liquid Glass": frosted glass over a soft colour wallpaper, systemBlue,
+      capsule controls, SF-style icons. Active when <html data-ui-theme="ios">.
+
+   All map onto the same shadcn tokens (--background, --card, --accent …), so
+   every existing `bg-card`, `text-muted-foreground`, `border-border` … utility
+   follows whichever theme is active. Shape / font / elevation / motion are
+   variables too (--radius, --font-*, --shadow-*, --ease-default). */
 
 @layer base {
   :root {
@@ -12,57 +25,187 @@
        near-white and invisible against our white input backgrounds. */
     color-scheme: light;
 
-    /* ── Page surface: pale lavender-white ── */
+    /* ═════════════ MATERIAL 3 (default) ═════════════ */
+
+    /* Colour roles (light) */
+    --md-primary: 243.4 74% 57.8%;
+    --md-on-primary: 0 0% 100%;
+    --md-primary-container: 245.6 100% 93.7%;
+    --md-on-primary-container: 248.6 100% 20.6%;
+    --md-secondary: 245.7 10.2% 40.2%;
+    --md-on-secondary: 0 0% 100%;
+    --md-secondary-container: 247.2 67.6% 92.7%;
+    --md-on-secondary-container: 240 25.7% 13.7%;
+    --md-tertiary: 327.7 19% 40.2%;
+    --md-on-tertiary: 0 0% 100%;
+    --md-tertiary-container: 332.3 100% 92.4%;
+    --md-on-tertiary-container: 324 46.9% 12.5%;
+    --md-error: 0 75.5% 41.6%;
+    --md-on-error: 0 0% 100%;
+    --md-error-container: 5.9 100% 92%;
+    --md-on-error-container: 358.2 100% 12.7%;
+    --md-surface: 288 55.6% 98.2%;
+    --md-on-surface: 255 6.9% 11.4%;
+    --md-on-surface-variant: 246.7 6% 29.2%;
+    --md-outline: 252 4.1% 48.2%;
+    --md-outline-variant: 256.4 10.5% 79.4%;
+    --md-inverse-surface: 255 4% 19.6%;
+    --md-inverse-on-surface: 288 18.5% 94.7%;
+    --md-inverse-primary: 242.9 100% 87.6%;
+    --md-surface-dim: 285 5.6% 85.9%;
+    --md-surface-bright: 288 55.6% 98.2%;
+    --md-surface-container-lowest: 0 0% 100%;
+    --md-surface-container-low: 288 23.8% 95.9%;
+    --md-surface-container: 285 12.5% 93.7%;
+    --md-surface-container-high: 288 11.6% 91.6%;
+    --md-surface-container-highest: 288 9.1% 89.2%;
+    --md-scrim: 0 0% 0%;
+
+    /* shadcn semantic tokens → Material roles */
+    --background: var(--md-surface-container-low);   /* page canvas: soft tinted surface */
+    --foreground: var(--md-on-surface);
+    --card: var(--md-surface-container-lowest);      /* cards: pure white on the tinted canvas */
+    --card-foreground: var(--md-on-surface);
+    --popover: var(--md-surface-container);          /* menus / select lists */
+    --popover-foreground: var(--md-on-surface);
+    --primary: var(--md-primary);
+    --primary-foreground: var(--md-on-primary);
+    --secondary: var(--md-secondary-container);      /* tonal buttons / selected chips */
+    --secondary-foreground: var(--md-on-secondary-container);
+    --muted: var(--md-surface-container-high);
+    --muted-foreground: var(--md-on-surface-variant);
+    /* This app uses `accent` as its brand colour (text-accent, bg-accent/10, …) */
+    --accent: var(--md-primary);
+    --accent-foreground: var(--md-on-primary);
+    --destructive: var(--md-error);
+    --destructive-foreground: var(--md-on-error);
+    --border: var(--md-outline-variant);
+    --input: var(--md-outline);
+    --ring: var(--md-primary);
+    --radius: 0.75rem;
+
+    /* Type: Google Sans for titles/numbers, Roboto for body — Google's own pairing */
+    --font-display: "Google Sans", Roboto, system-ui, sans-serif;
+    --font-sans: Roboto, system-ui, sans-serif;
+
+    /* Elevation levels 1–5 (umbra + penumbra), softened for a light UI */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.10), 0 1px 3px 1px rgb(0 0 0 / 0.06);
+    --shadow: 0 1px 2px 0 rgb(0 0 0 / 0.10), 0 1px 3px 1px rgb(0 0 0 / 0.06);
+    --shadow-md: 0 1px 2px 0 rgb(0 0 0 / 0.12), 0 2px 6px 2px rgb(0 0 0 / 0.08);
+    --shadow-lg: 0 1px 3px 0 rgb(0 0 0 / 0.14), 0 4px 8px 3px rgb(0 0 0 / 0.09);
+    --shadow-xl: 0 2px 3px 0 rgb(0 0 0 / 0.14), 0 6px 10px 4px rgb(0 0 0 / 0.09);
+    --shadow-2xl: 0 4px 4px 0 rgb(0 0 0 / 0.14), 0 8px 12px 6px rgb(0 0 0 / 0.09);
+    --md-elev-1: var(--shadow-sm);
+    --md-elev-2: var(--shadow-md);
+    --md-elev-3: var(--shadow-lg);
+
+    /* Motion: M3 "standard" easing, 200ms */
+    --ease-default: cubic-bezier(0.2, 0, 0, 1);
+    --dur-default: 200ms;
+    --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --ease-out-expo: cubic-bezier(0.2, 0, 0, 1);
+
+    /* Legacy aliases — kept so older markup keeps working, flattened to Material */
+    --neu-out: var(--md-elev-2);
+    --neu-in: inset 0 1px 3px rgb(0 0 0 / 0.12);
+    --neu-sm: var(--md-elev-1);
+    --glass-shadow: var(--md-elev-2);
+    --shadow-glow: var(--md-elev-3);
+    /* Material is flat & tonal — the old brand "gradient" is a solid primary fill */
+    --gradient-brand: linear-gradient(hsl(var(--md-primary)), hsl(var(--md-primary)));
+    --gradient-brand-start: var(--md-primary);
+    --gradient-brand-end: var(--md-primary);
+
+    /* Sidebar tokens (only used by the unused shadcn sidebar primitive) */
+    --sidebar-background: var(--md-surface-container-low);
+    --sidebar-foreground: var(--md-on-surface-variant);
+    --sidebar-primary: var(--md-primary);
+    --sidebar-primary-foreground: var(--md-on-primary);
+    --sidebar-accent: var(--md-secondary-container);
+    --sidebar-accent-foreground: var(--md-on-secondary-container);
+    --sidebar-border: var(--md-outline-variant);
+    --sidebar-ring: var(--md-primary);
+  }
+
+  /* ═════════════ MINIMAL — the earlier flat indigo design ═════════════ */
+  html[data-ui-theme="minimal"] {
+    /* Page surface: pale lavender-white · cards: solid white, flat */
     --background: 240 30% 98%;
     --foreground: 240 30% 14%;
-
-    /* ── Cards: solid white, flat (no glass/blur) ── */
     --card: 0 0% 100%;
     --card-foreground: 240 30% 14%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 240 30% 14%;
-
-    /* ── Primary: deep navy ── */
+    /* Primary: deep navy · accent: indigo/violet */
     --primary: 240 35% 14%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 240 20% 95%;
     --secondary-foreground: 240 25% 22%;
-
     --muted: 240 20% 95%;
     --muted-foreground: 240 9% 52%;
-
-    /* ── Accent: indigo/violet ── */
     --accent: 243 75% 59%;
     --accent-foreground: 0 0% 100%;
-
     --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
-
     --border: 240 16% 90%;
     --input: 240 16% 90%;
     --ring: 243 75% 59%;
     --radius: 0.875rem;
 
-    /* ── Flat, subtle shadows (no neumorphic dual-highlight) ── */
+    --font-display: "Space Grotesk", Inter, system-ui, sans-serif;
+    --font-sans: Inter, system-ui, sans-serif;
+
+    /* Flat, subtle shadows (Tailwind's stock scale) */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+    --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+    --dur-default: 150ms;
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
     --neu-out: 0 6px 16px hsl(240 25% 25% / 0.08);
     --neu-in:  inset 0 1px 4px hsl(240 25% 25% / 0.14);
     --neu-sm:  0 1px 3px hsl(240 25% 25% / 0.08), 0 1px 2px hsl(240 25% 25% / 0.05);
-
-    /* ── Glass shadows (legacy; no longer used on cards, kept for reference) ── */
-    --glass-shadow: 0 8px 32px hsl(240 30% 15% / 0.08),
-                    0 2px 8px  hsl(240 30% 15% / 0.05);
+    --glass-shadow: 0 8px 32px hsl(240 30% 15% / 0.08), 0 2px 8px hsl(240 30% 15% / 0.05);
     --shadow-glow:  0 8px 30px hsl(243 75% 59% / 0.25);
+    --md-elev-1: var(--neu-sm);
+    --md-elev-2: var(--neu-out);
+    --md-elev-3: var(--shadow-lg);
 
-    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-
-    /* ── Brand gradient: violet → indigo, used for primary CTAs and accents ── */
+    /* Brand gradient: violet → indigo, used for primary CTAs and accents */
     --gradient-brand: linear-gradient(135deg, hsl(258 90% 66%), hsl(243 75% 59%));
     --gradient-brand-start: 258 90% 66%;
     --gradient-brand-end: 243 75% 59%;
 
-    /* ── Sidebar (kept for the unused shadcn sidebar primitive; not used by AdminLayout) ── */
+    /* Material roles approximated in the minimal palette, so any shared markup
+       that uses `bg-surface-container-*` / `text-on-surface-variant` still looks right */
+    --md-primary: 243 75% 59%;
+    --md-on-primary: 0 0% 100%;
+    --md-primary-container: 243 100% 94%;
+    --md-on-primary-container: 243 75% 25%;
+    --md-secondary-container: 240 20% 95%;
+    --md-on-secondary-container: 240 25% 22%;
+    --md-surface: 240 30% 98%;
+    --md-on-surface: 240 30% 14%;
+    --md-on-surface-variant: 240 9% 52%;
+    --md-outline: 240 9% 62%;
+    --md-outline-variant: 240 16% 90%;
+    --md-surface-container-lowest: 0 0% 100%;
+    --md-surface-container-low: 240 30% 98%;
+    --md-surface-container: 240 22% 96%;
+    --md-surface-container-high: 240 20% 95%;
+    --md-surface-container-highest: 240 16% 92%;
+    --md-inverse-surface: 240 30% 14%;
+    --md-inverse-on-surface: 0 0% 98%;
+    --md-inverse-primary: 243 100% 88%;
+    --md-error-container: 0 90% 95%;
+    --md-on-error-container: 0 70% 30%;
+
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 240 25% 22%;
     --sidebar-primary: 243 75% 59%;
@@ -73,90 +216,456 @@
     --sidebar-ring: 243 75% 59%;
   }
 
-  .dark {
-    --background: 240 25% 8%;
-    --foreground: 240 20% 92%;
-    --card: 240 25% 11%;
-    --card-foreground: 240 20% 92%;
-    --popover: 240 25% 11%;
-    --popover-foreground: 240 20% 92%;
-    --primary: 243 75% 59%;
+  /* ═════════════ iOS — "Liquid Glass" ═════════════
+     Apple system colours (systemBlue #007AFF, systemRed #FF3B30 …), translucent
+     glass surfaces over a soft colour wallpaper, capsule controls, SF-style type
+     (real SF Pro on Apple devices, Inter elsewhere). The glass itself is applied by
+     the `html[data-ui-theme="ios"] .bg-card` / `.ios-glass*` rules further down. */
+  html[data-ui-theme="ios"] {
+    --background: 240 24% 96%;          /* fallback under the wallpaper */
+    --foreground: 240 10% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 9%;
+    --primary: 211 100% 50%;            /* systemBlue */
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 22% 16%;
-    --secondary-foreground: 240 20% 90%;
-    --muted: 240 22% 16%;
-    --muted-foreground: 240 9% 55%;
-    --accent: 243 75% 59%;
+    --secondary: 240 6% 90%;
+    --secondary-foreground: 240 10% 9%;
+    --muted: 240 8% 93%;
+    --muted-foreground: 240 3% 42%;     /* secondary label */
+    --accent: 211 100% 50%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 50%;
+    --destructive: 3 100% 59%;          /* systemRed */
     --destructive-foreground: 0 0% 100%;
-    --border: 240 22% 20%;
-    --input: 240 22% 20%;
-    --ring: 243 75% 59%;
-    --neu-out: 0 6px 16px hsl(0 0% 0% / 0.3);
-    --neu-in:  inset 0 1px 4px hsl(0 0% 0% / 0.35);
-    --neu-sm:  0 1px 3px hsl(0 0% 0% / 0.25);
-    --glass-shadow: 0 8px 32px hsl(0 0% 0% / 0.25), 0 2px 8px hsl(0 0% 0% / 0.15);
+    --border: 240 6% 82%;               /* separator */
+    --input: 240 6% 82%;
+    --ring: 211 100% 50%;
+    --radius: 1.125rem;
+
+    --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui, sans-serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
+
+    /* Soft, diffuse, slightly blue-tinted shadows */
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04), 0 2px 8px rgb(20 30 60 / 0.05);
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 2px 8px rgb(20 30 60 / 0.05);
+    --shadow-md: 0 4px 16px rgb(20 30 60 / 0.08), 0 1px 3px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 10px 34px rgb(20 30 60 / 0.12), 0 2px 8px rgb(0 0 0 / 0.05);
+    --shadow-xl: 0 18px 50px rgb(20 30 60 / 0.16), 0 4px 12px rgb(0 0 0 / 0.06);
+    --shadow-2xl: 0 30px 80px rgb(20 30 60 / 0.22);
+
+    /* iOS sheet curve */
+    --ease-default: cubic-bezier(0.32, 0.72, 0, 1);
+    --dur-default: 250ms;
+    --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
+    --ease-out-expo: cubic-bezier(0.32, 0.72, 0, 1);
+
+    --neu-out: 0 8px 26px rgb(30 50 110 / 0.12);
+    --neu-in: inset 0 1px 3px rgb(0 0 0 / 0.1);
+    --neu-sm: 0 2px 10px rgb(30 50 110 / 0.08);
+    --glass-shadow: 0 8px 30px rgb(30 50 110 / 0.1);
+    --shadow-glow: 0 10px 30px rgb(0 122 255 / 0.25);
+    --md-elev-1: var(--neu-sm);
+    --md-elev-2: var(--neu-out);
+    --md-elev-3: var(--shadow-lg);
+
+    --gradient-brand: linear-gradient(160deg, hsl(199 96% 62%), hsl(211 100% 50%));
+    --gradient-brand-start: 211 100% 50%;
+    --gradient-brand-end: 200 96% 55%;
+
+    /* Material roles approximated (shared markup that still uses them stays readable) */
+    --md-primary: 211 100% 50%;
+    --md-on-primary: 0 0% 100%;
+    --md-primary-container: 211 100% 94%;
+    --md-on-primary-container: 211 100% 25%;
+    --md-secondary-container: 240 6% 90%;
+    --md-on-secondary-container: 240 10% 9%;
+    --md-surface: 240 24% 96%;
+    --md-on-surface: 240 10% 9%;
+    --md-on-surface-variant: 240 3% 42%;
+    --md-outline: 240 4% 60%;
+    --md-outline-variant: 240 6% 82%;
+    --md-surface-container-lowest: 0 0% 100%;
+    --md-surface-container-low: 240 24% 96%;
+    --md-surface-container: 240 14% 94%;
+    --md-surface-container-high: 240 8% 92%;
+    --md-surface-container-highest: 240 6% 88%;
+    --md-inverse-surface: 240 6% 12%;
+    --md-inverse-on-surface: 0 0% 98%;
+    --md-inverse-primary: 211 100% 78%;
+    --md-error-container: 3 100% 95%;
+    --md-on-error-container: 3 80% 30%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 10% 9%;
+    --sidebar-primary: 211 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 8% 93%;
+    --sidebar-accent-foreground: 240 10% 9%;
+    --sidebar-border: 240 6% 82%;
+    --sidebar-ring: 211 100% 50%;
+  }
+
+  .dark {
+    --md-primary: 242.9 100% 87.6%;
+    --md-on-primary: 250.5 100% 32.4%;
+    --md-primary-container: 245.7 70.7% 46.9%;
+    --md-on-primary-container: 245.6 100% 93.7%;
+    --md-secondary: 247.2 26.9% 81.8%;
+    --md-on-secondary: 243 17.9% 22%;
+    --md-secondary-container: 243 12.7% 31%;
+    --md-on-secondary-container: 247.2 67.6% 92.7%;
+    --md-tertiary: 330.6 53.8% 82.2%;
+    --md-on-tertiary: 325.5 30.3% 21.4%;
+    --md-tertiary-container: 326.7 23.1% 30.6%;
+    --md-on-tertiary-container: 332.3 100% 92.4%;
+    --md-error: 6.4 100% 83.5%;
+    --md-on-error: 357.1 100% 20.6%;
+    --md-error-container: 355.9 100% 28.8%;
+    --md-on-error-container: 5.9 100% 92%;
+    --md-surface: 240 7.3% 8%;
+    --md-on-surface: 288 9.1% 89.2%;
+    --md-on-surface-variant: 256.4 10.5% 79.4%;
+    --md-outline: 256.4 5.2% 58.2%;
+    --md-outline-variant: 246.7 6% 29.2%;
+    --md-inverse-surface: 288 9.1% 89.2%;
+    --md-inverse-on-surface: 255 4% 19.6%;
+    --md-inverse-primary: 243.4 74% 57.8%;
+    --md-surface-dim: 240 7.3% 8%;
+    --md-surface-bright: 260 2.6% 22.9%;
+    --md-surface-container-lowest: 240 9.7% 6.1%;
+    --md-surface-container-low: 255 6.9% 11.4%;
+    --md-surface-container: 255 6.1% 12.9%;
+    --md-surface-container-high: 255 4.7% 16.9%;
+    --md-surface-container-highest: 255 3.7% 21.2%;
   }
 }
 
 @layer base {
   * { @apply border-border; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
   body {
     @apply bg-background text-foreground antialiased;
+  }
+  html[data-ui-theme="minimal"] body {
     font-feature-settings: "ss01", "cv11";
   }
+
+  /* ── iOS theme only ── */
+  /* Soft colour "wallpaper" — this is what the glass surfaces blur and pick tint from */
+  html[data-ui-theme="ios"] body {
+    background-color: #eef1f8;
+    background-image:
+      radial-gradient(55% 45% at 6% 2%, rgb(120 180 255 / 0.55), transparent 65%),
+      radial-gradient(50% 42% at 96% 6%, rgb(200 150 255 / 0.45), transparent 65%),
+      radial-gradient(55% 48% at 92% 98%, rgb(110 220 240 / 0.45), transparent 65%),
+      radial-gradient(48% 42% at 4% 96%, rgb(255 170 210 / 0.4), transparent 65%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    letter-spacing: -0.006em;
+  }
+  html[data-ui-theme="ios"] :is(h1, h2, h3, h4) { font-family: var(--font-display); letter-spacing: -0.022em; }
+  html[data-ui-theme="ios"] table { font-variant-numeric: tabular-nums; }
+  html[data-ui-theme="ios"] ::selection { background: rgb(0 122 255 / 0.22); }
+  /* Thin overlay-style scrollbars, like iOS */
+  html[data-ui-theme="ios"] ::-webkit-scrollbar { width: 8px; height: 8px; }
+  html[data-ui-theme="ios"] ::-webkit-scrollbar-track { background: transparent; }
+  html[data-ui-theme="ios"] ::-webkit-scrollbar-corner { background: transparent; }
+  html[data-ui-theme="ios"] ::-webkit-scrollbar-thumb {
+    background-color: rgb(60 60 67 / 0.28);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  html[data-ui-theme="ios"] ::-webkit-scrollbar-thumb:hover { background-color: rgb(60 60 67 / 0.45); background-clip: padding-box; }
+  @supports not selector(::-webkit-scrollbar) {
+    html[data-ui-theme="ios"] * { scrollbar-width: thin; scrollbar-color: rgb(60 60 67 / 0.3) transparent; }
+  }
+
+  /* ── Material theme only ── */
+  /* Titles use Google Sans, body copy Roboto — Material's own pairing */
+  html[data-ui-theme="material"] :is(h1, h2, h3, h4) { font-family: var(--font-display); }
+  /* Numbers line up in every table (amounts, dates, quantities) */
+  html[data-ui-theme="material"] table { font-variant-numeric: tabular-nums; }
+  html[data-ui-theme="material"] ::selection {
+    background: hsl(var(--md-primary-container));
+    color: hsl(var(--md-on-primary-container));
+  }
+
+  /* Slim Material scrollbars (Chromium / Safari) */
+  html[data-ui-theme="material"] ::-webkit-scrollbar { width: 10px; height: 10px; }
+  html[data-ui-theme="material"] ::-webkit-scrollbar-track { background: transparent; }
+  html[data-ui-theme="material"] ::-webkit-scrollbar-corner { background: transparent; }
+  html[data-ui-theme="material"] ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--md-outline-variant));
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+  html[data-ui-theme="material"] ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--md-outline));
+    background-clip: padding-box;
+  }
+  /* Firefox has no ::-webkit-scrollbar — use the standard properties there only
+     (in Chromium 121+ those would otherwise switch the custom styling off). */
+  @supports not selector(::-webkit-scrollbar) {
+    html[data-ui-theme="material"] * { scrollbar-width: thin; scrollbar-color: hsl(var(--md-outline-variant)) transparent; }
+  }
+}
+
+/* ── Material interaction primitives ──
+   Kept in the `components` layer (lower priority than Tailwind utilities) so an
+   element that is also `absolute` / `fixed` / `sticky` keeps that positioning. */
+@layer components {
+  /* State layer: hover 8% · focus/press 12% overlay in the element's own text colour */
+  .md-state { position: relative; isolation: isolate; }
+  .md-state::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms var(--ease-standard);
+  }
+  .md-state:hover::before { opacity: 0.08; }
+  .md-state:focus-visible::before,
+  .md-state:active::before { opacity: 0.12; }
+
+  /* Touch ripple — the layer/dot elements are injected by src/lib/ripple.ts */
+  .md-ripple { position: relative; }
+  .md-ripple-layer {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .md-ripple-dot {
+    position: absolute;
+    border-radius: 9999px;
+    background: currentColor;
+    opacity: 0.16;
+    transform: scale(0);
+    animation: md-ripple-expand 550ms var(--ease-standard) forwards;
+  }
+  .md-ripple-dot.md-ripple-out { opacity: 0; transition: opacity 350ms linear; }
+  @media (prefers-reduced-motion: reduce) {
+    .md-ripple-dot { animation-duration: 1ms; }
+  }
+  html[data-ui-theme="minimal"] .md-state::before,
+  html[data-ui-theme="minimal"] .md-ripple-layer,
+  html[data-ui-theme="ios"] .md-state::before,
+  html[data-ui-theme="ios"] .md-ripple-layer { display: none; }
 }
 
 /* ── Utility classes ── */
 @layer utilities {
-  /* Glass card */
-  .glass {
+  /* Ultra-slim, barely-there scrollbar — used by the navigation drawer (both themes).
+     The doubled class raises specificity above the Material theme's global thin-scrollbar rule. */
+  .scrollbar-slim.scrollbar-slim::-webkit-scrollbar { width: 3px; height: 3px; }
+  .scrollbar-slim.scrollbar-slim::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-slim.scrollbar-slim::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border) / 0.7);
+    border: 0;
+    border-radius: 9999px;
+    background-clip: border-box;
+  }
+  .scrollbar-slim.scrollbar-slim:hover::-webkit-scrollbar-thumb { background-color: hsl(var(--muted-foreground) / 0.45); }
+  @supports not selector(::-webkit-scrollbar) {
+    .scrollbar-slim { scrollbar-width: thin; scrollbar-color: hsl(var(--border)) transparent; }
+  }
+
+  /* ═══ Material: legacy aliases flattened, primary CTA = filled button ═══ */
+  html[data-ui-theme="material"] .glass {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border) / 0.6);
+    box-shadow: var(--md-elev-1);
+  }
+  html[data-ui-theme="material"] .glass-dark {
+    background: hsl(var(--md-inverse-surface));
+    color: hsl(var(--md-inverse-on-surface));
+    box-shadow: var(--md-elev-2);
+  }
+  html[data-ui-theme="material"] .neu-out { box-shadow: var(--md-elev-2); }
+  html[data-ui-theme="material"] .neu-in  { box-shadow: var(--neu-in); }
+  html[data-ui-theme="material"] .neu-sm  { box-shadow: var(--md-elev-1); }
+  html[data-ui-theme="material"] .shadow-glow { box-shadow: var(--md-elev-3); }
+  html[data-ui-theme="material"] .hover-lift { transition: box-shadow 200ms var(--ease-standard); }
+  html[data-ui-theme="material"] .hover-lift:hover { box-shadow: var(--md-elev-2); }
+
+  html[data-ui-theme="material"] .btn-gradient {
+    background-color: hsl(var(--primary));
+    background-image: none;
+    color: hsl(var(--primary-foreground));
+    position: relative;
+    isolation: isolate;
+  }
+  html[data-ui-theme="material"] .btn-gradient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms var(--ease-standard);
+  }
+  html[data-ui-theme="material"] .btn-gradient:hover { box-shadow: var(--md-elev-1); }
+  html[data-ui-theme="material"] .btn-gradient:hover::before { opacity: 0.08; }
+  html[data-ui-theme="material"] .btn-gradient:active::before { opacity: 0.12; }
+
+  /* Tiles/cards: a state layer instead of a light sweep */
+  html[data-ui-theme="material"] .shine-hover { position: relative; isolation: isolate; overflow: hidden; }
+  html[data-ui-theme="material"] .shine-hover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: hsl(var(--md-primary));
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms var(--ease-standard);
+  }
+  html[data-ui-theme="material"] .shine-hover:hover::after { opacity: 0.06; }
+  html[data-ui-theme="material"] .shine-hover:active::after { opacity: 0.12; }
+
+  html[data-ui-theme="material"] .ring-gradient { position: relative; }
+
+  /* ═══ iOS Liquid Glass ═══
+     Every plain white card (`bg-card`) becomes a frosted glass pane; chrome uses the
+     stronger `.ios-glass-strong`, round controls `.ios-glass-btn`. Glass = translucent
+     white + backdrop blur/saturation + a bright specular edge (inset top highlight). */
+  html[data-ui-theme="ios"] .bg-card,
+  html[data-ui-theme="ios"] .ios-glass {
+    background-color: rgb(255 255 255 / 0.58);
+    -webkit-backdrop-filter: blur(26px) saturate(180%);
+    backdrop-filter: blur(26px) saturate(180%);
+    border-color: rgb(255 255 255 / 0.62);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.85),
+      inset 0 0 0 1px rgb(255 255 255 / 0.16),
+      0 8px 30px rgb(30 50 110 / 0.1),
+      0 1px 3px rgb(30 50 110 / 0.06);
+  }
+  html[data-ui-theme="ios"] .ios-glass-strong {
+    background-color: rgb(255 255 255 / 0.7);
+    -webkit-backdrop-filter: blur(34px) saturate(190%);
+    backdrop-filter: blur(34px) saturate(190%);
+    border: 1px solid rgb(255 255 255 / 0.7);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.9),
+      inset 0 0 0 1px rgb(255 255 255 / 0.2),
+      0 12px 40px rgb(30 50 110 / 0.14),
+      0 2px 6px rgb(30 50 110 / 0.06);
+  }
+  /* Dialogs, sheets and menus: more opaque so form content stays crisp */
+  html[data-ui-theme="ios"] .ios-glass-sheet {
+    background-color: rgb(255 255 255 / 0.8);
+    -webkit-backdrop-filter: blur(40px) saturate(190%);
+    backdrop-filter: blur(40px) saturate(190%);
+    border: 1px solid rgb(255 255 255 / 0.75);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.95),
+      inset 0 0 0 1px rgb(255 255 255 / 0.2),
+      0 24px 70px rgb(30 50 110 / 0.24),
+      0 4px 14px rgb(30 50 110 / 0.1);
+  }
+  html[data-ui-theme="ios"] .ios-glass-btn {
+    background-color: rgb(255 255 255 / 0.55);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    backdrop-filter: blur(18px) saturate(180%);
+    border: 1px solid rgb(255 255 255 / 0.7);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.85), 0 2px 10px rgb(30 50 110 / 0.1);
+  }
+  /* Press feedback instead of ripples */
+  html[data-ui-theme="ios"] .ios-press { transition: transform 200ms var(--ease-standard), opacity 200ms; }
+  html[data-ui-theme="ios"] .ios-press:active { transform: scale(0.96); opacity: 0.85; }
+
+  html[data-ui-theme="ios"] .glass {
+    background-color: rgb(255 255 255 / 0.58);
+    -webkit-backdrop-filter: blur(26px) saturate(180%);
+    backdrop-filter: blur(26px) saturate(180%);
+    border: 1px solid rgb(255 255 255 / 0.62);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.85), var(--glass-shadow);
+  }
+  html[data-ui-theme="ios"] .glass-dark {
+    background-color: rgb(28 28 30 / 0.62);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid rgb(255 255 255 / 0.12);
+    color: white;
+  }
+  html[data-ui-theme="ios"] .neu-out { box-shadow: var(--neu-out); }
+  html[data-ui-theme="ios"] .neu-in  { box-shadow: var(--neu-in); }
+  html[data-ui-theme="ios"] .neu-sm  { box-shadow: var(--neu-sm); }
+  html[data-ui-theme="ios"] .shadow-glow { box-shadow: var(--shadow-glow); }
+  html[data-ui-theme="ios"] .hover-lift { transition: transform 250ms var(--ease-standard), box-shadow 250ms var(--ease-standard); }
+  html[data-ui-theme="ios"] .hover-lift:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+
+  /* Primary CTA: filled systemBlue capsule with a soft gloss */
+  html[data-ui-theme="ios"] .btn-gradient {
+    background-image: linear-gradient(180deg, hsl(208 100% 58%), hsl(211 100% 50%));
+    color: #fff;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 6px 16px rgb(0 122 255 / 0.32);
+    transition: transform 200ms var(--ease-standard), opacity 200ms;
+  }
+  html[data-ui-theme="ios"] .btn-gradient:active { transform: scale(0.97); opacity: 0.9; }
+  html[data-ui-theme="ios"] .shine-hover { transition: transform 200ms var(--ease-standard); }
+  html[data-ui-theme="ios"] .shine-hover:active { transform: scale(0.97); }
+  html[data-ui-theme="ios"] .ring-gradient { position: relative; }
+
+  /* On phones the floating tab bar sits at the bottom — lift the AI assistant above it */
+  @media (max-width: 1023px) {
+    html[data-ui-theme="ios"] .ai-orb { bottom: 6.5rem; }
+  }
+
+  /* iOS activity indicator (12 spokes) — see components/ui/loader.tsx */
+  .ios-spinner { animation: ios-spin 1s steps(12) infinite; }
+
+  /* ═══ Minimal: the earlier glass / neumorphic-flat / gradient utilities ═══ */
+  html[data-ui-theme="minimal"] .glass {
     background: rgba(255, 255, 255, 0.65);
     backdrop-filter: blur(18px) saturate(160%);
     -webkit-backdrop-filter: blur(18px) saturate(160%);
     border: 1px solid rgba(255, 255, 255, 0.75);
     box-shadow: var(--glass-shadow);
   }
-  .glass-dark {
+  html[data-ui-theme="minimal"] .glass-dark {
     background: rgba(10, 18, 40, 0.78);
     backdrop-filter: blur(20px) saturate(140%);
     -webkit-backdrop-filter: blur(20px) saturate(140%);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 8px 32px rgba(0,0,0,0.3);
   }
-
-  /* Neumorphic surfaces */
-  .neu-out { box-shadow: var(--neu-out); }
-  .neu-in  { box-shadow: var(--neu-in); }
-  .neu-sm  { box-shadow: var(--neu-sm); }
-
-  .shadow-glow { box-shadow: var(--shadow-glow); }
-
-  .hover-lift {
+  html[data-ui-theme="minimal"] .neu-out { box-shadow: var(--neu-out); }
+  html[data-ui-theme="minimal"] .neu-in  { box-shadow: var(--neu-in); }
+  html[data-ui-theme="minimal"] .neu-sm  { box-shadow: var(--neu-sm); }
+  html[data-ui-theme="minimal"] .shadow-glow { box-shadow: var(--shadow-glow); }
+  html[data-ui-theme="minimal"] .hover-lift {
     transition: transform 300ms var(--ease-out-expo), box-shadow 300ms var(--ease-out-expo);
   }
-  .hover-lift:hover {
+  html[data-ui-theme="minimal"] .hover-lift:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-glow);
   }
 
-  /* Brand gradient — primary CTAs and key accents (blue → indigo) */
-  .btn-gradient {
+  /* Brand gradient — primary CTAs and key accents (violet → indigo) */
+  html[data-ui-theme="minimal"] .btn-gradient {
     background-image: var(--gradient-brand);
     color: white;
     position: relative;
     overflow: hidden;
   }
-  .btn-gradient:hover {
-    opacity: 0.92;
-  }
+  html[data-ui-theme="minimal"] .btn-gradient:hover { opacity: 0.92; }
 
   /* Diagonal light-sweep on hover — baked into .btn-gradient, and available
      standalone (via .shine-hover) for non-gradient surfaces like tiles/cards. */
-  .btn-gradient::after,
-  .shine-hover::after {
+  html[data-ui-theme="minimal"] .btn-gradient::after,
+  html[data-ui-theme="minimal"] .shine-hover::after {
     content: "";
     position: absolute;
     inset: 0;
@@ -165,20 +674,18 @@
     transition: transform 0.7s ease;
     pointer-events: none;
   }
-  .btn-gradient:hover::after,
-  .shine-hover:hover::after {
+  html[data-ui-theme="minimal"] .btn-gradient:hover::after,
+  html[data-ui-theme="minimal"] .shine-hover:hover::after {
     transform: translateX(120%);
   }
-  .shine-hover {
+  html[data-ui-theme="minimal"] .shine-hover {
     position: relative;
     overflow: hidden;
   }
 
   /* Subtle 1px gradient ring around a card, e.g. the login card */
-  .ring-gradient {
-    position: relative;
-  }
-  .ring-gradient::before {
+  html[data-ui-theme="minimal"] .ring-gradient { position: relative; }
+  html[data-ui-theme="minimal"] .ring-gradient::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -199,6 +706,30 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
   }
+  @keyframes md-ripple-expand { to { transform: scale(1); } }
+  @keyframes ios-spin { to { transform: rotate(360deg); } }
+
+  /* Android / Material circular indeterminate loader (see components/ui/loader.tsx) */
+  @keyframes md-loader-rotate {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(270deg); }
+  }
+  @keyframes md-loader-dash {
+    0%   { stroke-dashoffset: 187; transform: rotate(0deg); }
+    50%  { stroke-dashoffset: 46.75; transform: rotate(135deg); }
+    100% { stroke-dashoffset: 187; transform: rotate(450deg); }
+  }
+}
+
+.md-loader { animation: md-loader-rotate 1.4s linear infinite; }
+.md-loader-arc {
+  stroke-dasharray: 187;
+  stroke-dashoffset: 187;
+  transform-origin: center;
+  animation: md-loader-dash 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .md-loader, .md-loader-arc { animation-duration: 3s; }
 }
 
 /* Belt-and-suspenders alongside `color-scheme: light` above — keeps the

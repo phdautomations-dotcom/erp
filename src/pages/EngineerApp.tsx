@@ -14,7 +14,7 @@ import {
   MapPin, Phone, Wrench, CheckCircle, ArrowLeft, PenTool, LogOut, Calendar,
   FileText, WifiOff, RefreshCw, Map, Sparkles, Trash2, Clock, CalendarCheck2,
   Plus, Edit2, ShoppingCart, Receipt, BarChart3, TrendingUp, Search, X, Banknote, Camera,
-} from "lucide-react";
+} from "@/lib/icons";
 import { useNavigate } from "react-router-dom";
 import { fmtINR, fmtDate, calcLineTax, todayFY, peekNextDocNumber, reserveDocNumber } from "@/lib/format";
 import { useAuth } from "@/hooks/useAuth";
@@ -999,7 +999,7 @@ export default function EngineerApp() {
                   <img src={avatarUrl} alt="avatar" className="h-16 w-16 md:h-20 md:w-20 rounded-full object-cover ring-2 ring-background/20" />
                 ) : (
                   <div className="h-16 w-16 md:h-20 md:w-20 rounded-full flex items-center justify-center text-2xl font-bold text-white ring-2 ring-background/20"
-                    style={{ background: "linear-gradient(135deg, hsl(258 90% 66%), hsl(243 75% 59%))" }}>
+                    style={{ backgroundImage: "var(--gradient-brand)" }}>
                     {(user?.email?.[0] ?? "E").toUpperCase()}
                   </div>
                 )}

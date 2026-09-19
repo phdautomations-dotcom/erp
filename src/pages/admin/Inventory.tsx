@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { fmtNum, fmtDate } from "@/lib/format";
 import { toast } from "sonner";
-import { Plus, AlertTriangle, Search } from "lucide-react";
+import { Plus, AlertTriangle, Search } from "@/lib/icons";
 
 export default function Inventory() {
   const [items, setItems] = useState<any[]>([]);

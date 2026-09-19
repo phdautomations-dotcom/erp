@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Trash2, Wrench, Cpu, Printer, MapPin, Map, Pencil } from "lucide-react";
+import { Plus, Trash2, Wrench, Cpu, Printer, MapPin, Map, Pencil } from "@/lib/icons";
 import { INDIAN_STATES } from "@/lib/states";
 import { fmtINR, fmtNum, fmtDate } from "@/lib/format";
 import { toast } from "sonner";

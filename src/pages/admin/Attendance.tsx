@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { fmtINR, fmtDate } from "@/lib/format";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
-import { MapPin, Clock, Calculator, CalendarClock, CalendarCheck2, CheckCircle, XCircle, Palmtree, Trash2 } from "lucide-react";
+import { MapPin, Clock, Calculator, CalendarClock, CalendarCheck2, CheckCircle, XCircle, Palmtree, Trash2 } from "@/lib/icons";
 
 export default function Attendance() {
   const confirm = useConfirm();

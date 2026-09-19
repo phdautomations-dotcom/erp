@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
-import { Plus, Search, Trash2, AlertTriangle, ScanLine, QrCode } from "lucide-react";
+import { Plus, Search, Trash2, AlertTriangle, ScanLine, QrCode } from "@/lib/icons";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";

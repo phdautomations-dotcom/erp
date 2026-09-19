@@ -5,7 +5,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { fmtINR, fmtDate } from "@/lib/format";
-import { Wrench, Clock, CheckCircle, AlertTriangle, Printer } from "lucide-react";
+import { Wrench, Clock, CheckCircle, AlertTriangle, Printer } from "@/lib/icons";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import jsPDF from "jspdf";

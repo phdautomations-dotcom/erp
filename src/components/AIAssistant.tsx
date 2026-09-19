@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useMotionValue } from "framer-motion";
-import { X, Send, Loader2 } from "lucide-react";
+import { X, Send, Loader2 } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAIAssistant, type MatchedDraft } from "@/hooks/useAIAssistant";
@@ -79,7 +79,7 @@ export const AIAssistant = ({ onDraftReady }: { onDraftReady?: (draft: MatchedDr
         }}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
-        className="fixed bottom-5 right-5 z-[60] h-24 w-24 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none"
+        className="ai-orb fixed bottom-5 right-5 z-[60] h-24 w-24 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none"
         title="Saffyre AI — drag to move"
       >
         {open ? (

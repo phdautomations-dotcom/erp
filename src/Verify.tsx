@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, FileText, AlertCircle, Sparkles } from "lucide-react";
+import { CheckCircle2, FileText, AlertCircle, Sparkles } from "@/lib/icons";
 import { fmtINR, fmtDate } from "@/lib/format";
 
 export default function Verify() {

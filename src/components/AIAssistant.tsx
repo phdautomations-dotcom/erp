@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useMotionValue } from "framer-motion";
-import { X, Send, Loader2 } from "@/lib/icons";
+import { X, Send, Loader2, Sparkles } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAIAssistant, type MatchedDraft } from "@/hooks/useAIAssistant";
+import { useUIDesign } from "@/lib/uiTheme";
+import { cn } from "@/lib/utils";
 import saffyreLogo from "@/assets/saffyre-logo-256.png";
 
 // Floating in-app AI assistant. Answers come from Google Gemini's free
@@ -21,6 +23,9 @@ export const AIAssistant = ({ onDraftReady }: { onDraftReady?: (draft: MatchedDr
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const { messages, ask, thinking } = useAIAssistant(onDraftReady);
+  // Orion gets its own look: a liquid-glass orb and a frosted glass chat pane (index.css
+  // `.orion-ai-*`); the other designs keep the Saffyre globe and indigo header.
+  const orion = useUIDesign() === "orion";
   const scrollRef = useRef<HTMLDivElement>(null);
   const constraintsRef = useRef<HTMLDivElement>(null);
   // Dragged position persists per-browser (fixed bottom-5 right-5 is the
@@ -83,8 +88,13 @@ export const AIAssistant = ({ onDraftReady }: { onDraftReady?: (draft: MatchedDr
         title="Saffyre AI — drag to move"
       >
         {open ? (
-          <span className="h-14 w-14 rounded-full bg-foreground text-background shadow-xl shadow-black/20 flex items-center justify-center">
+          <span className={orion ? "orion-ai-close" : "h-14 w-14 rounded-full bg-foreground text-background shadow-xl shadow-black/20 flex items-center justify-center"}>
             <X className="h-5 w-5" />
+          </span>
+        ) : orion ? (
+          <span className="orion-ai-orb" aria-hidden>
+            <span className="orion-ai-orb__liquid" />
+            <Sparkles />
           </span>
         ) : (
           <img
@@ -104,8 +114,26 @@ export const AIAssistant = ({ onDraftReady }: { onDraftReady?: (draft: MatchedDr
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.96 }}
             transition={{ duration: 0.18 }}
-            className="fixed bottom-24 right-5 z-[60] w-[calc(100vw-2.5rem)] max-w-sm h-[70vh] max-h-[560px] bg-card border border-border/60 rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+            className={cn(
+              "fixed bottom-24 right-5 z-[60] w-[calc(100vw-2.5rem)] max-w-sm h-[70vh] max-h-[560px] flex flex-col overflow-hidden",
+              orion ? "orion-ai-panel" : "bg-card border border-border/60 rounded-3xl shadow-2xl",
+            )}
           >
+            {orion ? (
+              <div className="orion-ai-head">
+                <span className="orion-ai-orb orion-ai-orb--sm" aria-hidden>
+                  <span className="orion-ai-orb__liquid" />
+                  <Sparkles />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="orion-ai-head__name">Saffyre AI</p>
+                  <p className="orion-ai-head__by">Saffyre Intelligence Labs</p>
+                </div>
+                <button onClick={() => setOpen(false)} title="Close" className="orion-ai-x">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
             <div
               className="px-4 py-3 border-b border-border/50 flex items-center gap-2.5 text-white"
               style={{ background: "linear-gradient(135deg, hsl(243 75% 59%), hsl(243 75% 59%))" }}
@@ -123,6 +151,7 @@ export const AIAssistant = ({ onDraftReady }: { onDraftReady?: (draft: MatchedDr
                 <X className="h-4 w-4" />
               </button>
             </div>
+            )}
 
             <div ref={scrollRef} className="flex-1 px-4 py-3 overflow-y-auto">
               {messages.length === 0 && (
@@ -133,37 +162,45 @@ export const AIAssistant = ({ onDraftReady }: { onDraftReady?: (draft: MatchedDr
               <div className="space-y-3">
                 {messages.map((m, i) => (
                   <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm ${m.role === "user" ? "bg-foreground text-background" : "bg-secondary text-foreground"}`}>
+                    <div className={orion
+                      ? cn("orion-ai-msg", m.role === "user" ? "orion-ai-msg--me" : "orion-ai-msg--ai")
+                      : `max-w-[85%] rounded-2xl px-3.5 py-2 text-sm ${m.role === "user" ? "bg-foreground text-background" : "bg-secondary text-foreground"}`}>
                       {m.content}
                     </div>
                   </div>
                 ))}
                 {thinking && (
                   <div className="flex justify-start">
-                    <div className="max-w-[85%] rounded-2xl px-3.5 py-2 text-sm bg-secondary text-muted-foreground flex items-center gap-2">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Thinking…
-                    </div>
+                    {orion ? (
+                      <div className="orion-ai-msg orion-ai-msg--ai" aria-label="Thinking">
+                        <span className="orion-ai-typing"><i /><i /><i /></span>
+                      </div>
+                    ) : (
+                      <div className="max-w-[85%] rounded-2xl px-3.5 py-2 text-sm bg-secondary text-muted-foreground flex items-center gap-2">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Thinking…
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="p-3 border-t border-border/50 flex items-center gap-2">
+            <div className={orion ? "orion-ai-compose" : "p-3 border-t border-border/50 flex items-center gap-2"}>
               <Input
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && send()}
                 placeholder="Apna sawal likho..."
-                className="rounded-full h-10"
+                className={orion ? "rounded-full h-11" : "rounded-full h-10"}
                 disabled={thinking}
               />
               <Button
                 size="icon"
                 onClick={send}
                 disabled={thinking || !input.trim()}
-                className="rounded-full h-10 w-10 shrink-0 text-white hover:opacity-90"
-                style={{ background: "linear-gradient(135deg, hsl(243 75% 59%), hsl(243 75% 59%))" }}
+                className={orion ? "orion-ai-send" : "rounded-full h-10 w-10 shrink-0 text-white hover:opacity-90"}
+                style={orion ? undefined : { background: "linear-gradient(135deg, hsl(243 75% 59%), hsl(243 75% 59%))" }}
               >
                 <Send className="h-4 w-4" />
               </Button>

@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { AdminLayout, NAV } from "@/components/admin/AdminLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavStyle } from "@/hooks/useNavStyle";
+import { useUIDesign } from "@/lib/uiTheme";
+import { OrionCard, OrionGrid, orionTone } from "@/components/OrionCard";
 
 // Full literal class names (not built from a template string) so Tailwind's
 // content scanner can actually find and generate them at build time.
@@ -47,6 +49,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { hasRole, user } = useAuth();
   const navStyle = useNavStyle();
+  const orion = useUIDesign() === "orion";
 
   useEffect(() => { document.title = "Home | ASTA One"; }, []);
 
@@ -69,11 +72,28 @@ export default function Home() {
       <div className="h-full flex flex-col">
         <div className="mb-6 shrink-0">
           <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {greeting}{user?.email ? `, ${user.email.split("@")[0]}` : ""}
+            {orion && <span className="orion-kicker">{greeting}</span>}
+            {orion
+              ? (user?.email ? user.email.split("@")[0] : "Welcome")
+              : `${greeting}${user?.email ? `, ${user.email.split("@")[0]}` : ""}`}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Jump into any module below.</p>
         </div>
 
+        {orion ? (
+          <OrionGrid minItem={100} maxCols={6} gap={16} aspect={(w) => (w < 160 ? 1 : 1.3)}>
+            {tiles.map((tile, i) => (
+              <OrionCard
+                key={tile.to}
+                compact
+                tone={orionTone(i)}
+                icon={tile.icon}
+                title={tile.label}
+                onClick={() => navigate(tile.to)}
+              />
+            ))}
+          </OrionGrid>
+        ) : (
         <div className="flex-1 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 auto-rows-fr gap-4">
           {tiles.map((tile) => {
             const color = COLOR_MAP[TILE_COLORS[tile.to] || "slate"];
@@ -91,6 +111,7 @@ export default function Home() {
             );
           })}
         </div>
+        )}
 
         <p className="shrink-0 pt-6 text-xs text-muted-foreground/60 text-center">
           Made by <span className="font-semibold text-foreground/70">Saffyre Intelligence Labs</span>

@@ -10,12 +10,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { INDIAN_STATES } from "@/lib/states";
 import { toast } from "sonner";
 import { useNavStyle, setNavStyle, NavStyle } from "@/hooks/useNavStyle";
-import { useUITheme, setUITheme, UITheme } from "@/lib/uiTheme";
+import { useUIDesign, setUITheme, UIDesign } from "@/lib/uiTheme";
 import { cn } from "@/lib/utils";
 
 // Tiny fixed-colour mock-ups of each design. They use literal colours (not
 // theme tokens) so each one always shows *its own* look, whichever theme is active.
-function ThemePreview({ kind }: { kind: UITheme }) {
+function ThemePreview({ kind }: { kind: UIDesign }) {
+  if (kind === "orion") {
+    const card = (bg: string, border: string) => (
+      <div className="relative flex flex-1 flex-col rounded-[14px] p-1.5" style={{ background: bg, border: `1px solid ${border}`, boxShadow: "inset 0 1px 1px rgba(255,255,255,0.6), inset 0 0 8px rgba(255,255,255,0.3)" }}>
+        <div className="h-1.5 w-1.5 rounded-full bg-white/90" />
+        <div className="mt-1.5 h-1 w-7 rounded-full bg-white/90" />
+        <div className="mt-0.5 h-1 w-5 rounded-full bg-white/60" />
+        <div className="mx-auto mt-auto h-3.5 w-3.5 rounded-full" style={{ border: "1px solid rgba(255,255,255,0.7)", boxShadow: "inset 0 -2px 3px rgba(255,255,255,0.5)" }} />
+      </div>
+    );
+    return (
+      <div className="relative flex h-20 w-full gap-1.5 overflow-hidden rounded-xl p-2" style={{ background: "linear-gradient(115deg, #e4e4e8 0 30%, #f3f3f5 30%)" }}>
+        <div className="absolute right-3 top-2 h-3 w-3 rounded-full" style={{ background: "#f6d23e", boxShadow: "0 0 0 4px rgba(246,210,62,0.2)" }} />
+        {card("linear-gradient(180deg,#a2dc6e,#87c4a8 32%,#7db5d7 50%,#92cea3 72%,#b1e060)", "rgba(255,255,255,0.5)")}
+        {card("linear-gradient(180deg,rgba(128,76,60,.85),rgba(184,140,134,.75) 58%,rgba(226,212,222,.85))", "rgba(255,255,255,0.7)")}
+      </div>
+    );
+  }
   if (kind === "ios") {
     return (
       <div
@@ -85,11 +102,12 @@ function ThemePreview({ kind }: { kind: UITheme }) {
 
 function AppearanceCard() {
   const navStyle = useNavStyle();
-  const uiTheme = useUITheme();
-  const designs: { value: UITheme; label: string; desc: string }[] = [
+  const uiTheme = useUIDesign();
+  const designs: { value: UIDesign; label: string; desc: string }[] = [
     { value: "material", label: "Material", desc: "Google Material 3" },
     { value: "minimal", label: "Minimal", desc: "Flat, clean & indigo" },
     { value: "ios", label: "iOS", desc: "Liquid Glass" },
+    { value: "orion", label: "Orion", desc: "Calm gradient glass · default" },
   ];
   const navOptions: { value: NavStyle; label: string; desc: string; icon: typeof PanelLeft }[] = [
     { value: "sidebar", label: "Sidebar", desc: "Persistent left navigation bar", icon: PanelLeft },
@@ -104,7 +122,7 @@ function AppearanceCard() {
 
       <div className="space-y-2.5">
         <Label>Design</Label>
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           {designs.map(d => (
             <button
               key={d.value}

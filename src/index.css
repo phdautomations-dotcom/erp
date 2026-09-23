@@ -269,6 +269,11 @@
     --md-elev-2: var(--neu-out);
     --md-elev-3: var(--shadow-lg);
 
+    /* App-icon fills (brand mark, avatar, dialogs) - the Orion skin swaps these */
+    --ios-brand-fill: linear-gradient(160deg, #5AC8FA 0%, #007AFF 100%);
+    --ios-brand-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5), 0 4px 12px rgb(0 122 255 / 0.35);
+    --ios-brand-shadow-lg: inset 0 1px 0 rgb(255 255 255 / 0.5), 0 8px 20px rgb(0 122 255 / 0.35);
+
     --gradient-brand: linear-gradient(160deg, hsl(199 96% 62%), hsl(211 100% 50%));
     --gradient-brand-start: 211 100% 50%;
     --gradient-brand-end: 200 96% 55%;
@@ -763,4 +768,629 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   --input: 215 20% 89%;
   --ring: 212 90% 40%;
   --radius: 0.5rem;
+}
+
+/* ═════════════ Orion — calm, tactile glassmorphism ═════════════
+   A skin over the iOS structure (html has data-ui-theme="ios" AND data-ui-skin="orion").
+   Muted grey map backdrop, pearl glass surfaces, near-black controls, yellow "pin"
+   highlights, and the signature gradient squircle cards (`.orion-card`, see
+   components/OrionCard.tsx) with a soap-bubble glass action button (`.orion-bubble`).
+   Kept unlayered so it wins over the iOS rules in @layer utilities. */
+html[data-ui-skin="orion"] {
+  --background: 240 6% 94%;
+  --foreground: 240 6% 8%;
+  --primary: 240 5% 9%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 5% 91%;
+  --muted: 240 5% 91%;
+  --muted-foreground: 240 3% 50%;
+  --accent: 240 5% 9%;
+  --accent-foreground: 0 0% 100%;
+  --border: 240 5% 86%;
+  --input: 240 5% 84%;
+  --ring: 48 92% 58%;
+  --md-primary: 240 5% 9%;
+  --md-primary-container: 48 92% 88%;
+  --md-on-primary-container: 240 5% 9%;
+  --sidebar-primary: 240 5% 9%;
+  --sidebar-ring: 48 92% 58%;
+  --shadow-glow: 0 10px 30px rgb(0 0 0 / 0.18);
+  --gradient-brand: linear-gradient(180deg, #a3dc6c 0%, #86c3b4 42%, #7fb6d8 56%, #a9dd6a 100%);
+  --gradient-brand-start: 95 60% 64%;
+  --gradient-brand-end: 205 52% 67%;
+  --ios-brand-fill: linear-gradient(180deg, #a3dc6c 0%, #86c3b4 42%, #7fb6d8 58%, #a9dd6a 100%);
+  --ios-brand-shadow: inset 0 1px 1px rgb(255 255 255 / 0.6), inset 0 0 10px rgb(255 255 255 / 0.3), 0 4px 12px rgb(110 170 90 / 0.35);
+  --ios-brand-shadow-lg: inset 0 1px 1px rgb(255 255 255 / 0.6), inset 0 0 14px rgb(255 255 255 / 0.3), 0 10px 24px rgb(110 170 90 / 0.4);
+  --orion-pin: #f6d23e;
+}
+
+/* Muted map "wallpaper": pale land, faint coast + road lines, a few soft yellow pins */
+html[data-ui-skin="orion"] body {
+  background-color: #efeff1;
+  background-image:
+    radial-gradient(circle at 72% 30%, rgb(246 210 62 / 0.22) 0 10px, rgb(246 210 62 / 0.08) 11px 26px, transparent 27px),
+    radial-gradient(circle at 18% 64%, rgb(246 210 62 / 0.2) 0 8px, rgb(246 210 62 / 0.07) 9px 22px, transparent 23px),
+    radial-gradient(circle at 88% 78%, rgb(246 210 62 / 0.18) 0 8px, rgb(246 210 62 / 0.06) 9px 20px, transparent 21px),
+    radial-gradient(circle at 44% 12%, rgb(246 210 62 / 0.16) 0 7px, rgb(246 210 62 / 0.06) 8px 18px, transparent 19px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 1000' preserveAspectRatio='xMidYMid slice'%3E%3Cpath d='M0 0H1600V1000H0Z' fill='%23f3f3f5'/%3E%3Cpath d='M0 0H520C560 90 470 160 520 250S640 360 600 470 470 560 520 680 700 760 660 860 560 960 600 1000H0Z' fill='%23e4e4e8'/%3E%3Cg fill='none' stroke='%23d6d6dc' stroke-width='1.2'%3E%3Cpath d='M120 0C180 140 90 260 200 380S330 600 260 760 330 920 300 1000'/%3E%3Cpath d='M0 300C160 320 300 250 420 330S700 420 900 380 1250 300 1600 360'/%3E%3Cpath d='M0 640C220 600 380 700 560 660S900 560 1100 620 1400 700 1600 660'/%3E%3Cpath d='M760 0C740 160 820 300 780 460S700 760 820 1000'/%3E%3Cpath d='M1180 0C1150 200 1260 360 1210 540S1120 820 1240 1000'/%3E%3C/g%3E%3Cg fill='none' stroke='%23e0e0e5' stroke-width='0.8'%3E%3Cpath d='M300 120L520 220 700 180 960 260 1300 200 1600 240'/%3E%3Cpath d='M60 500L260 460 480 540 820 500 1020 560 1380 520 1600 560'/%3E%3Cpath d='M40 860L300 820 600 900 900 840 1200 900 1600 860'/%3E%3Cpath d='M960 0L1000 180 940 380 1020 600 960 800 1000 1000'/%3E%3Cpath d='M1420 0L1380 240 1460 480 1400 720 1460 1000'/%3E%3Cpath d='M420 0L380 220 460 420 400 640 480 1000'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: auto, auto, auto, auto, cover;
+  background-attachment: fixed;
+}
+html[data-ui-skin="orion"] ::selection { background: rgb(246 210 62 / 0.45); }
+
+/* Pearl glass: the plain white cards/panels */
+html[data-ui-skin="orion"] .bg-card,
+html[data-ui-skin="orion"] .ios-glass {
+  background-color: rgb(248 248 250 / 0.7);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  backdrop-filter: blur(28px) saturate(140%);
+  border-color: transparent;
+  box-shadow:
+    inset 1px 1.5px 1px -0.5px rgb(255 255 255 / 0.95),
+    inset 0 0 16px 3px rgb(255 255 255 / 0.5),
+    0 24px 50px -28px rgb(40 40 60 / 0.22),
+    0 2px 6px -3px rgb(40 40 60 / 0.07);
+}
+/* Superellipse corners on panels too, sized up so they read like the cards' */
+@supports (corner-shape: squircle) {
+  html[data-ui-skin="orion"] :is(.bg-card, .ios-glass):is(.rounded-3xl, .rounded-2xl) { corner-shape: squircle; }
+  html[data-ui-skin="orion"] :is(.bg-card, .ios-glass).rounded-3xl { border-radius: 2.75rem; }
+  html[data-ui-skin="orion"] :is(.bg-card, .ios-glass).rounded-2xl { border-radius: 1.9rem; }
+}
+/* The iOS primary button carries a systemBlue glow; in Orion primaries are black, so the
+   glow becomes a soft neutral shadow */
+html[data-ui-skin="orion"] [class*="rgb(0_122_255"] {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), 0 8px 20px -8px rgb(0 0 0 / 0.35);
+}
+html[data-ui-skin="orion"] .ios-glass-strong {
+  background-color: rgb(250 250 251 / 0.72);
+  border-color: rgb(255 255 255 / 0.9);
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 0.95),
+    inset 0 0 30px rgb(255 255 255 / 0.45),
+    0 18px 50px -14px rgb(40 40 50 / 0.18),
+    0 2px 6px rgb(40 40 50 / 0.05);
+}
+html[data-ui-skin="orion"] .ios-glass-sheet { background-color: rgb(250 250 251 / 0.86); }
+html[data-ui-skin="orion"] .ios-glass-btn {
+  background: radial-gradient(circle at 32% 26%, rgb(255 255 255 / 0.95), rgb(255 255 255 / 0.55) 45%, rgb(235 235 240 / 0.6) 100%);
+  border-color: rgb(255 255 255 / 0.9);
+  box-shadow: inset 0 -2px 5px rgb(255 255 255 / 0.6), inset 0 1px 1px #fff, 0 4px 14px rgb(40 40 50 / 0.12);
+}
+
+/* Primary CTA: black pill, like the map's black locate button */
+html[data-ui-skin="orion"] .btn-gradient {
+  background-image: linear-gradient(180deg, #2a2a2e, #0e0e10);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 8px 20px rgb(0 0 0 / 0.22);
+}
+
+/* Active nav item: black capsule, white label */
+html[data-ui-skin="orion"] .ios-glass-strong nav a[aria-current="page"] {
+  background-color: #111113;
+  color: #fff;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.2);
+}
+html[data-ui-skin="orion"] .ios-glass-strong nav a[aria-current="page"] svg { color: #fff; }
+
+/* Page title: thin grey line over a bold black line ("Vacancies / Around You") */
+.orion-kicker { display: block; font-weight: 300; color: hsl(240 3% 58%); letter-spacing: -0.03em; }
+
+/* ── Orion glass cards ──
+   Each card is a pane of tinted glass laid over the page, built from real layers:
+     .orion-card     the pane — backdrop blur + saturation, floating shadow, squircle
+     __fill   (z 0)  translucent colour diffusion: several soft tinted blobs, blurred
+     __pour   (z 1)  hover only: a light blob drops in from the top and swirls
+     __inner  (z 2)  icon / amount / label / glass arrow bubble (+ a faint film grain)
+     ::after  (z 3)  edge glow — a blurred band just inside the rim, like light caught in
+                     thick glass — plus two soft specular light patches
+     ::before (z 4)  the glass edge: a hairline, bright top-left and faint elsewhere
+   Why real layers and explicit z-index: a child with a *negative* z-index paints above
+   its parent's own box-shadow, so an inset-shadow rim on the card itself would end up
+   hidden under the fill. Corner radii are in cqw of the card's grid cell, so every card
+   keeps the same proportions at any size. */
+.orion-cell { container-type: inline-size; }
+
+.orion-card {
+  container-type: inline-size;
+  position: relative;
+  isolation: isolate;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: clamp(18px, 13cqw, 44px);
+  background: transparent;
+  color: #fff;
+  text-align: left;
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+  box-shadow:
+    0 30px 60px -30px var(--orion-glow, rgb(0 0 0 / 0.25)),
+    0 14px 28px -20px rgb(30 30 40 / 0.16),
+    0 2px 6px -3px rgb(30 30 40 / 0.08);
+  transition: transform 350ms cubic-bezier(0.32, 0.72, 0, 1), box-shadow 350ms cubic-bezier(0.32, 0.72, 0, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.orion-card:hover { transform: translateY(-3px); }
+.orion-card:active { transform: scale(0.97); }
+.orion-card:focus-visible { outline: 2px solid #f6d23e; outline-offset: 3px; }
+
+.orion-card__fill {
+  position: absolute;
+  inset: -20%;
+  z-index: 0;
+  background: var(--orion-fill);
+  filter: blur(14px) saturate(112%);
+  pointer-events: none;
+}
+
+/* Hover-only: a bright blob starts above the card and drops/swirls in, soft-light
+   blended so it reads as new colour mixing into the liquid rather than a flat layer */
+.orion-card__pour {
+  position: absolute;
+  inset: -20%;
+  z-index: 1;
+  background:
+    radial-gradient(26% 20% at 50% 10%, rgb(255 255 255 / 1) 0%, rgb(255 255 255 / 0.7) 45%, transparent 75%),
+    radial-gradient(40% 32% at 50% 30%, rgb(255 255 255 / 0.8), transparent 72%);
+  filter: blur(7px);
+  mix-blend-mode: soft-light;
+  opacity: 0;
+  transform: translateY(-70%) scale(0.4);
+  pointer-events: none;
+  transition: opacity 550ms ease, transform 550ms ease;
+}
+.orion-card:hover .orion-card__pour {
+  animation: orion-pour-in 750ms cubic-bezier(0.22, 1, 0.36, 1) forwards, orion-swirl 2.8s ease-in-out 750ms infinite;
+}
+@keyframes orion-pour-in {
+  0%   { opacity: 0;    transform: translateY(-70%) scale(0.35) rotate(0deg); }
+  50%  { opacity: 1;    transform: translateY(6%)   scale(1.5)  rotate(30deg); }
+  100% { opacity: 0.85; transform: translateY(0%)   scale(1.15) rotate(18deg); }
+}
+@keyframes orion-swirl {
+  0%, 100% { transform: translateY(0%)   scale(1.15) rotate(18deg); }
+  50%      { transform: translateY(-8%)  scale(1.3)  rotate(-14deg); }
+}
+
+/* cq units resolve against the card (the container), so they live on this inner box */
+.orion-card__inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 11cqw 10cqw 7cqw 12cqw;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.orion-card__inner > * { flex-shrink: 0; }
+
+/* Edge glow: a band of light pooled just inside the rim (measured off the reference:
+   peaks ~3% of the width in, gone by ~9%), plus soft specular patches top-left and a
+   fainter bounce bottom-right. Blurred, so none of it reads as a drawn line. */
+.orion-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 4cqw solid var(--orion-band, rgb(255 255 255 / 0.26));
+  border-radius: inherit;
+  background:
+    radial-gradient(48% 30% at 14% 5%, var(--orion-sheen, rgb(255 255 255 / 0.24)), transparent 72%),
+    radial-gradient(40% 22% at 88% 97%, var(--orion-sheen-low, rgb(255 255 255 / 0.12)), transparent 72%);
+  filter: blur(3cqw);
+  pointer-events: none;
+}
+
+/* The glass edge: a 1px hairline — bright where the light hits (top-left), almost gone
+   on the far side, a little reflected light again at the bottom-right */
+.orion-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(150deg, rgb(255 255 255 / var(--orion-rim, 0.72)) 0%, rgb(255 255 255 / 0.18) 32%, rgb(255 255 255 / 0.04) 62%, rgb(255 255 255 / 0.28) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+
+/* True superellipse corners where supported (Chrome 139+), like the reference */
+@supports (corner-shape: squircle) {
+  .orion-card, .orion-card::before, .orion-card::after { corner-shape: squircle; }
+  .orion-card { border-radius: clamp(24px, 20cqw, 72px); }
+}
+
+.orion-card__icon { display: flex; height: 11cqw; min-height: 18px; max-height: 32px; align-items: center; color: #fff; }
+.orion-card__icon svg { height: 100%; width: auto; stroke-width: 1.6; filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.08)); }
+.orion-card__title {
+  margin-top: 8cqw;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(14px, 6cqw, 17.5px);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+.orion-card--compact .orion-card__title { font-size: clamp(13px, 5.2cqw, 15px); font-weight: 500; }
+.orion-card__sub {
+  margin-top: 2cqw;
+  display: flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.35em;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: clamp(10.5px, 4cqw, 12px);
+  font-weight: 400;
+  color: rgb(255 255 255 / 0.88);
+}
+.orion-card__sub > span:first-child { overflow: hidden; text-overflow: ellipsis; }
+.orion-card__dot { font-size: 0.7em; opacity: 0.9; }
+.orion-card__meta { color: rgb(255 255 255 / 0.6); flex-shrink: 0; }
+.orion-card--compact .orion-card__title { margin-top: 8cqw; }
+
+/* ── Hero cards (Receivable / Payable): tall glass panes laid out like the reference —
+   icon high up, amount below it, label under that, the glass bubble low and centred,
+   with generous air between them ── */
+.orion-card--hero { border-radius: clamp(24px, 17cqw, 64px); }
+@supports (corner-shape: squircle) {
+  .orion-card--hero { border-radius: clamp(32px, 27cqw, 112px); }
+}
+.orion-card--hero {
+  -webkit-backdrop-filter: blur(14px) saturate(170%) brightness(1.03);
+  backdrop-filter: blur(14px) saturate(170%) brightness(1.03);
+}
+.orion-card--hero .orion-card__inner { padding: 17cqw 12cqw 15cqw 17cqw; }
+.orion-card--hero .orion-card__icon { height: 13cqw; max-height: 44px; }
+.orion-card--hero .orion-card__title { margin-top: 14cqw; font-size: clamp(14px, 7cqw, 20px); font-weight: 500; letter-spacing: -0.02em; }
+.orion-card--hero .orion-card__sub { margin-top: 1.5cqw; font-size: clamp(11px, 5cqw, 14px); }
+.orion-card--hero .orion-bubble { width: 28cqw; max-width: 96px; }
+
+/* Glass arrow bubble: a clear lens — faint fill, backdrop blur of the card behind it,
+   thin translucent rim, a glint top-left and a soft halo */
+.orion-bubble {
+  margin: auto auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 21cqw;
+  min-width: 36px;
+  max-width: 58px;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  color: #fff;
+  border: 1px solid rgb(255 255 255 / 0.5);
+  background:
+    radial-gradient(circle at 29% 23%, rgb(255 255 255 / 0.6) 0 3.5%, rgb(255 255 255 / 0.16) 10%, transparent 24%),
+    radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.05) 52%, rgb(255 255 255 / 0.15) 78%, rgb(255 255 255 / 0.4) 100%);
+  /* Only a touch of blur/brightness — the card behind stays its own colour through the
+     lens (saturating it here turned the bubble into a solid neon ball) */
+  -webkit-backdrop-filter: blur(2px) brightness(1.03);
+  backdrop-filter: blur(2px) brightness(1.03);
+  box-shadow:
+    inset 0 -4px 8px -4px rgb(255 255 255 / 0.55),
+    inset 0 3px 6px -3px rgb(255 255 255 / 0.4),
+    inset 3px 0 6px -4px rgb(190 225 255 / 0.5),
+    inset -3px 0 6px -4px rgb(255 225 190 / 0.45),
+    0 0 18px -4px rgb(255 255 255 / 0.35),
+    0 6px 14px -8px rgb(0 0 0 / 0.2);
+  transition: transform 350ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.orion-bubble svg { width: 22%; height: 22%; stroke-width: 1.75; }
+.orion-card:hover .orion-bubble { transform: scale(1.06) rotate(-4deg); }
+
+/* ── Orion dashboard: every panel speaks the cards' language — medium-weight numbers and
+   titles, no rainbow icon chips, calm glass avatars ── */
+.orion-dash .bg-card h2 { font-size: 16px; font-weight: 500; letter-spacing: -0.02em; }
+.orion-dash .bg-card :is(.font-bold, .font-semibold) { font-weight: 500; }
+.orion-dash .bg-card h2 > span:first-child { width: auto; height: auto; background: transparent; color: hsl(var(--foreground) / 0.8); }
+.orion-dash .bg-card h2 svg { color: hsl(var(--foreground) / 0.8); }
+.orion-avatar {
+  background: radial-gradient(circle at 30% 25%, #fff, rgb(236 236 242) 70%);
+  color: #111113;
+  box-shadow: inset 0 -2px 4px -2px rgb(20 20 40 / 0.12), 0 3px 8px -4px rgb(20 20 40 / 0.25);
+}
+
+/* Horizontal strip card: icon · number over label · bubble */
+.orion-card__text { display: flex; min-width: 0; max-width: 100%; flex-direction: column; }
+.orion-card--strip { border-radius: 26px; }
+@supports (corner-shape: squircle) { .orion-card--strip { border-radius: 34px; } }
+.orion-card--strip .orion-card__inner { flex-direction: row; align-items: center; gap: 12px; padding: 0 12px 0 18px; }
+.orion-card--strip .orion-card__icon { height: 20px; min-height: 0; color: #111113; }
+.orion-card--strip .orion-card__text { flex: 1; }
+.orion-card--strip .orion-card__title { margin-top: 0; font-size: 16px; font-weight: 500; }
+.orion-card--strip .orion-card__sub { margin-top: 1px; font-size: 11px; }
+.orion-card--strip .orion-bubble { margin: 0; width: 30px; min-width: 30px; }
+.orion-status { display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 9999px; background: currentColor; vertical-align: 1px; }
+.orion-status--emerald { color: #34c38f; }
+.orion-status--blue { color: #5aa9e6; }
+.orion-status--amber { color: #f0b429; }
+.orion-status--rose { color: #f07f98; }
+.orion-status--red { color: #ef5350; }
+
+/* ── Dashboard KPI bento: the two hero glass cards stand tall side by side and the six
+   stat cards fill the rest, so no row is ever left half empty ── */
+.orion-bento-wrap { container: orion-bento / inline-size; }
+.orion-bento { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.orion-bento__hero, .orion-bento__cell { container-type: inline-size; display: flex; min-width: 0; }
+.orion-bento__hero { aspect-ratio: 0.74; }
+.orion-bento__cell { aspect-ratio: 1.3; }
+@container orion-bento (min-width: 620px) {
+  .orion-bento { gap: 16px; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .orion-bento__hero { grid-column: span 3; aspect-ratio: 0.9; }
+  .orion-bento__cell { grid-column: span 2; }
+}
+@container orion-bento (min-width: 960px) {
+  .orion-bento { gap: 18px; grid-template-columns: 1fr 1fr 0.88fr 0.88fr 0.88fr; }
+  .orion-bento__hero { grid-column: auto; grid-row: span 2; aspect-ratio: auto; }
+  .orion-bento__cell { grid-column: auto; }
+}
+
+/* Tones — each a mesh of 5–6 translucent hues over a soft base (see ::after) */
+.orion-card--lime {
+  --orion-glow: rgb(110 175 80 / 0.5);
+  --orion-band: rgb(255 255 255 / 0.3);
+  --orion-fill:
+    radial-gradient(95% 22% at 50% 18%, rgb(150 220 88 / 0.92), rgb(150 220 88 / 0.6) 50%, transparent 100%),
+    radial-gradient(100% 17% at 50% 50%, rgb(70 170 206 / 0.9), rgb(70 170 206 / 0.55) 50%, transparent 100%),
+    radial-gradient(100% 22% at 50% 83%, rgb(146 222 56 / 0.95), rgb(146 222 56 / 0.6) 50%, transparent 100%),
+    radial-gradient(90% 16% at 50% 34%, rgb(108 196 158 / 0.7), transparent 100%),
+    radial-gradient(90% 16% at 50% 67%, rgb(108 200 150 / 0.7), transparent 100%),
+    rgb(128 204 140 / 0.45);
+}
+.orion-card--mocha {
+  --orion-glow: rgb(120 70 55 / 0.4);
+  --orion-band: rgb(90 45 40 / 0.3);
+  --orion-sheen: rgb(255 236 230 / 0.2);
+  --orion-fill:
+    radial-gradient(80% 26% at 46% 22%, rgb(128 70 52 / 0.85), rgb(128 70 52 / 0.5) 55%, transparent 100%),
+    radial-gradient(48% 30% at 30% 72%, rgb(150 90 72 / 0.6), transparent 100%),
+    radial-gradient(52% 34% at 72% 60%, rgb(250 232 246 / 0.7), transparent 100%),
+    radial-gradient(62% 20% at 56% 84%, rgb(236 214 226 / 0.6), transparent 100%),
+    rgb(190 140 130 / 0.3);
+}
+.orion-card--sky {
+  --orion-glow: rgb(100 140 220 / 0.45);
+  --orion-fill:
+    radial-gradient(55% 30% at 50% 2%, rgb(128 196 246 / 0.9), transparent 72%),
+    radial-gradient(45% 30% at 10% 42%, rgb(120 214 236 / 0.65), transparent 72%),
+    radial-gradient(45% 30% at 90% 50%, rgb(176 160 244 / 0.7), transparent 72%),
+    radial-gradient(50% 26% at 30% 74%, rgb(206 176 240 / 0.7), transparent 72%),
+    radial-gradient(55% 30% at 70% 98%, rgb(244 188 222 / 0.8), transparent 72%),
+    linear-gradient(180deg, rgb(142 196 242 / 0.85), rgb(160 180 242 / 0.8) 45%, rgb(214 186 238 / 0.82));
+}
+.orion-card--peach {
+  --orion-glow: rgb(235 140 110 / 0.45);
+  --orion-fill:
+    radial-gradient(55% 30% at 50% 2%, rgb(255 200 130 / 0.92), transparent 72%),
+    radial-gradient(40% 30% at 10% 40%, rgb(255 226 140 / 0.6), transparent 72%),
+    radial-gradient(45% 30% at 88% 46%, rgb(248 146 140 / 0.75), transparent 72%),
+    radial-gradient(50% 26% at 35% 70%, rgb(246 160 176 / 0.7), transparent 72%),
+    radial-gradient(55% 30% at 65% 98%, rgb(236 176 226 / 0.8), transparent 72%),
+    linear-gradient(180deg, rgb(255 190 136 / 0.85), rgb(248 164 150 / 0.82) 50%, rgb(242 180 212 / 0.85));
+}
+.orion-card--mint {
+  --orion-glow: rgb(60 170 160 / 0.45);
+  --orion-fill:
+    radial-gradient(55% 30% at 50% 2%, rgb(140 232 200 / 0.9), transparent 72%),
+    radial-gradient(45% 30% at 12% 46%, rgb(110 190 236 / 0.7), transparent 72%),
+    radial-gradient(45% 30% at 88% 42%, rgb(100 214 214 / 0.7), transparent 72%),
+    radial-gradient(50% 26% at 60% 70%, rgb(130 170 236 / 0.6), transparent 72%),
+    radial-gradient(55% 30% at 40% 98%, rgb(176 236 160 / 0.85), transparent 72%),
+    linear-gradient(180deg, rgb(132 222 196 / 0.85), rgb(118 196 222 / 0.8) 50%, rgb(160 226 180 / 0.85));
+}
+.orion-card--lilac {
+  --orion-glow: rgb(150 110 210 / 0.45);
+  --orion-fill:
+    radial-gradient(55% 30% at 50% 2%, rgb(206 170 246 / 0.9), transparent 72%),
+    radial-gradient(45% 30% at 10% 48%, rgb(150 170 246 / 0.7), transparent 72%),
+    radial-gradient(45% 30% at 90% 40%, rgb(236 170 230 / 0.6), transparent 72%),
+    radial-gradient(50% 26% at 62% 72%, rgb(160 184 244 / 0.7), transparent 72%),
+    radial-gradient(55% 30% at 38% 98%, rgb(236 196 238 / 0.85), transparent 72%),
+    linear-gradient(180deg, rgb(196 168 244 / 0.85), rgb(166 174 240 / 0.8) 50%, rgb(222 192 236 / 0.85));
+}
+.orion-card--sun {
+  --orion-glow: rgb(230 170 40 / 0.45);
+  --orion-fill:
+    radial-gradient(55% 30% at 50% 2%, rgb(252 214 80 / 0.92), transparent 72%),
+    radial-gradient(40% 30% at 12% 44%, rgb(255 236 140 / 0.65), transparent 72%),
+    radial-gradient(45% 30% at 88% 48%, rgb(246 160 90 / 0.75), transparent 72%),
+    radial-gradient(50% 26% at 40% 72%, rgb(244 176 120 / 0.7), transparent 72%),
+    radial-gradient(55% 30% at 60% 98%, rgb(250 210 110 / 0.9), transparent 72%),
+    linear-gradient(180deg, rgb(246 200 70 / 0.88), rgb(240 170 96 / 0.85) 50%, rgb(246 200 96 / 0.88));
+}
+.orion-card--graphite {
+  --orion-glow: rgb(0 0 0 / 0.3);
+  --orion-fill:
+    radial-gradient(55% 30% at 50% 0%, rgb(46 46 54 / 0.9), transparent 72%),
+    radial-gradient(45% 30% at 88% 40%, rgb(90 100 130 / 0.6), transparent 72%),
+    radial-gradient(45% 30% at 12% 56%, rgb(110 104 120 / 0.55), transparent 72%),
+    radial-gradient(55% 30% at 50% 98%, rgb(186 186 200 / 0.75), transparent 72%),
+    linear-gradient(180deg, rgb(60 60 68 / 0.85), rgb(96 96 108 / 0.75) 50%, rgb(160 160 172 / 0.72));
+}
+/* Pale pearl card (the lower Slack / Wise cards) — dark text */
+.orion-card--pearl {
+  --orion-glow: rgb(40 40 60 / 0.2);
+  --orion-band: rgb(255 255 255 / 0.9);
+  --orion-rim: 1;
+  --orion-fill:
+    radial-gradient(70% 45% at 20% 12%, rgb(255 255 255 / 0.75), transparent 72%),
+    rgb(244 244 247 / 0.74);
+  color: #111113;
+}
+.orion-card--pearl .orion-card__icon { color: #111113; }
+.orion-card--pearl .orion-card__title { color: #111113; }
+.orion-card--pearl .orion-card__sub { color: #2c2c32; }
+.orion-card--pearl .orion-card__meta { color: #a2a2aa; }
+.orion-card--pearl .orion-bubble {
+  color: #111113;
+  border-color: rgb(255 255 255 / 0.95);
+  background:
+    radial-gradient(circle at 29% 23%, #fff 0 3.5%, rgb(255 255 255 / 0.3) 10%, transparent 24%),
+    radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.12) 52%, rgb(255 255 255 / 0.5) 86%, rgb(255 255 255 / 0.9) 100%);
+  box-shadow: inset 0 -3px 6px -3px rgb(255 255 255 / 0.9), inset 0 2px 4px -2px rgb(20 20 40 / 0.06), 0 6px 12px -8px rgb(20 20 30 / 0.22);
+}
+
+/* ── Saffyre AI in Orion: a liquid-glass orb (the hero card's lime→sky water, slowly
+   turning) and a frosted glass chat pane that matches the cards ── */
+.orion-ai-orb {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+  border-radius: 9999px;
+  color: #fff;
+  box-shadow: 0 18px 36px -16px rgb(90 170 110 / 0.6), 0 6px 14px -8px rgb(20 30 40 / 0.28);
+}
+.orion-ai-orb--sm { width: 40px; height: 40px; flex-shrink: 0; box-shadow: 0 8px 18px -10px rgb(90 170 110 / 0.6); }
+.orion-ai-orb__liquid {
+  position: absolute;
+  inset: -30%;
+  z-index: 0;
+  background:
+    radial-gradient(60% 34% at 50% 24%, rgb(150 220 88 / 0.95), transparent 100%),
+    radial-gradient(75% 28% at 50% 52%, rgb(70 170 206 / 0.95), transparent 100%),
+    radial-gradient(60% 34% at 50% 82%, rgb(146 222 56 / 0.95), transparent 100%),
+    rgb(118 196 160);
+  filter: blur(5px);
+  animation: orion-orb-turn 10s linear infinite;
+}
+@keyframes orion-orb-turn { to { transform: rotate(360deg); } }
+.orion-ai-orb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 30% 23%, rgb(255 255 255 / 0.85) 0 4%, rgb(255 255 255 / 0.22) 12%, transparent 26%),
+    radial-gradient(circle at 50% 50%, transparent 58%, rgb(255 255 255 / 0.2) 80%, rgb(255 255 255 / 0.5) 100%);
+  box-shadow: inset 1px 1.5px 1px -0.5px rgb(255 255 255 / 0.7), inset 0 -6px 12px -6px rgb(255 255 255 / 0.55);
+}
+.orion-ai-orb svg { position: relative; z-index: 1; width: 42%; height: 42%; filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.18)); }
+.orion-ai-close {
+  display: flex;
+  width: 52px;
+  height: 52px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: #fff;
+  background: linear-gradient(180deg, #2a2a2e, #0e0e10);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), 0 12px 26px -10px rgb(0 0 0 / 0.45);
+}
+
+.orion-ai-panel {
+  border-radius: 34px;
+  background: rgb(248 248 250 / 0.72);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  backdrop-filter: blur(30px) saturate(160%);
+  box-shadow:
+    inset 1px 1.5px 1px -0.5px rgb(255 255 255 / 0.95),
+    inset 0 0 18px 3px rgb(255 255 255 / 0.5),
+    0 40px 80px -36px rgb(30 40 60 / 0.4),
+    0 12px 30px -18px rgb(30 40 60 / 0.2);
+}
+@supports (corner-shape: squircle) { .orion-ai-panel { corner-shape: squircle; border-radius: 48px; } }
+.orion-ai-head { display: flex; align-items: center; gap: 12px; padding: 18px 16px 10px 18px; }
+.orion-ai-head__name { font-size: 15px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; color: #111113; }
+.orion-ai-head__by { font-size: 11px; line-height: 1.3; color: hsl(var(--muted-foreground)); }
+.orion-ai-x {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: #111113;
+  background:
+    radial-gradient(circle at 29% 23%, #fff 0 4%, rgb(255 255 255 / 0.3) 11%, transparent 24%),
+    radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.35) 52%, rgb(226 226 234 / 0.6) 88%, rgb(255 255 255 / 0.95) 100%);
+  box-shadow: inset 0 -3px 6px -3px rgb(255 255 255 / 0.9), 0 4px 10px -6px rgb(20 20 30 / 0.3);
+  transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.orion-ai-x:active { transform: scale(0.92); }
+.orion-ai-msg { max-width: 85%; padding: 9px 14px; font-size: 13.5px; line-height: 1.45; border-radius: 20px; }
+.orion-ai-msg--me {
+  color: #fff;
+  background: linear-gradient(180deg, #2a2a2e, #111113);
+  border-bottom-right-radius: 8px;
+  box-shadow: 0 6px 14px -8px rgb(0 0 0 / 0.35);
+}
+.orion-ai-msg--ai {
+  color: #111113;
+  background: rgb(255 255 255 / 0.78);
+  border-bottom-left-radius: 8px;
+  box-shadow: inset 1px 1.5px 1px -0.5px #fff, 0 6px 16px -10px rgb(30 40 60 / 0.28);
+}
+.orion-ai-compose { display: flex; align-items: center; gap: 8px; padding: 10px 12px 14px; }
+.orion-ai-send {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: #fff;
+  background: linear-gradient(180deg, #2a2a2e, #0e0e10);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), 0 8px 18px -8px rgb(0 0 0 / 0.4);
+}
+.orion-ai-send:disabled { opacity: 0.35; }
+.orion-ai-typing { display: inline-flex; gap: 4px; padding: 4px 2px; }
+.orion-ai-typing i { width: 6px; height: 6px; border-radius: 9999px; background: hsl(var(--muted-foreground)); animation: orion-typing 1.2s ease-in-out infinite; }
+.orion-ai-typing i:nth-child(2) { animation-delay: 0.15s; }
+.orion-ai-typing i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes orion-typing {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40%           { transform: translateY(-3px); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orion-ai-orb__liquid, .orion-ai-typing i { animation: none; }
+}
+
+/* Small cards (phones, 3-up module tiles): the bubble tucks into the bottom-right
+   corner, labels may wrap, nothing drops below readable sizes. Hero cards keep their
+   own tall layout at every width. */
+@container (max-width: 220px) {
+  .orion-card:not(.orion-card--hero):not(.orion-card--strip) .orion-card__inner { padding: 14px 12px 12px 14px; }
+  .orion-card:not(.orion-card--hero):not(.orion-card--strip) .orion-card__icon { height: 20px; }
+  .orion-card:not(.orion-card--hero):not(.orion-card--strip) .orion-card__title { margin-top: 10px; font-size: 14.5px; }
+  .orion-card--compact:not(.orion-card--hero) .orion-card__title { font-size: 13px; }
+  .orion-card:not(.orion-card--hero):not(.orion-card--strip) .orion-card__sub { margin-top: 2px; font-size: 10.5px; }
+  .orion-card:not(.orion-card--hero):not(.orion-card--strip) .orion-bubble { margin: auto 0 0 auto; width: 32px; min-width: 32px; }
+}
+@container (max-width: 130px) {
+  .orion-card:not(.orion-card--hero):not(.orion-card--strip) .orion-card__inner { padding: 12px 10px 10px 12px; }
+  .orion-card--compact:not(.orion-card--hero) .orion-card__title { font-size: 12.5px; font-weight: 500; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .orion-card:not(.orion-card--hero):not(.orion-card--strip) .orion-bubble { width: 28px; min-width: 28px; }
+}
+/* No hover lift on touch screens (it sticks after a tap) */
+@media (hover: none) {
+  .orion-card:hover, .orion-card:hover .orion-bubble { transform: none; }
+  .orion-card:active { transform: scale(0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orion-card, .orion-bubble, .orion-card__pour { transition: none; }
+  .orion-card:hover, .orion-card:hover .orion-bubble { transform: none; }
+  .orion-card:hover .orion-card__pour { animation: none; opacity: 0; }
 }

@@ -56,7 +56,7 @@ function WhatsNewDialog() {
           ) : theme === "ios" ? (
             <div
               className="mb-2 flex h-16 w-16 items-center justify-center rounded-[22px] text-white"
-              style={{ backgroundImage: "linear-gradient(160deg, #5AC8FA, #007AFF)", boxShadow: "inset 0 1px 0 rgb(255 255 255 / 0.5), 0 8px 20px rgb(0 122 255 / 0.35)" }}
+              style={{ backgroundImage: "var(--ios-brand-fill)", boxShadow: "var(--ios-brand-shadow-lg)" }}
             >
               <PartyPopper className="h-8 w-8" />
             </div>
@@ -813,7 +813,7 @@ function UserAvatarMenu() {
           ) : (
             <div
               className="flex h-10 w-10 items-center justify-center rounded-full text-[15px] font-semibold text-white ring-2 ring-white/80"
-              style={{ backgroundImage: "linear-gradient(160deg, #5AC8FA, #007AFF)" }}
+              style={{ backgroundImage: "var(--ios-brand-fill)" }}
             >
               {initial}
             </div>
@@ -851,7 +851,7 @@ function UserAvatarMenu() {
                 ) : theme === "ios" ? (
                   <div
                     className="flex h-16 w-16 items-center justify-center rounded-full font-display text-2xl font-semibold text-white"
-                    style={{ backgroundImage: "linear-gradient(160deg, #5AC8FA, #007AFF)" }}
+                    style={{ backgroundImage: "var(--ios-brand-fill)" }}
                   >
                     {initial}
                   </div>

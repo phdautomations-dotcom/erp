@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Apply the saved UI theme before first paint so there is no flash of the wrong design -->
-    <script>try{var t=localStorage.getItem("asta_ui_theme");document.documentElement.dataset.uiTheme=t==="minimal"||t==="ios"?t:"material"}catch(e){}</script>
+    <script>try{var s=localStorage,t=s.getItem("asta_ui_theme");if(!s.getItem("asta_ui_theme_orion_default")){t="orion";s.setItem("asta_ui_theme","orion");s.setItem("asta_ui_theme_orion_default","1")}var d=document.documentElement.dataset;if(t!=="material"&&t!=="minimal"&&t!=="ios")t="orion";d.uiTheme=t==="orion"?"ios":t;if(t==="orion")d.uiSkin="orion"}catch(e){}</script>
     <!-- Material theme: Google Sans + Roboto · Minimal theme: Space Grotesk + Inter (files only download when used) -->
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 

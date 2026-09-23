@@ -12,6 +12,8 @@ import { ComposedChart, Line, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid,
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { draftPaymentReminder } from "@/lib/ai/remote";
+import { useUIDesign } from "@/lib/uiTheme";
+import { OrionCard, OrionGrid, orionTone } from "@/components/OrionCard";
 
 const formatYAxis = (v: number) => {
   if (v === 0) return '₹0';
@@ -448,11 +450,18 @@ export default function Dashboard() {
     { label: "Overdue Invoices", value: stats.overdueInvoices.toString(), caption: "Overdue", icon: Clock, color: "red", to: "/admin/sales?type=invoice&due=1" },
   ];
 
+  const orion = useUIDesign() === "orion";
+
   return (
     <AdminLayout title="Dashboard">
+      {/* Orion: .orion-dash carries the card typography/glass down to every panel below */}
+      <div className={orion ? "orion-dash" : "contents"}>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
-          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            {orion && <span className="orion-kicker">Business</span>}
+            {orion ? "At a Glance" : "Dashboard"}
+          </h1>
           <p className="text-sm text-muted-foreground">Welcome back{user?.email ? `, ${user.email.split('@')[0]}` : ''}! Here's what's happening with your business today.</p>
         </div>
 
@@ -472,6 +481,35 @@ export default function Dashboard() {
 
       {/* Two tiles per row even on phones (less scrolling); on small screens the
           tiles get tighter padding/type and the sparkline moves beside the icon. */}
+      {orion ? (
+        <div className="orion-bento-wrap">
+          <div className="orion-bento">
+            {cards.map((c, i) => {
+              const pct = trendPct(c.spark);
+              const hero = i < 2; // Receivable + Payable stand tall, like the reference
+              return (
+                <motion.div
+                  key={c.label}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 + 0.1, duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+                  className={hero ? "orion-bento__hero" : "orion-bento__cell"}
+                >
+                  <OrionCard
+                    hero={hero}
+                    tone={orionTone(i)}
+                    icon={c.icon}
+                    title={c.value}
+                    subtitle={c.label}
+                    meta={pct === null ? undefined : `${pct >= 0 ? "+" : "−"}${Math.abs(pct).toFixed(0)}%`}
+                    onClick={c.to ? () => navigate(c.to) : undefined}
+                  />
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {cards.map((c, i) => (
           <motion.div
@@ -498,12 +536,25 @@ export default function Dashboard() {
           </motion.div>
         ))}
       </div>
+      )}
 
-      <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
-        {miniStats.map((m) => (
+      {(() => {
+      const minis = miniStats.map((m) => orion ? (
+          <OrionCard
+            key={m.label}
+            strip
+            tone="pearl"
+            icon={m.icon}
+            title={m.value}
+            // The caption mostly restates the label ("Overdue Invoices · Overdue"), and a
+            // strip is too short for both — the status survives as the coloured dot.
+            subtitle={<><span className={`orion-status orion-status--${m.color}`} />{m.label}</>}
+            onClick={() => navigate(m.to)}
+          />
+        ) : (
           <div
             key={m.label}
-            className="flex min-w-0 cursor-pointer items-center gap-2.5 rounded-2xl border border-border/50 bg-card p-3 shadow-sm transition-shadow hover:shadow-md sm:gap-3 sm:p-4"
+            className="flex w-full min-w-0 cursor-pointer items-center gap-2.5 rounded-2xl border border-border/50 bg-card p-3 shadow-sm transition-shadow hover:shadow-md sm:gap-3 sm:p-4"
             onClick={() => navigate(m.to)}
           >
             <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10 ${COLOR_MAP[m.color].bg} ${COLOR_MAP[m.color].text}`}>
@@ -515,8 +566,16 @@ export default function Dashboard() {
               <p className={`text-[11px] font-medium ${COLOR_MAP[m.color].text}`}>{m.caption}</p>
             </div>
           </div>
-        ))}
-      </div>
+        ));
+      // Orion: no half-empty rows — the grid picks an even column count or stretches the last row
+      return orion ? (
+        <OrionGrid minItem={165} maxCols={5} gap={14} aspect={(w) => w / 84} className="mt-3.5">
+          {minis}
+        </OrionGrid>
+      ) : (
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">{minis}</div>
+      );
+      })()}
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -557,17 +616,17 @@ export default function Dashboard() {
                 formatter={(value: number) => fmtINR(value)}
               />
               <Legend wrapperStyle={{ fontSize: "0.8rem" }} />
-              <Bar dataKey="Sales" fill="#22c55e" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="Sales" fill={orion ? "#9fdd5e" : "#22c55e"} radius={[4, 4, 0, 0]}>
                  <LabelList dataKey="Sales" position="top" formatter={formatLabel} fontSize={10} fill="hsl(var(--muted-foreground))" />
               </Bar>
-              <Bar dataKey="Purchase" fill="#f97316" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="Purchase" fill={orion ? "#b68b7c" : "#f97316"} radius={[4, 4, 0, 0]}>
                  <LabelList dataKey="Purchase" position="top" formatter={formatLabel} fontSize={10} fill="hsl(var(--muted-foreground))" />
               </Bar>
-              <Bar dataKey="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="Expenses" fill={orion ? "#e8a3a8" : "#ef4444"} radius={[4, 4, 0, 0]}>
                  <LabelList dataKey="Expenses" position="top" formatter={formatLabel} fontSize={10} fill="hsl(var(--muted-foreground))" />
               </Bar>
               <Bar dataKey="Profit" fill="url(#profitGradient)" radius={[4, 4, 0, 0]} />
-              <Line type="monotone" dataKey="Profit" name="Profit Trend" stroke="#eab308" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+              <Line type="monotone" dataKey="Profit" name="Profit Trend" stroke={orion ? "#1c1c1f" : "#eab308"} strokeWidth={orion ? 2 : 3} dot={{ r: orion ? 3 : 4 }} activeDot={{ r: 6 }} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -739,7 +798,7 @@ export default function Dashboard() {
                   <div key={customer.id} className="flex items-center justify-between gap-3 p-4 transition-colors hover:bg-muted/30">
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="text-xs font-semibold text-muted-foreground w-4 shrink-0">{i + 1}</span>
-                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-semibold text-sm ${COLOR_MAP[AVATAR_COLORS[i % AVATAR_COLORS.length]].bg} ${COLOR_MAP[AVATAR_COLORS[i % AVATAR_COLORS.length]].text}`}>
+                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-semibold text-sm ${orion ? "orion-avatar" : `${COLOR_MAP[AVATAR_COLORS[i % AVATAR_COLORS.length]].bg} ${COLOR_MAP[AVATAR_COLORS[i % AVATAR_COLORS.length]].text}`}`}>
                         {customer.name?.[0]?.toUpperCase() || "?"}
                       </div>
                       <div className="min-w-0">
@@ -878,6 +937,7 @@ export default function Dashboard() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </AdminLayout>
   );
 }

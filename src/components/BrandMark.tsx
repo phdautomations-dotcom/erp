@@ -20,8 +20,8 @@ export function BrandMark({ className }: { className?: string }) {
       <div
         className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-[24%] text-white", className)}
         style={{
-          backgroundImage: "linear-gradient(160deg, #5AC8FA 0%, #007AFF 100%)",
-          boxShadow: "inset 0 1px 0 rgb(255 255 255 / 0.5), 0 4px 12px rgb(0 122 255 / 0.35)",
+          backgroundImage: "var(--ios-brand-fill)",
+          boxShadow: "var(--ios-brand-shadow)",
         }}
       >
         <span className="font-display text-[20px] font-bold leading-none">A</span>

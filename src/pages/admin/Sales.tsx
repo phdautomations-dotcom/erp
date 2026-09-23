@@ -288,7 +288,7 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
             {filtered.map(d => (
                 <tr key={d.id} className="transition-colors hover:bg-muted/30">
                   <td className="whitespace-nowrap px-6 py-4 text-muted-foreground">{d.doc_date}</td>
-                  <td className="px-6 py-4 font-mono text-xs"><Link to={`/admin/${purchase ? "purchases" : "sales"}/${d.id}`} className="font-medium transition-colors hover:text-accent">{d.doc_number}</Link></td>
+                  <td className="whitespace-nowrap px-6 py-4 font-mono text-xs"><Link to={`/admin/${purchase ? "purchases" : "sales"}/${d.id}`} className="font-medium transition-colors hover:text-accent">{d.doc_number}</Link></td>
                   <td className="px-6 py-4 font-medium">{(d.parties as any)?.name}</td>
                   <td className="px-6 py-4 text-right font-semibold">{fmtINR(d.total)}</td>
                   <td className="px-6 py-4 text-right text-muted-foreground">{fmtINR(d.paid)}</td>
@@ -302,7 +302,7 @@ export default function Sales({ purchase = false }: { purchase?: boolean }) {
                       'bg-muted text-muted-foreground'
                     }`}>{d.status}</span>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="whitespace-nowrap px-6 py-4 text-right">
                   {PAYABLE_TYPES.includes(d.doc_type) && (Number(d.total) - Number(d.paid || 0) > 0.01) && (
                     <Button variant="ghost" size="icon" title="Record payment" onClick={() => openPay(d)}><Wallet className="h-4 w-4 text-emerald-600" /></Button>
                   )}

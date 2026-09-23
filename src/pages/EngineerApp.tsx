@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import { AvatarCropDialog } from "@/components/AvatarCropDialog";
 import { AIAssistant } from "@/components/AIAssistant";
+import { WelcomeSplash } from "@/components/WelcomeSplash";
 import { classifyText, expandDescription } from "@/lib/ai/remote";
 import type { MatchedDraft } from "@/hooks/useAIAssistant";
 import { usePermissions, type PermModule } from "@/hooks/usePermissions";
@@ -1999,6 +2000,7 @@ export default function EngineerApp() {
 
       <AvatarCropDialog imageSrc={pendingImage} open={cropOpen} onCancel={cancelAvatarCrop} onConfirm={confirmAvatarCrop} busy={avatarUploading} />
       <AIAssistant onDraftReady={handleAIDraft} />
+      <WelcomeSplash />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import { useNavStyle, NavStyle } from "@/hooks/useNavStyle";
 import { AvatarCropDialog } from "@/components/AvatarCropDialog";
 import { AIAssistant } from "@/components/AIAssistant";
+import { WelcomeSplash, isWelcomePending } from "@/components/WelcomeSplash";
 import { BrandMark } from "@/components/BrandMark";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtINR } from "@/lib/format";
@@ -39,6 +40,8 @@ function WhatsNewDialog() {
   const theme = useUITheme();
 
   useEffect(() => {
+    // Right after a sign-in the welcome card has the floor; "what's new" waits for a later visit
+    if (isWelcomePending()) return;
     if (!localStorage.getItem(WHATS_NEW_KEY)) {
       setOpen(true);
       localStorage.setItem(WHATS_NEW_KEY, "1");
@@ -1153,6 +1156,7 @@ export const AdminShell = () => {
     {ios && navStyle === "sidebar" && <IosTabBar />}
     <AIAssistant />
     <WhatsNewDialog />
+    <WelcomeSplash />
     </>
   );
 };

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { markFreshLogin } from "@/components/WelcomeSplash";
 import { useNavigate, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { motion } from "framer-motion";
@@ -67,7 +68,8 @@ export default function Auth() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Welcome back");
+      // The welcome card (WelcomeSplash) greets the user once the app shell mounts
+      markFreshLogin();
       // Navigation is handled by the useEffect above once roles are loaded,
       // ensuring engineers are correctly routed to /engineer
     }

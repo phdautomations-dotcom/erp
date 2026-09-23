@@ -4,6 +4,7 @@ import { AdminLayout, NAV } from "@/components/admin/AdminLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavStyle } from "@/hooks/useNavStyle";
 import { useUIDesign } from "@/lib/uiTheme";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { OrionCard, OrionGrid, orionTone } from "@/components/OrionCard";
 
 // Full literal class names (not built from a template string) so Tailwind's
@@ -50,6 +51,9 @@ export default function Home() {
   const { hasRole, user } = useAuth();
   const navStyle = useNavStyle();
   const orion = useUIDesign() === "orion";
+  // Phones: square tiles at a third of the screen read as boxes, so they turn into slim
+  // two-column strips (icon · name) instead
+  const isMobile = useIsMobile();
 
   useEffect(() => { document.title = "Home | ASTA One"; }, []);
 
@@ -81,11 +85,17 @@ export default function Home() {
         </div>
 
         {orion ? (
-          <OrionGrid minItem={100} maxCols={6} gap={16} aspect={(w) => (w < 160 ? 1 : 1.3)}>
+          <OrionGrid
+            minItem={isMobile ? 150 : 100}
+            maxCols={6}
+            gap={isMobile ? 12 : 16}
+            aspect={(w) => (isMobile ? w / 60 : w < 160 ? 1 : 1.3)}
+          >
             {tiles.map((tile, i) => (
               <OrionCard
                 key={tile.to}
                 compact
+                strip={isMobile}
                 tone={orionTone(i)}
                 icon={tile.icon}
                 title={tile.label}

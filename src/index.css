@@ -1108,7 +1108,21 @@ html[data-ui-skin="orion"] .ios-glass-strong nav a[aria-current="page"] svg { co
 .orion-card--strip { border-radius: 26px; }
 @supports (corner-shape: squircle) { .orion-card--strip { border-radius: 34px; } }
 .orion-card--strip .orion-card__inner { flex-direction: row; align-items: center; gap: 12px; padding: 0 12px 0 18px; }
-.orion-card--strip .orion-card__icon { height: 20px; min-height: 0; color: #111113; }
+.orion-card--strip .orion-card__icon { height: 20px; min-height: 0; }
+/* Module-name strips (Home on phones): smaller type, may wrap to two lines */
+.orion-card--strip.orion-card--compact .orion-card__title {
+  display: -webkit-box;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: normal;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+/* Phones: a strip is too narrow for the bubble — the whole strip is the tap target */
+@media (max-width: 767px) {
+  .orion-card--strip .orion-bubble { display: none; }
+  .orion-card--strip .orion-card__inner { gap: 10px; padding: 0 12px 0 14px; }
+}
 .orion-card--strip .orion-card__text { flex: 1; }
 .orion-card--strip .orion-card__title { margin-top: 0; font-size: 16px; font-weight: 500; }
 .orion-card--strip .orion-card__sub { margin-top: 1px; font-size: 11px; }
@@ -1127,7 +1141,25 @@ html[data-ui-skin="orion"] .ios-glass-strong nav a[aria-current="page"] svg { co
 .orion-bento__hero, .orion-bento__cell { container-type: inline-size; display: flex; min-width: 0; }
 .orion-bento__hero { aspect-ratio: 0.74; }
 .orion-bento__cell { aspect-ratio: 1.3; }
+/* Phones: the six stat cards become a swipeable row of tall glass cards (like the
+   reference's lower cards) rather than a 2-up grid of boxy squares; the third card
+   peeks in from the edge so the row reads as scrollable */
+.orion-bento__rest {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  margin: -6px -2px -16px;
+  padding: 6px 2px 24px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.orion-bento__rest::-webkit-scrollbar { display: none; }
+.orion-bento__rest > .orion-bento__cell { flex: 0 0 40%; aspect-ratio: 0.8; scroll-snap-align: start; }
 @container orion-bento (min-width: 620px) {
+  .orion-bento__rest { display: contents; }
+  .orion-bento__rest > .orion-bento__cell { aspect-ratio: 1.3; }
   .orion-bento { gap: 16px; grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .orion-bento__hero { grid-column: span 3; aspect-ratio: 0.9; }
   .orion-bento__cell { grid-column: span 2; }
@@ -1375,7 +1407,8 @@ html[data-ui-skin="orion"] .ios-glass-strong nav a[aria-current="page"] svg { co
   .orion-card:not(.orion-card--hero):not(.orion-card--strip) .orion-card__icon { height: 20px; }
   .orion-card:not(.orion-card--hero):not(.orion-card--strip) .orion-card__title { margin-top: 10px; font-size: 14.5px; }
   .orion-card--compact:not(.orion-card--hero) .orion-card__title { font-size: 13px; }
-  .orion-card:not(.orion-card--hero):not(.orion-card--strip) .orion-card__sub { margin-top: 2px; font-size: 10.5px; }
+  .orion-card:not(.orion-card--hero):not(.orion-card--strip) .orion-card__sub { margin-top: 2px; font-size: 10.5px; flex-direction: column; align-items: flex-start; gap: 1px; }
+  .orion-card:not(.orion-card--hero):not(.orion-card--strip) .orion-card__dot { display: none; }
   .orion-card:not(.orion-card--hero):not(.orion-card--strip) .orion-bubble { margin: auto 0 0 auto; width: 32px; min-width: 32px; }
 }
 @container (max-width: 130px) {

@@ -484,29 +484,37 @@ export default function Dashboard() {
       {orion ? (
         <div className="orion-bento-wrap">
           <div className="orion-bento">
-            {cards.map((c, i) => {
-              const pct = trendPct(c.spark);
-              const hero = i < 2; // Receivable + Payable stand tall, like the reference
+            {(() => {
+              const kpi = (c: (typeof cards)[number], i: number) => {
+                const pct = trendPct(c.spark);
+                const hero = i < 2; // Receivable + Payable stand tall, like the reference
+                return (
+                  <motion.div
+                    key={c.label}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 + 0.1, duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+                    className={hero ? "orion-bento__hero" : "orion-bento__cell"}
+                  >
+                    <OrionCard
+                      hero={hero}
+                      tone={orionTone(i)}
+                      icon={c.icon}
+                      title={c.value}
+                      subtitle={c.label}
+                      meta={pct === null ? undefined : `${pct >= 0 ? "+" : "−"}${Math.abs(pct).toFixed(0)}%`}
+                      onClick={c.to ? () => navigate(c.to) : undefined}
+                    />
+                  </motion.div>
+                );
+              };
               return (
-                <motion.div
-                  key={c.label}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 + 0.1, duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
-                  className={hero ? "orion-bento__hero" : "orion-bento__cell"}
-                >
-                  <OrionCard
-                    hero={hero}
-                    tone={orionTone(i)}
-                    icon={c.icon}
-                    title={c.value}
-                    subtitle={c.label}
-                    meta={pct === null ? undefined : `${pct >= 0 ? "+" : "−"}${Math.abs(pct).toFixed(0)}%`}
-                    onClick={c.to ? () => navigate(c.to) : undefined}
-                  />
-                </motion.div>
+                <>
+                  {cards.slice(0, 2).map((c, i) => kpi(c, i))}
+                  <div className="orion-bento__rest">{cards.slice(2).map((c, i) => kpi(c, i + 2))}</div>
+                </>
               );
-            })}
+            })()}
           </div>
         </div>
       ) : (

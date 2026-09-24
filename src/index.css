@@ -1112,7 +1112,7 @@ html[data-ui-skin="orion"] .ios-glass-strong nav a[aria-current="page"] svg { co
 .orion-card--strip { border-radius: 26px; }
 @supports (corner-shape: squircle) { .orion-card--strip { border-radius: 34px; } }
 .orion-card--strip .orion-card__inner { flex-direction: row; align-items: center; gap: 12px; padding: 0 12px 0 18px; }
-.orion-card--strip .orion-card__icon { height: 20px; min-height: 0; }
+.orion-card--strip .orion-card__icon { height: 24px; min-height: 0; }
 /* Module-name strips (Home on phones): smaller type, may wrap to two lines */
 .orion-card--strip.orion-card--compact .orion-card__title {
   display: -webkit-box;

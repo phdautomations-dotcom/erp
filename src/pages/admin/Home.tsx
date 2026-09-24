@@ -89,7 +89,7 @@ export default function Home() {
             minItem={isMobile ? 150 : 100}
             maxCols={6}
             gap={isMobile ? 12 : 16}
-            aspect={(w) => (isMobile ? w / 60 : w < 160 ? 1 : 1.3)}
+            aspect={(w) => (isMobile ? w / 108 : w < 160 ? 1 : 1.3)}
           >
             {tiles.map((tile, i) => (
               <OrionCard

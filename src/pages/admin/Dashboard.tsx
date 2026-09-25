@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { draftPaymentReminder } from "@/lib/ai/remote";
 import { useUIDesign } from "@/lib/uiTheme";
 import { OrionCard, OrionGrid, orionTone } from "@/components/OrionCard";
+
+// SAP design: Fiori KPI tiles (real SAP UI5 icons) — fetched only for that design
+const SapKpiTiles = lazy(() => import("@/sap/SapTiles").then((m) => ({ default: m.SapKpiTiles })));
 
 const formatYAxis = (v: number) => {
   if (v === 0) return '₹0';
@@ -450,7 +453,16 @@ export default function Dashboard() {
     { label: "Overdue Invoices", value: stats.overdueInvoices.toString(), caption: "Overdue", icon: Clock, color: "red", to: "/admin/sales?type=invoice&due=1" },
   ];
 
-  const orion = useUIDesign() === "orion";
+  const design = useUIDesign();
+  const orion = design === "orion";
+  const sap = design === "sap";
+
+  // Fiori semantic colours for the SAP tiles: green = healthy, orange = needs attention, red = act now
+  const flag = (n: number, tone: "critical" | "bad") => (n > 0 ? tone : "good");
+  const kpiTones = ["neutral", "critical", "good", "good", "neutral", flag(stats.lowStock, "bad"), "good", flag(stats.pendingLogs, "critical")] as const;
+  const sapKpis = cards.map((c, i) => ({ label: c.label, value: c.value, to: c.to, trend: trendPct(c.spark), tone: kpiTones[i] }));
+  const miniTones = ["neutral", "neutral", flag(stats.lowStock, "bad"), flag(stats.pendingInvoices, "critical"), flag(stats.overdueInvoices, "bad")] as const;
+  const sapMinis = miniStats.map((m, i) => ({ label: m.label, value: m.value, to: m.to, hint: m.caption, tone: miniTones[i] }));
 
   return (
     <AdminLayout title="Dashboard">
@@ -481,7 +493,11 @@ export default function Dashboard() {
 
       {/* Two tiles per row even on phones (less scrolling); on small screens the
           tiles get tighter padding/type and the sparkline moves beside the icon. */}
-      {orion ? (
+      {sap ? (
+        <Suspense fallback={<div className="min-h-[24rem]" />}>
+          <SapKpiTiles kpis={sapKpis} minis={sapMinis} />
+        </Suspense>
+      ) : orion ? (
         <div className="orion-bento-wrap">
           <div className="orion-bento">
             {(() => {
@@ -576,6 +592,7 @@ export default function Dashboard() {
           </div>
         ));
       // Orion: no half-empty rows — the grid picks an even column count or stretches the last row
+      if (sap) return null; // the SAP tiles above already include these
       return orion ? (
         <OrionGrid minItem={165} maxCols={5} gap={14} aspect={(w) => w / 84} className="mt-3.5">
           {minis}

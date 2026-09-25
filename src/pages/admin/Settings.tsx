@@ -16,6 +16,33 @@ import { cn } from "@/lib/utils";
 // Tiny fixed-colour mock-ups of each design. They use literal colours (not
 // theme tokens) so each one always shows *its own* look, whichever theme is active.
 function ThemePreview({ kind }: { kind: UIDesign }) {
+  if (kind === "sap") {
+    // Fiori: white shell bar with the blue brand tile, side navigation, a row of tiles
+    return (
+      <div className="relative h-20 w-full overflow-hidden rounded-xl" style={{ background: "#F5F6F7" }}>
+        <div className="flex h-4 items-center gap-1.5 px-2" style={{ background: "#fff", boxShadow: "0 1px 0 #D5DADD" }}>
+          <div className="h-2 w-2 rounded-[2px]" style={{ background: "#0070F2" }} />
+          <div className="h-1.5 w-8 rounded-full" style={{ background: "#1D2D3E", opacity: 0.55 }} />
+          <div className="ml-auto h-2 w-2 rounded-full" style={{ background: "#0070F2" }} />
+        </div>
+        <div className="flex gap-1.5 p-1.5">
+          <div className="w-6 space-y-1 rounded-md p-1" style={{ background: "#fff", boxShadow: "0 0 0 1px #D5DADD" }}>
+            <div className="h-1.5 rounded-sm" style={{ background: "#E6F2FF", boxShadow: "inset 2px 0 0 #0070F2" }} />
+            <div className="h-1.5 rounded-sm" style={{ background: "#EAECEE" }} />
+            <div className="h-1.5 rounded-sm" style={{ background: "#EAECEE" }} />
+          </div>
+          <div className="grid flex-1 grid-cols-3 gap-1">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="rounded-md p-1" style={{ background: "#fff", boxShadow: "0 0 0 1px #D5DADD" }}>
+                <div className="h-1 w-3 rounded-full" style={{ background: "#556B82", opacity: 0.5 }} />
+                <div className="mt-1.5 h-2 w-4 rounded-sm" style={{ background: i === 0 ? "#0070F2" : "#1D2D3E", opacity: i === 0 ? 1 : 0.7 }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (kind === "orion") {
     const card = (bg: string, border: string) => (
       <div className="relative flex flex-1 flex-col rounded-[14px] p-1.5" style={{ background: bg, border: `1px solid ${border}`, boxShadow: "inset 0 1px 1px rgba(255,255,255,0.6), inset 0 0 8px rgba(255,255,255,0.3)" }}>
@@ -108,6 +135,7 @@ function AppearanceCard() {
     { value: "minimal", label: "Minimal", desc: "Flat, clean & indigo" },
     { value: "ios", label: "iOS", desc: "Liquid Glass" },
     { value: "orion", label: "Orion", desc: "Calm gradient glass · default" },
+    { value: "sap", label: "SAP", desc: "Fiori Horizon · UI5" },
   ];
   const navOptions: { value: NavStyle; label: string; desc: string; icon: typeof PanelLeft }[] = [
     { value: "sidebar", label: "Sidebar", desc: "Persistent left navigation bar", icon: PanelLeft },
@@ -122,14 +150,17 @@ function AppearanceCard() {
 
       <div className="space-y-2.5">
         <Label>Design</Label>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-          {designs.map(d => (
+        {/* 5 designs: three across on the first row, two wider ones under them (no gap in the last row) */}
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-6">
+          {designs.map((d, i) => (
             <button
               key={d.value}
               onClick={() => setUITheme(d.value)}
               aria-pressed={uiTheme === d.value}
               className={cn(
                 "flex flex-col gap-2.5 rounded-xl border p-2.5 text-left transition-colors",
+                i < 3 ? "sm:col-span-2" : "sm:col-span-3",
+                i === designs.length - 1 && "col-span-2",
                 uiTheme === d.value ? "border-accent bg-accent/5 ring-1 ring-accent" : "border-border hover:bg-muted/50",
               )}
             >

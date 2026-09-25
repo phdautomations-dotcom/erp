@@ -1,0 +1,349 @@
+/* ═════════════ SAP Fiori "Horizon" ═════════════
+   A skin over Minimal (html has data-ui-theme="minimal" AND data-ui-skin="sap"), plus the real
+   SAP UI5 shell (see SapShell.tsx). The UI5 runtime defines the --sap* theme variables on :root
+   (Horizon is its default theme); wherever possible these rules read them, with the Horizon values
+   as fallbacks, so the app's own controls always match the UI5 components next to them.
+   Values were measured off the real UI5 components: cozy density, buttons 2.25rem / radius .5rem,
+   fields radius .25rem, tiles + cards radius 1rem, brand #0070F2, text #131E29, page #F5F6F7. */
+
+html[data-ui-theme][data-ui-skin="sap"] {
+  --background: 210 11% 96%;             /* #F5F6F7 page */
+  --foreground: 212 36% 12%;             /* #131E29 text */
+  --card: 0 0% 100%;
+  --card-foreground: 212 36% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 212 36% 12%;
+  --primary: 212 100% 47%;               /* #0070F2 brand */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 11% 93%;              /* #EAECEE hover grey */
+  --secondary-foreground: 212 36% 12%;
+  --muted: 210 11% 93%;
+  --muted-foreground: 211 21% 42%;       /* #556B82 label */
+  --accent: 212 100% 43%;                /* #0064D9 link / action blue */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 91% 35%;              /* #AA0808 negative */
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 90%;                    /* #E5E5E5 list border */
+  --input: 211 21% 55%;                  /* #758CA4 field border */
+  --ring: 224 100% 32%;                  /* #0032A5 focus */
+  --radius: 0.5rem;
+
+  --font-display: "72", "72full", Arial, Helvetica, sans-serif;
+  --font-sans: "72", "72full", Arial, Helvetica, sans-serif;
+
+  /* Fiori shadows: flat and cool-grey */
+  --shadow-sm: 0 0 0.125rem 0 rgb(34 53 72 / 0.2), 0 0.125rem 0.25rem 0 rgb(34 53 72 / 0.2);
+  --shadow: var(--shadow-sm);
+  --shadow-md: 0 0 0 0.0625rem rgb(34 53 72 / 0.48), 0 0.125rem 0.5rem 0 rgb(34 53 72 / 0.3);
+  --shadow-lg: 0 0 0 0.0625rem rgb(34 53 72 / 0.48), 0 0.625rem 1.875rem 0 rgb(34 53 72 / 0.25);
+  --shadow-xl: 0 0 0 0.0625rem rgb(34 53 72 / 0.48), 0 1.25rem 5rem 0 rgb(34 53 72 / 0.25);
+  --shadow-2xl: var(--shadow-xl);
+  --neu-out: var(--shadow-md);
+  --neu-in: inset 0 1px 3px rgb(34 53 72 / 0.2);
+  --neu-sm: var(--shadow-sm);
+  --glass-shadow: var(--shadow-sm);
+  --shadow-glow: var(--shadow-sm);
+  --gradient-brand: linear-gradient(#0070f2, #0070f2);
+  --gradient-brand-start: 212 100% 47%;
+  --gradient-brand-end: 212 100% 47%;
+
+  --md-primary: 212 100% 47%;
+  --md-primary-container: 211 100% 95%;
+  --md-on-primary-container: 212 100% 25%;
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-default: 150ms;
+  --sidebar-primary: 212 100% 47%;
+  --sidebar-ring: 224 100% 32%;
+}
+
+html[data-ui-skin="sap"] body { font-family: var(--sapFontFamily, "72", "72full", Arial, Helvetica, sans-serif); }
+html[data-ui-skin="sap"] ::selection { background: rgb(0 112 242 / 0.22); }
+
+/* ── Shell ── */
+.sap-app { height: 100dvh; background: var(--sapBackgroundColor, #f5f6f7); }
+.sap-page { min-height: 100%; padding: 1rem; }
+@media (min-width: 1024px) { .sap-page { padding: 1.5rem 2rem 2rem; } }
+.sap-logo {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 0.5rem;
+  background: var(--sapBrandColor, #0070f2);
+  color: #fff;
+  font-family: var(--sapFontBoldFamily, "72-Bold", "72", Arial, sans-serif);
+  font-size: 1rem;
+  line-height: 1;
+}
+.sap-page-title { font-size: 0.875rem; color: var(--sapContent_LabelColor, #556b82); white-space: nowrap; }
+
+/* ── Cards / panels: the Fiori card (radius 1rem, cool-grey elevation, no drawn border) ── */
+html[data-ui-skin="sap"] .bg-card {
+  background: var(--sapTile_Background, #fff);
+  border-color: transparent;
+  border-radius: var(--sapTile_BorderCornerRadius, 1rem);
+  box-shadow: var(--sapContent_Shadow0, 0 0 0.125rem rgb(34 53 72 / 0.2), 0 0.125rem 0.25rem rgb(34 53 72 / 0.2));
+}
+html[data-ui-skin="sap"] .bg-card:is(.rounded-3xl, .rounded-2xl, .rounded-xl) { border-radius: var(--sapTile_BorderCornerRadius, 1rem); }
+html[data-ui-skin="sap"] .bg-card.cursor-pointer:hover { background: var(--sapTile_Hover_Background, #eaecee); }
+html[data-ui-skin="sap"] .bg-card .divide-border\/50 > * + *,
+html[data-ui-skin="sap"] .bg-card .border-b { border-color: var(--sapList_BorderColor, #e5e5e5); }
+
+/* ── Headings: the Fiori page title is 1.5rem bold (SAP "Header 3"); card titles 1rem bold ── */
+html[data-ui-skin="sap"] .sap-page h1 { font-size: 1.5rem !important; font-weight: 700; letter-spacing: 0; line-height: 1.25; }
+html[data-ui-skin="sap"] .sap-page h2 { font-size: 1rem; font-weight: 700; letter-spacing: 0; }
+html[data-ui-skin="sap"] .font-display { letter-spacing: 0; }
+
+/* ── Buttons: rounded rectangles, never pills (Fiori has no pill buttons) ── */
+html[data-ui-skin="sap"] :is(button, a).rounded-full { border-radius: var(--sapButton_BorderCornerRadius, 0.5rem); }
+html[data-ui-skin="sap"] :is(button, a).h-10 { height: 2.25rem; }
+html[data-ui-skin="sap"] :is(button, a).h-11 { height: 2.25rem; }
+html[data-ui-skin="sap"] button.font-medium,
+html[data-ui-skin="sap"] a.font-medium { font-weight: 400; }
+/* Emphasized (primary): brand blue */
+html[data-ui-skin="sap"] .btn-gradient {
+  background-image: none;
+  background-color: var(--sapButton_Emphasized_Background, #0070f2);
+  color: #fff;
+  box-shadow: none;
+}
+html[data-ui-skin="sap"] button:is(.bg-primary, .btn-gradient):hover:not(:disabled) { background-color: var(--sapButton_Emphasized_Hover_Background, #0064d9); }
+html[data-ui-skin="sap"] button.bg-primary { box-shadow: none; font-weight: 700; }
+/* Default: white with a grey outline and action-blue text */
+html[data-ui-skin="sap"] button.border-input,
+html[data-ui-skin="sap"] button:is(.bg-background, .bg-card).border {
+  background: var(--sapButton_Background, #fff);
+  border-color: var(--sapButton_BorderColor, #bcc3ca);
+  color: var(--sapButton_TextColor, #0064d9);
+}
+html[data-ui-skin="sap"] button.border-input:hover:not(:disabled) { background: var(--sapButton_Hover_Background, #eaecee); }
+/* Transparent (ghost) */
+html[data-ui-skin="sap"] button.hover\:bg-accent:not(.bg-primary):not(.border) { color: var(--sapButton_TextColor, #0064d9); }
+html[data-ui-skin="sap"] button.hover\:bg-accent:not(.bg-primary):hover { background: var(--sapButton_Hover_Background, #eaecee); color: var(--sapButton_TextColor, #0064d9); }
+/* Focus: Fiori's 2px dark-blue ring */
+html[data-ui-skin="sap"] :is(button, a, input, textarea, [role="tab"], [role="combobox"]):focus-visible {
+  outline: 2px solid var(--sapContent_FocusColor, #0032a5);
+  outline-offset: 1px;
+  box-shadow: none;
+}
+
+/* ── Fields ── */
+html[data-ui-skin="sap"] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea, button[role="combobox"]) {
+  background: var(--sapField_Background, #fff);
+  border-color: rgb(85 107 129 / 0.5);
+  border-radius: var(--sapField_BorderCornerRadius, 0.25rem);
+  font-size: 0.875rem;
+}
+html[data-ui-skin="sap"] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), button[role="combobox"]).h-10 { height: 2.25rem; }
+html[data-ui-skin="sap"] :is(input, textarea, button[role="combobox"]):hover { border-color: var(--sapField_BorderColor, #556b81); }
+html[data-ui-skin="sap"] label { font-size: 0.875rem; }
+
+/* ── Tables: the Fiori list report look — white bold header, hairline rows, grey hover ── */
+html[data-ui-skin="sap"] table { font-size: 0.875rem; }
+html[data-ui-skin="sap"] thead { background: var(--sapList_HeaderBackground, #fff) !important; }
+html[data-ui-skin="sap"] thead th {
+  padding-block: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--sapList_HeaderTextColor, #131e29);
+  border-bottom: 1px solid var(--sapList_BorderColor, #e5e5e5);
+  text-transform: none;
+  letter-spacing: 0;
+}
+html[data-ui-skin="sap"] tbody tr { border-color: var(--sapList_BorderColor, #e5e5e5); }
+html[data-ui-skin="sap"] tbody td { padding-block: 0.75rem; }
+html[data-ui-skin="sap"] tbody tr:hover { background: var(--sapList_Hover_Background, #eaecee) !important; }
+html[data-ui-skin="sap"] tbody.divide-y > tr + tr { border-top: 1px solid var(--sapList_BorderColor, #e5e5e5); }
+
+/* ── Status pills become Fiori tags: small rounded rectangles ── */
+html[data-ui-skin="sap"] span.rounded-full:is(.px-2, .px-2\.5, .px-3):not(.h-8):not(.w-8) {
+  border-radius: 0.5rem;
+  font-weight: 400;
+}
+
+/* ── Tabs: an underlined tab strip with a 3px action-blue indicator ── */
+html[data-ui-skin="sap"] [role="tablist"] {
+  height: auto;
+  gap: 0.25rem;
+  padding: 0;
+  border-radius: 0;
+  background: transparent !important;
+  border-bottom: 1px solid var(--sapList_BorderColor, #e5e5e5);
+  box-shadow: none;
+}
+html[data-ui-skin="sap"] [role="tab"] {
+  border-radius: 0;
+  padding: 0.5rem 1rem;
+  background: transparent !important;
+  color: var(--sapContent_LabelColor, #556b82);
+  box-shadow: none !important;
+  border-bottom: 3px solid transparent;
+  font-weight: 400;
+}
+html[data-ui-skin="sap"] [role="tab"][data-state="active"] { color: var(--sapButton_TextColor, #0064d9) !important; border-bottom-color: var(--sapButton_TextColor, #0064d9); }
+html[data-ui-skin="sap"] [role="tab"]:hover { background: var(--sapList_Hover_Background, #eaecee) !important; }
+
+/* ── Dialogs / sheets / menus: Fiori popup elevation ── */
+html[data-ui-skin="sap"] [role="dialog"], html[data-ui-skin="sap"] [role="alertdialog"] {
+  border-radius: var(--sapTile_BorderCornerRadius, 1rem);
+  box-shadow: var(--sapContent_Shadow3, 0 1.25rem 5rem rgb(34 53 72 / 0.25));
+  border-color: transparent;
+}
+html[data-ui-skin="sap"] [data-radix-popper-content-wrapper] > * { border-radius: 0.75rem; box-shadow: var(--sapContent_Shadow2, 0 0.625rem 1.875rem rgb(34 53 72 / 0.25)); }
+html[data-ui-skin="sap"] [role="menuitem"]:focus, html[data-ui-skin="sap"] [role="option"]:focus { background: var(--sapList_Hover_Background, #eaecee); }
+html[data-ui-skin="sap"] [role="option"][data-state="checked"] { background: var(--sapList_SelectionBackgroundColor, #ebf8ff); }
+
+/* ── Launchpad (Home): grouped GenericTile-style tiles ── */
+.sap-lp__title { font-size: 1.5rem; font-weight: 700; line-height: 1.25; color: var(--sapTextColor, #131e29); }
+.sap-lp__lead { margin-top: 0.25rem; font-size: 0.875rem; color: var(--sapContent_LabelColor, #556b82); }
+.sap-lp__group { margin-top: 1.75rem; }
+.sap-lp__group-title { margin-bottom: 0.75rem; font-size: 1rem; font-weight: 700; color: var(--sapTextColor, #131e29); }
+.sap-lp__tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 11rem)); gap: 1rem; }
+@media (max-width: 480px) { .sap-lp__tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; } }
+.sap-lp-tile {
+  display: flex;
+  min-height: 11rem;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+  border-radius: var(--sapTile_BorderCornerRadius, 1rem);
+  background: var(--sapTile_Background, #fff);
+  box-shadow: var(--sapContent_Shadow0, 0 0 0.125rem rgb(34 53 72 / 0.2), 0 0.125rem 0.25rem rgb(34 53 72 / 0.2));
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 120ms;
+}
+.sap-lp-tile:hover { background: var(--sapTile_Hover_Background, #eaecee); }
+.sap-lp-tile:active { background: var(--sapList_Active_Background, #dce0e5); }
+.sap-lp-tile__head { display: flex; flex-direction: column; gap: 0.125rem; }
+.sap-lp-tile__title { font-size: 0.875rem; font-weight: 400; color: var(--sapTile_TitleTextColor, #131e29); }
+.sap-lp-tile__sub { font-size: 0.75rem; color: var(--sapTile_TextColor, #556b82); }
+.sap-lp-tile__icon { width: 2.5rem; height: 2.5rem; color: var(--sapTile_IconColor, #0064d9); }
+
+/* ── KPI tiles: title + icon, big light-weight number in a semantic colour, delta underneath ── */
+.sap-kpi {
+  container-type: inline-size;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+  border-radius: var(--sapTile_BorderCornerRadius, 1rem);
+  background: var(--sapTile_Background, #fff);
+  box-shadow: var(--sapContent_Shadow0, 0 0 0.125rem rgb(34 53 72 / 0.2), 0 0.125rem 0.25rem rgb(34 53 72 / 0.2));
+  cursor: pointer;
+  transition: background-color 120ms;
+}
+.sap-kpi:hover { background: var(--sapTile_Hover_Background, #eaecee); }
+.sap-kpi:focus-visible { outline: 2px solid var(--sapContent_FocusColor, #0032a5); outline-offset: 2px; }
+.sap-kpi__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+.sap-kpi__title { font-size: 0.875rem; color: var(--sapTile_TitleTextColor, #131e29); }
+.sap-kpi__icon { width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: var(--sapTile_IconColor, #0064d9); }
+.sap-kpi__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--sapFontLightFamily, "72-Light", "72", Arial, sans-serif);
+  font-size: clamp(1.25rem, 12cqw, 2.25rem);
+  line-height: 1.1;
+  color: var(--sapTile_TitleTextColor, #131e29);
+}
+.sap-kpi--good .sap-kpi__value { color: var(--sapPositiveTextColor, #256f3a); }
+.sap-kpi--critical .sap-kpi__value { color: var(--sapCriticalTextColor, #b44e00); }
+.sap-kpi--bad .sap-kpi__value { color: var(--sapNegativeTextColor, #aa0808); }
+.sap-kpi__foot { display: flex; min-height: 1rem; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: var(--sapTile_TextColor, #556b82); }
+.sap-kpi__trend { width: 0.875rem; height: 0.875rem; }
+.sap-kpi__trend.is-up { color: var(--sapPositiveElementColor, #30914c); }
+.sap-kpi__trend.is-down { color: var(--sapNegativeElementColor, #f53232); }
+
+/* Phones: tighter KPI tiles */
+@container (max-width: 190px) {
+  .sap-kpi { padding: 0.75rem; }
+  .sap-kpi__title { font-size: 0.75rem; }
+}
+
+/* ── Saffyre AI, Fiori style: a blue round action button, a white popup card, grey/blue bubbles ── */
+.sap-ai-fab {
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+  border-radius: 9999px;
+  color: #fff;
+  background: var(--sapButton_Emphasized_Background, #0070f2);
+  box-shadow: var(--sapContent_Shadow1, 0 0 0 0.0625rem rgb(34 53 72 / 0.48), 0 0.125rem 0.5rem rgb(34 53 72 / 0.3));
+}
+.sap-ai-fab svg { width: 1.5rem; height: 1.5rem; }
+.sap-ai-fab--sm { width: 2.25rem; height: 2.25rem; flex-shrink: 0; box-shadow: none; }
+.sap-ai-fab--sm svg { width: 1.125rem; height: 1.125rem; }
+.sap-ai-close {
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+  border-radius: 9999px;
+  color: var(--sapButton_TextColor, #0064d9);
+  background: #fff;
+  box-shadow: var(--sapContent_Shadow1, 0 0 0 0.0625rem rgb(34 53 72 / 0.48), 0 0.125rem 0.5rem rgb(34 53 72 / 0.3));
+}
+.sap-ai-panel {
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: var(--sapContent_Shadow3, 0 0 0 0.0625rem rgb(34 53 72 / 0.48), 0 1.25rem 5rem rgb(34 53 72 / 0.25));
+}
+.sap-ai-head { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; border-bottom: 1px solid var(--sapList_BorderColor, #e5e5e5); }
+.sap-ai-head__name { font-size: 1rem; font-weight: 700; line-height: 1.25; color: var(--sapTextColor, #131e29); }
+.sap-ai-head__by { font-size: 0.75rem; color: var(--sapContent_LabelColor, #556b82); }
+.sap-ai-x {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 0.5rem;
+  color: var(--sapButton_TextColor, #0064d9);
+}
+.sap-ai-x:hover { background: var(--sapButton_Hover_Background, #eaecee); }
+.sap-ai-msg { max-width: 85%; padding: 0.5rem 0.75rem; font-size: 0.875rem; line-height: 1.4; border-radius: 0.75rem; }
+.sap-ai-msg--me { color: #fff; background: var(--sapButton_Emphasized_Background, #0070f2); }
+.sap-ai-msg--ai { color: var(--sapTextColor, #131e29); background: var(--sapShell_Background, #eff1f2); }
+.sap-ai-compose { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border-top: 1px solid var(--sapList_BorderColor, #e5e5e5); }
+.sap-ai-send {
+  display: inline-grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 0.5rem;
+  color: #fff;
+  background: var(--sapButton_Emphasized_Background, #0070f2);
+}
+.sap-ai-send:hover:not(:disabled) { background: var(--sapButton_Emphasized_Hover_Background, #0064d9); }
+.sap-ai-send:disabled { opacity: 0.4; }
+.sap-ai-typing { display: inline-flex; gap: 4px; padding: 4px 2px; }
+.sap-ai-typing i { width: 6px; height: 6px; border-radius: 9999px; background: var(--sapContent_LabelColor, #556b82); animation: orion-typing 1.2s ease-in-out infinite; }
+.sap-ai-typing i:nth-child(2) { animation-delay: 0.15s; }
+.sap-ai-typing i:nth-child(3) { animation-delay: 0.3s; }
+
+/* ── Welcome dialog, Fiori style: a plain white popup card, no liquid ── */
+html[data-ui-skin="sap"] .welcome-backdrop { background: rgb(85 107 129 / 0.5); -webkit-backdrop-filter: none; backdrop-filter: none; }
+html[data-ui-skin="sap"] .welcome-card {
+  border-radius: 1rem;
+  color: var(--sapTextColor, #131e29);
+  background: #fff;
+  box-shadow: var(--sapContent_Shadow3, 0 0 0 0.0625rem rgb(34 53 72 / 0.48), 0 1.25rem 5rem rgb(34 53 72 / 0.25));
+}
+html[data-ui-skin="sap"] .welcome-liquid,
+html[data-ui-skin="sap"] .welcome-light,
+html[data-ui-skin="sap"] .welcome-card::before,
+html[data-ui-skin="sap"] .welcome-card::after { display: none; }
+html[data-ui-skin="sap"] .welcome-body { min-height: 0; padding: 1.5rem; background-image: none; text-shadow: none; }
+html[data-ui-skin="sap"] .welcome-mark { border-radius: 0.5rem; background: var(--sapBrandColor, #0070f2); box-shadow: none; }
+html[data-ui-skin="sap"] .welcome-kicker { margin-top: 1.5rem; font-size: 0.875rem; font-weight: 400; color: var(--sapContent_LabelColor, #556b82); }
+html[data-ui-skin="sap"] .welcome-title { font-size: 2rem; font-weight: 700; letter-spacing: 0; color: var(--sapTextColor, #131e29); }
+html[data-ui-skin="sap"] .welcome-lead { margin-top: 0.75rem; font-size: 1rem; font-weight: 700; color: var(--sapTextColor, #131e29); }
+html[data-ui-skin="sap"] .welcome-copy { max-width: none; font-size: 0.875rem; color: var(--sapContent_LabelColor, #556b82); }
+html[data-ui-skin="sap"] .welcome-enter { height: 2.25rem; margin-top: 1.5rem; border-radius: 0.5rem; font-weight: 700; background: var(--sapButton_Emphasized_Background, #0070f2); box-shadow: none; }
+html[data-ui-skin="sap"] .welcome-enter:hover { background: var(--sapButton_Emphasized_Hover_Background, #0064d9); transform: none; }
+html[data-ui-skin="sap"] .welcome-by { color: var(--sapContent_LabelColor, #556b82); }

@@ -1,17 +1,21 @@
 import { useSyncExternalStore } from "react";
 import { loadIosIcons } from "./iosIcons";
+import { loadSap } from "./sapLoader";
 
 // Four selectable designs, remembered per browser:
 //   "material" — Google Material 3: tonal surfaces, pill buttons, Google Sans / Roboto
 //   "minimal"  — the earlier flat indigo design
 //   "ios"      — iOS "Liquid Glass": translucent blurred glass, SF-style icons, capsule controls
+//   "sap"      — SAP Fiori "Horizon": real SAP UI5 Web Components for the shell (ShellBar, side
+//                navigation) + Fiori look for everything else. A *skin* over Minimal, like Orion is
+//                over iOS; its ~1 MB runtime is fetched only when someone picks it (lib/sapLoader).
 //   "orion"    — (default) calm glassmorphism: gradient squircle cards, glass bubbles, muted map backdrop.
 //                A *skin* over the iOS structure — components still see UITheme "ios" (same
 //                chrome, glass classes, icons); CSS restyles it under <html data-ui-skin="orion">.
 // The structural theme is mirrored to <html data-ui-theme="…"> so CSS tokens switch
 // instantly, and components subscribe via useUITheme() for their class choices.
 export type UITheme = "material" | "minimal" | "ios";
-export type UIDesign = UITheme | "orion";
+export type UIDesign = UITheme | "orion" | "sap";
 const KEY = "asta_ui_theme";
 // One-time switch to Orion when it became the app-wide default (2026-09-23): every browser,
 // including ones that had picked another design earlier, starts on Orion once. A design
@@ -26,13 +30,17 @@ function read(): UIDesign {
       localStorage.setItem(ORION_DEFAULT_KEY, "1");
     }
     const v = localStorage.getItem(KEY);
-    return v === "material" || v === "minimal" || v === "ios" ? v : "orion";
+    return v === "material" || v === "minimal" || v === "ios" || v === "sap" ? v : "orion";
   } catch {
     return "orion";
   }
 }
 
-const structural = (d: UIDesign): UITheme => (d === "orion" ? "ios" : d);
+const structural = (d: UIDesign): UITheme => (d === "orion" ? "ios" : d === "sap" ? "minimal" : d);
+
+// Designs whose assets are fetched on demand: wait for them so nothing flashes unstyled
+const preload = (d: UIDesign): Promise<unknown> | null =>
+  d === "sap" ? loadSap() : structural(d) === "ios" ? loadIosIcons() : null;
 
 let design: UIDesign = read();
 let current: UITheme = structural(design);
@@ -44,7 +52,7 @@ function apply(d: UIDesign) {
   current = structural(d);
   const root = document.documentElement;
   root.dataset.uiTheme = current;
-  if (d === "orion") root.dataset.uiSkin = "orion";
+  if (d === "orion" || d === "sap") root.dataset.uiSkin = d;
   else delete root.dataset.uiSkin;
 }
 
@@ -57,9 +65,9 @@ export function setUITheme(t: UIDesign) {
   } catch {
     /* private mode — the choice still applies for this session */
   }
-  // The iOS icon set is fetched on demand; wait for it so icons never flash back to Lucide
-  if (structural(t) === "ios") {
-    loadIosIcons().finally(() => {
+  const ready = preload(t);
+  if (ready) {
+    ready.finally(() => {
       apply(t);
       emit();
     });
@@ -76,7 +84,8 @@ export function initUITheme() {
   window.addEventListener("storage", (e) => {
     if (e.key === KEY) {
       const t = read();
-      if (structural(t) === "ios") loadIosIcons().finally(() => { apply(t); emit(); });
+      const ready = preload(t);
+      if (ready) ready.finally(() => { apply(t); emit(); });
       else { apply(t); emit(); }
     }
   });

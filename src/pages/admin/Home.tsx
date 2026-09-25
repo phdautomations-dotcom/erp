@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AdminLayout, NAV } from "@/components/admin/AdminLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,6 +6,9 @@ import { useNavStyle } from "@/hooks/useNavStyle";
 import { useUIDesign } from "@/lib/uiTheme";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OrionCard, OrionGrid, orionTone } from "@/components/OrionCard";
+
+// SAP design: the Fiori Launchpad (real SAP UI5 icons) — fetched only for that design
+const SapLaunchpad = lazy(() => import("@/sap/SapTiles").then((m) => ({ default: m.SapLaunchpad })));
 
 // Full literal class names (not built from a template string) so Tailwind's
 // content scanner can actually find and generate them at build time.
@@ -50,7 +53,9 @@ export default function Home() {
   const navigate = useNavigate();
   const { hasRole, user } = useAuth();
   const navStyle = useNavStyle();
-  const orion = useUIDesign() === "orion";
+  const design = useUIDesign();
+  const orion = design === "orion";
+  const sap = design === "sap";
   // Phones: square tiles at a third of the screen read as boxes, so they turn into slim
   // two-column strips (icon · name) instead
   const isMobile = useIsMobile();
@@ -70,6 +75,14 @@ export default function Home() {
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+
+  if (sap) {
+    return (
+      <AdminLayout title="Home">
+        <Suspense fallback={null}><SapLaunchpad /></Suspense>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
